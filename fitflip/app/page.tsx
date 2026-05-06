@@ -1,0 +1,405 @@
+"use client";
+
+import { useState, useEffect, useRef, useCallback } from "react";
+import { translations, type Lang } from "@/lib/translations";
+
+type AnalysisResult = {
+  recognized: boolean;
+  category: string | null;
+  brand: string | null;
+  model: string | null;
+  era: string | null;
+  condition: string | null;
+  estimated_value_min_huf: number | null;
+  estimated_value_max_huf: number | null;
+  description: string | null;
+  search_query: string | null;
+  selling_tip: string | null;
+  confidence: "low" | "medium" | "high" | null;
+  scansLeft: number;
+};
+
+export default function HomePage() {
+  const [lang, setLang] = useState<Lang>("hu");
+  const [imageData, setImageData] = useState<string | null>(null);
+  const [imageMediaType, setImageMediaType] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [scansLeft, setScansLeft] = useState<number>(3);
+  const [limitReached, setLimitReached] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  const t = translations[lang];
+
+  useEffect(() => {
+    const stored = localStorage.getItem("ff_lang");
+    if (stored === "hu" || stored === "en") setLang(stored);
+    else if (typeof navigator !== "undefined" && navigator.language.startsWith("en")) {
+      setLang("en");
+    }
+    fetch("/api/analyze")
+      .then((r) => r.json())
+      .then((d) => {
+        if (typeof d.scansLeft === "number") {
+          setScansLeft(d.scansLeft);
+          if (d.scansLeft <= 0) setLimitReached(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const switchLang = (newLang: Lang) => {
+    setLang(newLang);
+    localStorage.setItem("ff_lang", newLang);
+  };
+
+  const handleFile = useCallback((file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > 8 * 1024 * 1024) {
+      setError(lang === "hu" ? "A fájl túl nagy (max 8MB)." : "File too large (max 8MB).");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const base64 = result.split(",")[1];
+      setImageData(base64);
+      setImageMediaType(file.type);
+      setImagePreview(result);
+      setError(null);
+      setResult(null);
+    };
+    reader.readAsDataURL(file);
+  }, [lang]);
+
+  const onFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) handleFile(f);
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const f = e.dataTransfer.files?.[0];
+    if (f) handleFile(f);
+  };
+
+  const analyze = async () => {
+    if (!imageData || !imageMediaType) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: imageData, mediaType: imageMediaType, lang }),
+      });
+      if (res.status === 429) {
+        setLimitReached(true);
+        setScansLeft(0);
+        setLoading(false);
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setError(t.error);
+        setLoading(false);
+        return;
+      }
+      setResult(data);
+      if (typeof data.scansLeft === "number") {
+        setScansLeft(data.scansLeft);
+        if (data.scansLeft <= 0) setLimitReached(true);
+      }
+    } catch {
+      setError(t.error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const reset = () => {
+    setImageData(null);
+    setImageMediaType(null);
+    setImagePreview(null);
+    setResult(null);
+    setError(null);
+  };
+
+  const formatHuf = (n: number | null) => {
+    if (n === null) return "—";
+    return new Intl.NumberFormat("hu-HU").format(n) + " Ft";
+  };
+
+  return (
+    <main className="min-h-screen flex flex-col">
+      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100">
+        <div className="flex items-baseline gap-2">
+          <span className="text-xl font-medium tracking-tight">FitFlip</span>
+          <span className="text-xs text-ink-500 hidden sm:inline">.app</span>
+        </div>
+        <div className="flex items-center gap-1 text-sm">
+          <button
+            onClick={() => switchLang("hu")}
+            className={`px-2 py-1 rounded transition ${
+              lang === "hu" ? "bg-ink-900 text-white" : "text-ink-500 hover:text-ink-900"
+            }`}
+            aria-label="Magyar"
+          >
+            HU
+          </button>
+          <button
+            onClick={() => switchLang("en")}
+            className={`px-2 py-1 rounded transition ${
+              lang === "en" ? "bg-ink-900 text-white" : "text-ink-500 hover:text-ink-900"
+            }`}
+            aria-label="English"
+          >
+            EN
+          </button>
+        </div>
+      </header>
+
+      <section className="flex-1 flex flex-col items-center justify-start px-6 py-12 max-w-2xl mx-auto w-full">
+        {!imagePreview && !result && (
+          <div className="w-full text-center fade-in">
+            <h1 className="text-4xl sm:text-5xl font-display tracking-tight mb-3">
+              {t.tagline}
+            </h1>
+            <p className="text-ink-500 text-lg mb-10">{t.subtagline}</p>
+
+            {limitReached ? (
+              <div className="border border-ink-100 rounded-2xl p-8 bg-ink-50">
+                <h2 className="text-xl font-medium mb-2">{t.limitReached}</h2>
+                <p className="text-ink-500 text-sm mb-5">{t.limitReachedSub}</p>
+                <button
+                  disabled
+                  className="px-6 py-2.5 rounded-full bg-ink-100 text-ink-300 text-sm cursor-not-allowed"
+                >
+                  {t.upgradeButton}
+                </button>
+              </div>
+            ) : (
+              <>
+                <div
+                  onDrop={onDrop}
+                  onDragOver={(e) => e.preventDefault()}
+                  className="border-2 border-dashed border-ink-100 rounded-2xl p-12 hover:border-ink-300 transition-colors cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-ink-50 flex items-center justify-center">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="font-medium">{t.uploadCta}</p>
+                      <p className="text-ink-500 text-sm mt-1">{t.uploadHint}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                  <button
+                    onClick={() => cameraInputRef.current?.click()}
+                    className="px-4 py-3 rounded-xl border border-ink-100 hover:border-ink-300 hover:bg-ink-50 transition text-sm font-medium"
+                  >
+                    {t.takePhoto}
+                  </button>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-4 py-3 rounded-xl border border-ink-100 hover:border-ink-300 hover:bg-ink-50 transition text-sm font-medium"
+                  >
+                    {t.chooseFile}
+                  </button>
+                </div>
+
+                <p className="text-xs text-ink-500 mt-6">
+                  {t.scansLeftFull.replace("{n}", scansLeft.toString())}
+                </p>
+              </>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={onFilePick}
+              className="hidden"
+            />
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={onFilePick}
+              className="hidden"
+            />
+          </div>
+        )}
+
+        {imagePreview && !result && (
+          <div className="w-full fade-in">
+            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-ink-50 mb-6">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imagePreview}
+                alt="preview"
+                className="w-full h-full object-contain"
+              />
+            </div>
+
+            {loading ? (
+              <div className="text-center py-4">
+                <div className="inline-flex items-center gap-3">
+                  <div className="w-2 h-2 bg-ink-900 rounded-full pulse-slow" />
+                  <p className="font-medium">{t.analyzing}</p>
+                </div>
+                <p className="text-sm text-ink-500 mt-2">{t.analyzingSub}</p>
+              </div>
+            ) : (
+              <div className="flex gap-3">
+                <button
+                  onClick={analyze}
+                  className="flex-1 px-6 py-3 rounded-full bg-ink-900 text-white font-medium hover:bg-ink-700 transition"
+                >
+                  {t.uploadCta}
+                </button>
+                <button
+                  onClick={reset}
+                  className="px-6 py-3 rounded-full border border-ink-100 hover:bg-ink-50 transition text-sm"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {error && (
+              <p className="text-center text-red-600 text-sm mt-4">{error}</p>
+            )}
+          </div>
+        )}
+
+        {result && (
+          <div className="w-full fade-in">
+            <div className="aspect-square w-full max-w-xs mx-auto rounded-2xl overflow-hidden bg-ink-50 mb-6">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imagePreview!}
+                alt="scanned"
+                className="w-full h-full object-contain"
+              />
+            </div>
+
+            {!result.recognized ? (
+              <div className="text-center border border-ink-100 rounded-2xl p-8">
+                <p className="font-medium mb-2">{t.notRecognized}</p>
+                <button
+                  onClick={reset}
+                  className="mt-4 px-6 py-2 rounded-full bg-ink-900 text-white text-sm hover:bg-ink-700 transition"
+                >
+                  {t.newScan}
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="border border-ink-100 rounded-2xl overflow-hidden">
+                  <div className="px-6 py-5 border-b border-ink-100">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h2 className="text-xl font-medium">
+                          {result.brand} {result.model && <span className="text-ink-500">— {result.model}</span>}
+                        </h2>
+                        {result.era && (
+                          <p className="text-sm text-ink-500 mt-1">{result.era}</p>
+                        )}
+                      </div>
+                      {result.confidence && (
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          result.confidence === "high"
+                            ? "bg-green-50 text-green-800"
+                            : result.confidence === "medium"
+                            ? "bg-amber-50 text-amber-800"
+                            : "bg-ink-50 text-ink-500"
+                        }`}>
+                          {result.confidence === "high" ? t.confidenceHigh : result.confidence === "medium" ? t.confidenceMedium : t.confidenceLow}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <dl className="divide-y divide-ink-100">
+                    {result.condition && (
+                      <div className="flex justify-between px-6 py-3 text-sm">
+                        <dt className="text-ink-500">{t.condition}</dt>
+                        <dd className="font-medium">{result.condition}</dd>
+                      </div>
+                    )}
+                    <div className="flex justify-between px-6 py-3 text-sm">
+                      <dt className="text-ink-500">{t.estimatedValue}</dt>
+                      <dd className="font-medium">
+                        {formatHuf(result.estimated_value_min_huf)} – {formatHuf(result.estimated_value_max_huf)}
+                      </dd>
+                    </div>
+                  </dl>
+
+                  {result.description && (
+                    <div className="px-6 py-4 bg-ink-50 text-sm text-ink-700 leading-relaxed">
+                      {result.description}
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-6 border border-ink-100 rounded-2xl p-6 bg-ink-50 relative overflow-hidden">
+                  <div className="opacity-60">
+                    <p className="text-xs uppercase tracking-wider text-ink-500 mb-2">
+                      {t.listingsTitle}
+                    </p>
+                    <p className="font-medium">{t.listingsLocked}</p>
+                    <p className="text-sm text-ink-500 mt-1">{t.listingsLockedSub}</p>
+                  </div>
+                  <button
+                    disabled
+                    className="mt-4 px-5 py-2 rounded-full bg-ink-100 text-ink-300 text-sm cursor-not-allowed"
+                  >
+                    {t.upgradeButton}
+                  </button>
+                </div>
+
+                {result.selling_tip && (
+                  <div className="mt-4 border border-ink-100 rounded-2xl p-6 bg-ink-50">
+                    <p className="text-xs uppercase tracking-wider text-ink-500 mb-2">
+                      {t.sellingTipTitle}
+                    </p>
+                    <p className="text-sm text-ink-700 leading-relaxed">
+                      {result.selling_tip}
+                    </p>
+                  </div>
+                )}
+
+                <div className="mt-6 text-center">
+                  <button
+                    onClick={reset}
+                    className="px-6 py-3 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition"
+                  >
+                    {t.newScan}
+                  </button>
+                  <p className="text-xs text-ink-500 mt-3">
+                    {t.scansLeftFull.replace("{n}", result.scansLeft.toString())}
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </section>
+
+      <footer className="px-6 py-6 border-t border-ink-100 text-center text-xs text-ink-500">
+        {t.footer}
+      </footer>
+    </main>
+  );
+}
