@@ -4,7 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
-const FREE_DAILY_LIMIT = 3;
+const FREE_DAILY_LIMIT = 999;
 const COOKIE_NAME = "ff_scans";
 
 type ScanCookie = {
