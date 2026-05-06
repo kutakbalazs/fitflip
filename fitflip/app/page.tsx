@@ -19,12 +19,62 @@ type AnalysisResult = {
   scansLeft: number;
 };
 
+const isHeicFile = (file: File): boolean => {
+  const name = file.name.toLowerCase();
+  return (
+    file.type === "image/heic" ||
+    file.type === "image/heif" ||
+    name.endsWith(".heic") ||
+    name.endsWith(".heif")
+  );
+};
+
+async function compressImage(file: File, maxDim = 1600, quality = 0.85): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height / width) * maxDim);
+            width = maxDim;
+          } else {
+            width = Math.round((width / height) * maxDim);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("Canvas not available"));
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return reject(new Error("Blob creation failed"));
+            resolve(new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" }));
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+      img.onerror = () => reject(new Error("Image load failed"));
+      img.src = reader.result as string;
+    };
+    reader.onerror = () => reject(new Error("File read failed"));
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function HomePage() {
   const [lang, setLang] = useState<Lang>("hu");
   const [imageData, setImageData] = useState<string | null>(null);
   const [imageMediaType, setImageMediaType] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [converting, setConverting] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [scansLeft, setScansLeft] = useState<number>(3);
@@ -56,34 +106,73 @@ export default function HomePage() {
     localStorage.setItem("ff_lang", newLang);
   };
 
-  const handleFile = useCallback((file: File) => {
-    if (!file.type.startsWith("image/")) return;
-    if (file.size > 8 * 1024 * 1024) {
-      setError(lang === "hu" ? "A fájl túl nagy (max 8MB)." : "File too large (max 8MB).");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      const base64 = result.split(",")[1];
-      setImageData(base64);
-      setImageMediaType(file.type);
-      setImagePreview(result);
+  const processFile = useCallback(
+    async (file: File) => {
       setError(null);
       setResult(null);
-    };
-    reader.readAsDataURL(file);
-  }, [lang]);
+
+      let workingFile: File = file;
+
+      if (isHeicFile(file)) {
+        setConverting(true);
+        try {
+          const heic2any = (await import("heic2any")).default;
+          const converted = await heic2any({
+            blob: file,
+            toType: "image/jpeg",
+            quality: 0.9,
+          });
+          const blob = Array.isArray(converted) ? converted[0] : converted;
+          workingFile = new File(
+            [blob],
+            file.name.replace(/\.(heic|heif)$/i, ".jpg"),
+            { type: "image/jpeg" }
+          );
+        } catch (err) {
+          setError(
+            lang === "hu"
+              ? "Nem siker√ľlt konvert√°lni a HEIC f√°jlt. Pr√≥b√°lj egy JPG vagy PNG k√©ppel."
+              : "Couldn't convert HEIC file. Try a JPG or PNG instead."
+          );
+          setConverting(false);
+          return;
+        }
+        setConverting(false);
+      }
+
+      if (!workingFile.type.startsWith("image/")) {
+        setError(lang === "hu" ? "Csak k√©pf√°jlokat tudunk feldolgozni." : "Only image files are supported.");
+        return;
+      }
+
+      // Mindig t√∂m√∂r√≠tj√ľk ‚Üí API-bar√°t m√©ret + gyorsabb felt√∂lt√©s
+      try {
+        const compressed = await compressImage(workingFile);
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          const base64 = result.split(",")[1];
+          setImageData(base64);
+          setImageMediaType("image/jpeg");
+          setImagePreview(result);
+        };
+        reader.readAsDataURL(compressed);
+      } catch {
+        setError(lang === "hu" ? "Nem siker√ľlt feldolgozni a k√©pet." : "Couldn't process the image.");
+      }
+    },
+    [lang]
+  );
 
   const onFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (f) handleFile(f);
+    if (f) processFile(f);
   };
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const f = e.dataTransfer.files?.[0];
-    if (f) handleFile(f);
+    if (f) processFile(f);
   };
 
   const analyze = async () => {
@@ -129,7 +218,7 @@ export default function HomePage() {
   };
 
   const formatHuf = (n: number | null) => {
-    if (n === null) return "—";
+    if (n === null) return "‚ÄĒ";
     return new Intl.NumberFormat("hu-HU").format(n) + " Ft";
   };
 
@@ -189,17 +278,26 @@ export default function HomePage() {
                   className="border-2 border-dashed border-ink-100 rounded-2xl p-12 hover:border-ink-300 transition-colors cursor-pointer"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-ink-50 flex items-center justify-center">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      </svg>
+                  {converting ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-2 h-2 bg-ink-900 rounded-full pulse-slow" />
+                      <p className="font-medium">
+                        {lang === "hu" ? "HEIC konverzi√≥ folyamatban‚Ä¶" : "Converting HEIC‚Ä¶"}
+                      </p>
                     </div>
-                    <div>
-                      <p className="font-medium">{t.uploadCta}</p>
-                      <p className="text-ink-500 text-sm mt-1">{t.uploadHint}</p>
+                  ) : (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-ink-50 flex items-center justify-center">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="font-medium">{t.uploadCta}</p>
+                        <p className="text-ink-500 text-sm mt-1">{t.uploadHint}</p>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 mt-4">
@@ -220,13 +318,16 @@ export default function HomePage() {
                 <p className="text-xs text-ink-500 mt-6">
                   {t.scansLeftFull.replace("{n}", scansLeft.toString())}
                 </p>
+                {error && (
+                  <p className="text-center text-red-600 text-sm mt-4">{error}</p>
+                )}
               </>
             )}
 
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/*,.heic,.heif"
               onChange={onFilePick}
               className="hidden"
             />
@@ -272,7 +373,7 @@ export default function HomePage() {
                   onClick={reset}
                   className="px-6 py-3 rounded-full border border-ink-100 hover:bg-ink-50 transition text-sm"
                 >
-                  ✕
+                  ‚úē
                 </button>
               </div>
             )}
@@ -311,7 +412,7 @@ export default function HomePage() {
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <h2 className="text-xl font-medium">
-                          {result.brand} {result.model && <span className="text-ink-500">— {result.model}</span>}
+                          {result.brand} {result.model && <span className="text-ink-500">‚ÄĒ {result.model}</span>}
                         </h2>
                         {result.era && (
                           <p className="text-sm text-ink-500 mt-1">{result.era}</p>
@@ -341,7 +442,7 @@ export default function HomePage() {
                     <div className="flex justify-between px-6 py-3 text-sm">
                       <dt className="text-ink-500">{t.estimatedValue}</dt>
                       <dd className="font-medium">
-                        {formatHuf(result.estimated_value_min_huf)} – {formatHuf(result.estimated_value_max_huf)}
+                        {formatHuf(result.estimated_value_min_huf)} ‚Äď {formatHuf(result.estimated_value_max_huf)}
                       </dd>
                     </div>
                   </dl>
