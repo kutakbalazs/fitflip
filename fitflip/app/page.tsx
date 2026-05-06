@@ -131,7 +131,7 @@ export default function HomePage() {
         } catch (err) {
           setError(
             lang === "hu"
-              ? "Nem siker√ľlt konvert√°lni a HEIC f√°jlt. Pr√≥b√°lj egy JPG vagy PNG k√©ppel."
+              ? "Nem sikerült konvertálni a HEIC fájlt. Próbálj egy JPG vagy PNG képpel."
               : "Couldn't convert HEIC file. Try a JPG or PNG instead."
           );
           setConverting(false);
@@ -141,11 +141,10 @@ export default function HomePage() {
       }
 
       if (!workingFile.type.startsWith("image/")) {
-        setError(lang === "hu" ? "Csak k√©pf√°jlokat tudunk feldolgozni." : "Only image files are supported.");
+        setError(lang === "hu" ? "Csak képfájlokat tudunk feldolgozni." : "Only image files are supported.");
         return;
       }
 
-      // Mindig t√∂m√∂r√≠tj√ľk ‚Üí API-bar√°t m√©ret + gyorsabb felt√∂lt√©s
       try {
         const compressed = await compressImage(workingFile);
         const reader = new FileReader();
@@ -158,7 +157,7 @@ export default function HomePage() {
         };
         reader.readAsDataURL(compressed);
       } catch {
-        setError(lang === "hu" ? "Nem siker√ľlt feldolgozni a k√©pet." : "Couldn't process the image.");
+        setError(lang === "hu" ? "Nem sikerült feldolgozni a képet." : "Couldn't process the image.");
       }
     },
     [lang]
@@ -218,7 +217,7 @@ export default function HomePage() {
   };
 
   const formatHuf = (n: number | null) => {
-    if (n === null) return "‚ÄĒ";
+    if (n === null) return "—";
     return new Intl.NumberFormat("hu-HU").format(n) + " Ft";
   };
 
@@ -282,7 +281,7 @@ export default function HomePage() {
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-2 h-2 bg-ink-900 rounded-full pulse-slow" />
                       <p className="font-medium">
-                        {lang === "hu" ? "HEIC konverzi√≥ folyamatban‚Ä¶" : "Converting HEIC‚Ä¶"}
+                        {lang === "hu" ? "HEIC konverzió folyamatban…" : "Converting HEIC…"}
                       </p>
                     </div>
                   ) : (
@@ -373,7 +372,7 @@ export default function HomePage() {
                   onClick={reset}
                   className="px-6 py-3 rounded-full border border-ink-100 hover:bg-ink-50 transition text-sm"
                 >
-                  ‚úē
+                  ✕
                 </button>
               </div>
             )}
@@ -412,7 +411,7 @@ export default function HomePage() {
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <h2 className="text-xl font-medium">
-                          {result.brand} {result.model && <span className="text-ink-500">‚ÄĒ {result.model}</span>}
+                          {result.brand} {result.model && <span className="text-ink-500">— {result.model}</span>}
                         </h2>
                         {result.era && (
                           <p className="text-sm text-ink-500 mt-1">{result.era}</p>
@@ -442,7 +441,7 @@ export default function HomePage() {
                     <div className="flex justify-between px-6 py-3 text-sm">
                       <dt className="text-ink-500">{t.estimatedValue}</dt>
                       <dd className="font-medium">
-                        {formatHuf(result.estimated_value_min_huf)} ‚Äď {formatHuf(result.estimated_value_max_huf)}
+                        {formatHuf(result.estimated_value_min_huf)} – {formatHuf(result.estimated_value_max_huf)}
                       </dd>
                     </div>
                   </dl>
