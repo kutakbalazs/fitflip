@@ -422,20 +422,12 @@ export default function HomePage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-1 gap-3 mt-4">
-                  <button
-                    onClick={() => cameraInputRef.current?.click()}
-                    className="sm:hidden px-4 py-3 rounded-xl border border-ink-100 hover:border-ink-300 hover:bg-ink-50 transition text-sm font-medium"
-                  >
-                    {t.takePhoto}
-                  </button>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="px-4 py-3 rounded-xl border border-ink-100 hover:border-ink-300 hover:bg-ink-50 transition text-sm font-medium"
-                  >
-                    {t.chooseFile}
-                  </button>
-                </div>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full mt-4 px-4 py-3 rounded-xl border border-ink-100 hover:border-ink-300 hover:bg-ink-50 transition text-sm font-medium"
+                >
+                  {t.chooseFile}
+                </button>
 
                 <p className="text-xs text-ink-500 mt-6">
                   {t.scansLeftFull.replace("{n}", scansLeft.toString())}
