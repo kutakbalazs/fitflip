@@ -84,6 +84,9 @@ export default function HomePage() {
   const [limitReached, setLimitReached] = useState(false);
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
+  const [banner, setBanner] = useState<{ kind: "success" | "info"; text: string } | null>(null);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -107,10 +110,22 @@ export default function HomePage() {
       .then((d) => {
         if (typeof d.scansLeft === "number") {
           setScansLeft(d.scansLeft);
-          if (d.authenticated && d.scansLeft <= 0) setLimitReached(true);
+          if (d.authenticated && d.scansLeft <= 0 && !d.isPremium) setLimitReached(true);
         }
+        if (d.isPremium) setIsPremium(true);
       })
       .catch(() => {});
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("upgraded") === "1") {
+      const isHu = (localStorage.getItem("ff_lang") ?? (navigator.language.startsWith("en") ? "en" : "hu")) === "hu";
+      setBanner({ kind: "success", text: isHu ? "Sikeres előfizetés! Mostantól korlátlan a használat." : "Subscription successful! You now have unlimited use." });
+      window.history.replaceState({}, "", "/");
+    } else if (params.get("upgrade") === "cancel") {
+      const isHu = (localStorage.getItem("ff_lang") ?? (navigator.language.startsWith("en") ? "en" : "hu")) === "hu";
+      setBanner({ kind: "info", text: isHu ? "Az előfizetést megszakítottad." : "You cancelled the upgrade." });
+      window.history.replaceState({}, "", "/");
+    }
   }, [supabase]);
 
   // Live camera background on mobile
@@ -272,6 +287,35 @@ export default function HomePage() {
     return new Intl.NumberFormat("hu-HU").format(n) + " Ft";
   };
 
+  const startCheckout = async () => {
+    setCheckoutLoading(true);
+    try {
+      const res = await fetch("/api/stripe/checkout", { method: "POST" });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setError(t.error);
+        setCheckoutLoading(false);
+      }
+    } catch {
+      setError(t.error);
+      setCheckoutLoading(false);
+    }
+  };
+
+  const openPortal = async () => {
+    try {
+      const res = await fetch("/api/stripe/portal", { method: "POST" });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch {
+      setError(t.error);
+    }
+  };
+
   return (
     <main className="min-h-screen flex flex-col">
       <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100">
@@ -303,12 +347,25 @@ export default function HomePage() {
 
           {authenticated === true && (
             <>
+              {isPremium && (
+                <span className="text-xs px-2 py-1 rounded-full bg-amber-50 text-amber-800 hidden sm:inline">
+                  {t.premiumActive}
+                </span>
+              )}
               <Link
                 href="/history"
                 className="text-ink-500 hover:text-ink-900 transition"
               >
                 {t.history}
               </Link>
+              {isPremium && (
+                <button
+                  onClick={openPortal}
+                  className="text-ink-500 hover:text-ink-900 transition hidden sm:inline"
+                >
+                  {t.manageSubscription}
+                </button>
+              )}
               <span className="hidden md:inline text-ink-500 text-xs truncate max-w-[140px]">
                 {userEmail}
               </span>
@@ -332,6 +389,12 @@ export default function HomePage() {
           )}
         </div>
       </header>
+
+      {banner && (
+        <div className={`px-6 py-3 text-sm text-center ${banner.kind === "success" ? "bg-green-50 text-green-800" : "bg-ink-50 text-ink-700"}`}>
+          {banner.text}
+        </div>
+      )}
 
       <section className="flex-1 flex flex-col items-center justify-start px-6 py-12 max-w-2xl mx-auto w-full">
         {!imagePreview && !result && (
@@ -357,10 +420,11 @@ export default function HomePage() {
                 <h2 className="text-xl font-medium mb-2">{t.limitReached}</h2>
                 <p className="text-ink-500 text-sm mb-5">{t.limitReachedSub}</p>
                 <button
-                  disabled
-                  className="px-6 py-2.5 rounded-full bg-ink-100 text-ink-300 text-sm cursor-not-allowed"
+                  onClick={startCheckout}
+                  disabled={checkoutLoading}
+                  className="px-6 py-2.5 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition disabled:opacity-50"
                 >
-                  {t.upgradeButton}
+                  {checkoutLoading ? "…" : t.upgradeButton}
                 </button>
               </div>
             ) : authenticated === true ? (
@@ -577,10 +641,11 @@ export default function HomePage() {
                     <p className="text-sm text-ink-500 mt-1">{t.listingsLockedSub}</p>
                   </div>
                   <button
-                    disabled
-                    className="mt-4 px-5 py-2 rounded-full bg-ink-100 text-ink-300 text-sm cursor-not-allowed"
+                    onClick={startCheckout}
+                    disabled={checkoutLoading || isPremium}
+                    className="mt-4 px-5 py-2 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition disabled:opacity-50"
                   >
-                    {t.upgradeButton}
+                    {isPremium ? t.premiumActive : checkoutLoading ? "…" : t.upgradeButton}
                   </button>
                 </div>
 
