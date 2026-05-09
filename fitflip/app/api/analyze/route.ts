@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
-const FREE_MONTHLY_LIMIT = 999; // Tesztelési időszak alatt magasan tartva. Élesítéskor csökkenteni.
+const FREE_DAILY_LIMIT = 3;
 
 function buildPrompt(lang: "hu" | "en"): string {
   if (lang === "hu") {
@@ -112,14 +112,21 @@ RESPONSE FORMAT (return ONLY this JSON, nothing else, no markdown):
 
 type Profile = {
   is_premium: boolean;
-  scan_count_current_month: number;
+  scan_count_today: number;
   scan_count_reset_at: string;
 };
+
+function nextMidnightUtc(): Date {
+  const d = new Date();
+  d.setUTCHours(0, 0, 0, 0);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d;
+}
 
 async function getOrResetProfile(supabase: ReturnType<typeof createClient>, userId: string): Promise<Profile | null> {
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_premium, scan_count_current_month, scan_count_reset_at")
+    .select("is_premium, scan_count_today, scan_count_reset_at")
     .eq("id", userId)
     .single();
 
@@ -127,18 +134,14 @@ async function getOrResetProfile(supabase: ReturnType<typeof createClient>, user
 
   const resetAt = new Date(profile.scan_count_reset_at);
   if (Date.now() >= resetAt.getTime()) {
-    const nextReset = new Date();
-    nextReset.setUTCDate(1);
-    nextReset.setUTCHours(0, 0, 0, 0);
-    nextReset.setUTCMonth(nextReset.getUTCMonth() + 1);
     const { data: updated } = await supabase
       .from("profiles")
       .update({
-        scan_count_current_month: 0,
-        scan_count_reset_at: nextReset.toISOString(),
+        scan_count_today: 0,
+        scan_count_reset_at: nextMidnightUtc().toISOString(),
       })
       .eq("id", userId)
-      .select("is_premium, scan_count_current_month, scan_count_reset_at")
+      .select("is_premium, scan_count_today, scan_count_reset_at")
       .single();
     return updated as Profile | null;
   }
@@ -147,7 +150,7 @@ async function getOrResetProfile(supabase: ReturnType<typeof createClient>, user
 
 function scansLeftFor(profile: Profile): number {
   if (profile.is_premium) return 9999;
-  return Math.max(0, FREE_MONTHLY_LIMIT - profile.scan_count_current_month);
+  return Math.max(0, FREE_DAILY_LIMIT - profile.scan_count_today);
 }
 
 export async function POST(req: NextRequest) {
@@ -255,17 +258,16 @@ export async function POST(req: NextRequest) {
       confidence: (parsed.confidence as string) ?? null,
     });
 
-    // Increment monthly scan count (only for non-premium)
     if (!profile.is_premium) {
       await supabase
         .from("profiles")
-        .update({ scan_count_current_month: profile.scan_count_current_month + 1 })
+        .update({ scan_count_today: profile.scan_count_today + 1 })
         .eq("id", user.id);
     }
 
     const newProfile: Profile = {
       ...profile,
-      scan_count_current_month: profile.scan_count_current_month + 1,
+      scan_count_today: profile.scan_count_today + 1,
     };
 
     return NextResponse.json({
