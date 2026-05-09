@@ -305,7 +305,7 @@ export default function HomePage() {
             <>
               <Link
                 href="/history"
-                className="text-ink-500 hover:text-ink-900 transition hidden sm:inline"
+                className="text-ink-500 hover:text-ink-900 transition"
               >
                 {t.history}
               </Link>
@@ -365,8 +365,11 @@ export default function HomePage() {
               </div>
             ) : authenticated === true ? (
               <>
-                {/* Mobile: live camera viewfinder background */}
-                <div className="sm:hidden relative aspect-[3/4] rounded-2xl overflow-hidden bg-ink-900 mb-4">
+                {/* Mobile: live camera viewfinder background — tap to capture */}
+                <div
+                  className="sm:hidden relative aspect-[3/4] rounded-2xl overflow-hidden bg-ink-900 mb-4 cursor-pointer"
+                  onClick={() => cameraInputRef.current?.click()}
+                >
                   <video
                     ref={videoRef}
                     autoPlay
