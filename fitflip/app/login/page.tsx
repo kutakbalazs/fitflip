@@ -39,8 +39,12 @@ export default function LoginPage() {
       },
     });
     setLoading(false);
-    if (error) setError(t.loginError);
-    else setLinkSent(true);
+    if (error) {
+      console.error("[magic-link] error:", error);
+      setError(`${t.loginError} (${error.message})`);
+    } else {
+      setLinkSent(true);
+    }
   };
 
   const handleGoogle = async () => {
