@@ -1,34 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { createClient } from "@/lib/supabase/server";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
-const FREE_DAILY_LIMIT = 999;
-const COOKIE_NAME = "ff_scans";
-
-type ScanCookie = {
-  date: string;
-  count: number;
-};
-
-function getTodayKey(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function readScanCookie(req: NextRequest): ScanCookie {
-  const raw = req.cookies.get(COOKIE_NAME)?.value;
-  if (!raw) return { date: getTodayKey(), count: 0 };
-  try {
-    const parsed = JSON.parse(raw) as ScanCookie;
-    if (parsed.date !== getTodayKey()) {
-      return { date: getTodayKey(), count: 0 };
-    }
-    return parsed;
-  } catch {
-    return { date: getTodayKey(), count: 0 };
-  }
-}
+const FREE_MONTHLY_LIMIT = 999; // Tesztelési időszak alatt magasan tartva. Élesítéskor csökkenteni.
 
 function buildPrompt(lang: "hu" | "en"): string {
   if (lang === "hu") {
@@ -133,9 +110,49 @@ RESPONSE FORMAT (return ONLY this JSON, nothing else, no markdown):
 }`;
 }
 
+type Profile = {
+  is_premium: boolean;
+  scan_count_current_month: number;
+  scan_count_reset_at: string;
+};
+
+async function getOrResetProfile(supabase: ReturnType<typeof createClient>, userId: string): Promise<Profile | null> {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_premium, scan_count_current_month, scan_count_reset_at")
+    .eq("id", userId)
+    .single();
+
+  if (!profile) return null;
+
+  const resetAt = new Date(profile.scan_count_reset_at);
+  if (Date.now() >= resetAt.getTime()) {
+    const nextReset = new Date();
+    nextReset.setUTCDate(1);
+    nextReset.setUTCHours(0, 0, 0, 0);
+    nextReset.setUTCMonth(nextReset.getUTCMonth() + 1);
+    const { data: updated } = await supabase
+      .from("profiles")
+      .update({
+        scan_count_current_month: 0,
+        scan_count_reset_at: nextReset.toISOString(),
+      })
+      .eq("id", userId)
+      .select("is_premium, scan_count_current_month, scan_count_reset_at")
+      .single();
+    return updated as Profile | null;
+  }
+  return profile as Profile;
+}
+
+function scansLeftFor(profile: Profile): number {
+  if (profile.is_premium) return 9999;
+  return Math.max(0, FREE_MONTHLY_LIMIT - profile.scan_count_current_month);
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.ANTHROPIC_API_KEY || process.env.FITFLIP_ANTHROPIC_KEY;
     if (!apiKey) {
       return NextResponse.json(
         { error: "API key not configured on server" },
@@ -143,8 +160,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const cookie = readScanCookie(req);
-    if (cookie.count >= FREE_DAILY_LIMIT) {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    }
+
+    const profile = await getOrResetProfile(supabase, user.id);
+    if (!profile) {
+      return NextResponse.json({ error: "Profile not found" }, { status: 500 });
+    }
+
+    if (scansLeftFor(profile) <= 0) {
       return NextResponse.json(
         { error: "limit_reached", scansLeft: 0 },
         { status: 429 }
@@ -162,7 +189,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing image" }, { status: 400 });
     }
 
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({ apiKey, baseURL: "https://api.anthropic.com" });
 
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",
@@ -211,34 +238,60 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const newCookie: ScanCookie = {
-      date: getTodayKey(),
-      count: cookie.count + 1,
+    // Save scan to history
+    await supabase.from("scans").insert({
+      user_id: user.id,
+      recognized: !!parsed.recognized,
+      category: (parsed.category as string) ?? null,
+      brand: (parsed.brand as string) ?? null,
+      model: (parsed.model as string) ?? null,
+      era: (parsed.era as string) ?? null,
+      condition: (parsed.condition as string) ?? null,
+      estimated_value_min_huf: (parsed.estimated_value_min_huf as number) ?? null,
+      estimated_value_max_huf: (parsed.estimated_value_max_huf as number) ?? null,
+      description: (parsed.description as string) ?? null,
+      search_query: (parsed.search_query as string) ?? null,
+      selling_tip: (parsed.selling_tip as string) ?? null,
+      confidence: (parsed.confidence as string) ?? null,
+    });
+
+    // Increment monthly scan count (only for non-premium)
+    if (!profile.is_premium) {
+      await supabase
+        .from("profiles")
+        .update({ scan_count_current_month: profile.scan_count_current_month + 1 })
+        .eq("id", user.id);
+    }
+
+    const newProfile: Profile = {
+      ...profile,
+      scan_count_current_month: profile.scan_count_current_month + 1,
     };
 
-    const res = NextResponse.json({
+    return NextResponse.json({
       ...parsed,
-      scansLeft: FREE_DAILY_LIMIT - newCookie.count,
+      scansLeft: scansLeftFor(newProfile),
     });
-
-    res.cookies.set({
-      name: COOKIE_NAME,
-      value: JSON.stringify(newCookie),
-      httpOnly: true,
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 2,
-    });
-
-    return res;
   } catch (err) {
+    console.error("[/api/analyze] error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
-export async function GET(req: NextRequest) {
-  const cookie = readScanCookie(req);
+export async function GET() {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ scansLeft: 0, authenticated: false });
+  }
+  const profile = await getOrResetProfile(supabase, user.id);
+  if (!profile) {
+    return NextResponse.json({ scansLeft: 0, authenticated: true });
+  }
   return NextResponse.json({
-    scansLeft: Math.max(0, FREE_DAILY_LIMIT - cookie.count),
+    scansLeft: scansLeftFor(profile),
+    authenticated: true,
+    isPremium: profile.is_premium,
   });
 }

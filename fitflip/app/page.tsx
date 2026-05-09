@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import Link from "next/link";
 import { translations, type Lang } from "@/lib/translations";
+import { createClient } from "@/lib/supabase/client";
 
 type AnalysisResult = {
   recognized: boolean;
@@ -69,6 +71,7 @@ async function compressImage(file: File, maxDim = 1600, quality = 0.85): Promise
 }
 
 export default function HomePage() {
+  const supabase = createClient();
   const [lang, setLang] = useState<Lang>("hu");
   const [imageData, setImageData] = useState<string | null>(null);
   const [imageMediaType, setImageMediaType] = useState<string | null>(null);
@@ -77,10 +80,13 @@ export default function HomePage() {
   const [converting, setConverting] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [scansLeft, setScansLeft] = useState<number>(3);
+  const [scansLeft, setScansLeft] = useState<number>(0);
   const [limitReached, setLimitReached] = useState(false);
+  const [authenticated, setAuthenticated] = useState<boolean | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const t = translations[lang];
 
@@ -90,16 +96,57 @@ export default function HomePage() {
     else if (typeof navigator !== "undefined" && navigator.language.startsWith("en")) {
       setLang("en");
     }
+
+    supabase.auth.getUser().then(({ data }) => {
+      setAuthenticated(!!data.user);
+      setUserEmail(data.user?.email ?? null);
+    });
+
     fetch("/api/analyze")
       .then((r) => r.json())
       .then((d) => {
         if (typeof d.scansLeft === "number") {
           setScansLeft(d.scansLeft);
-          if (d.scansLeft <= 0) setLimitReached(true);
+          if (d.authenticated && d.scansLeft <= 0) setLimitReached(true);
         }
       })
       .catch(() => {});
-  }, []);
+  }, [supabase]);
+
+  // Live camera background on mobile
+  useEffect(() => {
+    if (authenticated !== true) return;
+    if (typeof window === "undefined") return;
+    if (imagePreview || result || limitReached) return;
+
+    const isMobile = window.matchMedia("(max-width: 640px)").matches;
+    if (!isMobile) return;
+    if (!navigator.mediaDevices?.getUserMedia) return;
+
+    let cancelled = false;
+    let stream: MediaStream | null = null;
+
+    navigator.mediaDevices
+      .getUserMedia({ video: { facingMode: "environment" }, audio: false })
+      .then((s) => {
+        if (cancelled) {
+          s.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        stream = s;
+        if (videoRef.current) {
+          videoRef.current.srcObject = s;
+        }
+      })
+      .catch(() => {
+        // Permission denied or no camera — silent fallback to plain background
+      });
+
+    return () => {
+      cancelled = true;
+      if (stream) stream.getTracks().forEach((t) => t.stop());
+    };
+  }, [authenticated, imagePreview, result, limitReached]);
 
   const switchLang = (newLang: Lang) => {
     setLang(newLang);
@@ -128,7 +175,7 @@ export default function HomePage() {
             file.name.replace(/\.(heic|heif)$/i, ".jpg"),
             { type: "image/jpeg" }
           );
-        } catch (err) {
+        } catch {
           setError(
             lang === "hu"
               ? "Nem sikerült konvertálni a HEIC fájlt. Próbálj egy JPG vagy PNG képpel."
@@ -184,6 +231,10 @@ export default function HomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: imageData, mediaType: imageMediaType, lang }),
       });
+      if (res.status === 401) {
+        window.location.href = "/login";
+        return;
+      }
       if (res.status === 429) {
         setLimitReached(true);
         setScansLeft(0);
@@ -228,25 +279,57 @@ export default function HomePage() {
           <span className="text-xl font-medium tracking-tight">FitFlip</span>
           <span className="text-xs text-ink-500 hidden sm:inline">.app</span>
         </div>
-        <div className="flex items-center gap-1 text-sm">
-          <button
-            onClick={() => switchLang("hu")}
-            className={`px-2 py-1 rounded transition ${
-              lang === "hu" ? "bg-ink-900 text-white" : "text-ink-500 hover:text-ink-900"
-            }`}
-            aria-label="Magyar"
-          >
-            HU
-          </button>
-          <button
-            onClick={() => switchLang("en")}
-            className={`px-2 py-1 rounded transition ${
-              lang === "en" ? "bg-ink-900 text-white" : "text-ink-500 hover:text-ink-900"
-            }`}
-            aria-label="English"
-          >
-            EN
-          </button>
+        <div className="flex items-center gap-3 text-sm">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => switchLang("hu")}
+              className={`px-2 py-1 rounded transition ${
+                lang === "hu" ? "bg-ink-900 text-white" : "text-ink-500 hover:text-ink-900"
+              }`}
+              aria-label="Magyar"
+            >
+              HU
+            </button>
+            <button
+              onClick={() => switchLang("en")}
+              className={`px-2 py-1 rounded transition ${
+                lang === "en" ? "bg-ink-900 text-white" : "text-ink-500 hover:text-ink-900"
+              }`}
+              aria-label="English"
+            >
+              EN
+            </button>
+          </div>
+
+          {authenticated === true && (
+            <>
+              <Link
+                href="/history"
+                className="text-ink-500 hover:text-ink-900 transition hidden sm:inline"
+              >
+                {t.history}
+              </Link>
+              <span className="hidden md:inline text-ink-500 text-xs truncate max-w-[140px]">
+                {userEmail}
+              </span>
+              <form action="/auth/signout" method="post">
+                <button
+                  type="submit"
+                  className="text-ink-500 hover:text-ink-900 transition"
+                >
+                  {t.logout}
+                </button>
+              </form>
+            </>
+          )}
+          {authenticated === false && (
+            <Link
+              href="/login"
+              className="px-3 py-1.5 rounded-full bg-ink-900 text-white text-sm hover:bg-ink-700 transition"
+            >
+              {t.login}
+            </Link>
+          )}
         </div>
       </header>
 
@@ -258,7 +341,18 @@ export default function HomePage() {
             </h1>
             <p className="text-ink-500 text-lg mb-10">{t.subtagline}</p>
 
-            {limitReached ? (
+            {authenticated === false ? (
+              <div className="border border-ink-100 rounded-2xl p-8 bg-ink-50">
+                <h2 className="text-xl font-medium mb-2">{t.loginRequired}</h2>
+                <p className="text-ink-500 text-sm mb-5">{t.loginRequiredSub}</p>
+                <Link
+                  href="/login"
+                  className="inline-block px-6 py-2.5 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition"
+                >
+                  {t.login}
+                </Link>
+              </div>
+            ) : limitReached ? (
               <div className="border border-ink-100 rounded-2xl p-8 bg-ink-50">
                 <h2 className="text-xl font-medium mb-2">{t.limitReached}</h2>
                 <p className="text-ink-500 text-sm mb-5">{t.limitReachedSub}</p>
@@ -269,12 +363,38 @@ export default function HomePage() {
                   {t.upgradeButton}
                 </button>
               </div>
-            ) : (
+            ) : authenticated === true ? (
               <>
+                {/* Mobile: live camera viewfinder background */}
+                <div className="sm:hidden relative aspect-[3/4] rounded-2xl overflow-hidden bg-ink-900 mb-4">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="absolute inset-0 w-full h-full object-cover opacity-50"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    {converting ? (
+                      <div className="flex flex-col items-center gap-3 text-white">
+                        <div className="w-2 h-2 bg-white rounded-full pulse-slow" />
+                        <p className="font-medium">
+                          {lang === "hu" ? "HEIC konverzió folyamatban…" : "Converting HEIC…"}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-white/80 text-sm">
+                        {lang === "hu" ? "Készíts vagy válassz fotót" : "Take or pick a photo"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Desktop: drag-drop zone */}
                 <div
                   onDrop={onDrop}
                   onDragOver={(e) => e.preventDefault()}
-                  className="border-2 border-dashed border-ink-100 rounded-2xl p-12 hover:border-ink-300 transition-colors cursor-pointer"
+                  className="hidden sm:block border-2 border-dashed border-ink-100 rounded-2xl p-12 hover:border-ink-300 transition-colors cursor-pointer"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   {converting ? (
@@ -299,10 +419,10 @@ export default function HomePage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mt-4">
+                <div className="grid grid-cols-2 sm:grid-cols-1 gap-3 mt-4">
                   <button
                     onClick={() => cameraInputRef.current?.click()}
-                    className="px-4 py-3 rounded-xl border border-ink-100 hover:border-ink-300 hover:bg-ink-50 transition text-sm font-medium"
+                    className="sm:hidden px-4 py-3 rounded-xl border border-ink-100 hover:border-ink-300 hover:bg-ink-50 transition text-sm font-medium"
                   >
                     {t.takePhoto}
                   </button>
@@ -321,7 +441,7 @@ export default function HomePage() {
                   <p className="text-center text-red-600 text-sm mt-4">{error}</p>
                 )}
               </>
-            )}
+            ) : null}
 
             <input
               ref={fileInputRef}
