@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -123,8 +124,8 @@ function nextMidnightUtc(): Date {
   return d;
 }
 
-async function getOrResetProfile(supabase: ReturnType<typeof createClient>, userId: string): Promise<Profile | null> {
-  const { data: profile } = await supabase
+async function getOrResetProfile(admin: ReturnType<typeof createAdminClient>, userId: string): Promise<Profile | null> {
+  const { data: profile } = await admin
     .from("profiles")
     .select("is_premium, scan_count_today, scan_count_reset_at")
     .eq("id", userId)
@@ -134,7 +135,7 @@ async function getOrResetProfile(supabase: ReturnType<typeof createClient>, user
 
   const resetAt = new Date(profile.scan_count_reset_at);
   if (Date.now() >= resetAt.getTime()) {
-    const { data: updated } = await supabase
+    const { data: updated } = await admin
       .from("profiles")
       .update({
         scan_count_today: 0,
@@ -169,7 +170,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
 
-    const profile = await getOrResetProfile(supabase, user.id);
+    const admin = createAdminClient();
+    const profile = await getOrResetProfile(admin, user.id);
     if (!profile) {
       return NextResponse.json({ error: "Profile not found" }, { status: 500 });
     }
@@ -241,8 +243,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Save scan to history
-    await supabase.from("scans").insert({
+    // Save scan to history (admin bypasses RLS but enforces user_id)
+    await admin.from("scans").insert({
       user_id: user.id,
       recognized: !!parsed.recognized,
       category: (parsed.category as string) ?? null,
@@ -259,7 +261,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!profile.is_premium) {
-      await supabase
+      await admin
         .from("profiles")
         .update({ scan_count_today: profile.scan_count_today + 1 })
         .eq("id", user.id);
@@ -287,7 +289,8 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ scansLeft: 0, authenticated: false });
   }
-  const profile = await getOrResetProfile(supabase, user.id);
+  const admin = createAdminClient();
+  const profile = await getOrResetProfile(admin, user.id);
   if (!profile) {
     return NextResponse.json({ scansLeft: 0, authenticated: true });
   }

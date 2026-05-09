@@ -1,33 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
 import Stripe from "stripe";
 import { getStripe } from "@/lib/stripe/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
-// Service-role-less admin client using the anon key — but we never set cookies.
-// RLS would block direct profile updates, so we bypass with a "no-op cookies" client
-// and use a SECURITY DEFINER RPC OR — simpler — call from this trusted route using
-// the anon client + service role. To keep things simple here, we use the anon
-// client; webhook updates go through a stored procedure or RLS policies that
-// allow service-side updates. For now, we rely on a service role key set in env.
-function adminClient() {
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY not set");
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    serviceKey,
-    {
-      cookies: {
-        getAll() { return []; },
-        setAll() {},
-      },
-    }
-  );
-}
-
 async function setPremiumByCustomer(customerId: string, isPremium: boolean, status: string | null, subscriptionId: string | null) {
-  const supabase = adminClient();
+  const supabase = createAdminClient();
   await supabase
     .from("profiles")
     .update({
@@ -67,7 +46,7 @@ export async function POST(req: NextRequest) {
         const subscriptionId = session.subscription as string;
         if (!userId || !customerId) break;
 
-        const supabase = adminClient();
+        const supabase = createAdminClient();
         await supabase
           .from("profiles")
           .update({
