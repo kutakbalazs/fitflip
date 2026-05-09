@@ -103,6 +103,15 @@ export default function HomePage() {
     supabase.auth.getUser().then(({ data }) => {
       setAuthenticated(!!data.user);
       setUserEmail(data.user?.email ?? null);
+      if (data.user) {
+        const currentLang =
+          (localStorage.getItem("ff_lang") as Lang | null) ??
+          (navigator.language.startsWith("en") ? "en" : "hu");
+        const userLang = (data.user.user_metadata as { lang?: string } | null)?.lang;
+        if (userLang !== currentLang) {
+          supabase.auth.updateUser({ data: { lang: currentLang } }).catch(() => {});
+        }
+      }
     });
 
     fetch("/api/analyze")
