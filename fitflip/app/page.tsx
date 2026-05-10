@@ -137,6 +137,12 @@ export default function HomePage() {
     }
   }, [supabase]);
 
+  useEffect(() => {
+    if (!banner) return;
+    const id = window.setTimeout(() => setBanner(null), 6000);
+    return () => window.clearTimeout(id);
+  }, [banner]);
+
   // Live camera background on mobile
   useEffect(() => {
     if (authenticated !== true) return;
@@ -357,8 +363,21 @@ export default function HomePage() {
           {authenticated === true && (
             <>
               {isPremium && (
-                <span className="text-xs px-2 py-1 rounded-full bg-amber-50 text-amber-800 hidden sm:inline">
-                  {t.premiumActive}
+                <span
+                  className="group inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full bg-ink-900 text-white tracking-wide cursor-default"
+                  title={t.premiumActive}
+                >
+                  <svg
+                    className="opacity-90 group-hover:rotate-180 transition-transform duration-700"
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 1l2.39 7.16L22 10l-6.4 4.24L18 22l-6-4.24L6 22l2.4-7.76L2 10l7.61-1.84L12 1z" />
+                  </svg>
+                  <span>Premium</span>
                 </span>
               )}
               <Link
@@ -400,8 +419,19 @@ export default function HomePage() {
       </header>
 
       {banner && (
-        <div className={`px-6 py-3 text-sm text-center ${banner.kind === "success" ? "bg-green-50 text-green-800" : "bg-ink-50 text-ink-700"}`}>
+        <div className={`relative px-12 py-3 text-sm text-center ${banner.kind === "success" ? "bg-green-50 text-green-800" : "bg-ink-50 text-ink-700"}`}>
           {banner.text}
+          <button
+            type="button"
+            onClick={() => setBanner(null)}
+            aria-label="Close"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-black/5 transition"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
       )}
 
@@ -502,9 +532,11 @@ export default function HomePage() {
                   {t.chooseFile}
                 </button>
 
-                <p className="text-xs text-ink-500 mt-6">
-                  {t.scansLeftFull.replace("{n}", scansLeft.toString())}
-                </p>
+                {!isPremium && (
+                  <p className="text-xs text-ink-500 mt-6">
+                    {t.scansLeftFull.replace("{n}", scansLeft.toString())}
+                  </p>
+                )}
                 {error && (
                   <p className="text-center text-red-600 text-sm mt-4">{error}</p>
                 )}
@@ -676,9 +708,11 @@ export default function HomePage() {
                   >
                     {t.newScan}
                   </button>
-                  <p className="text-xs text-ink-500 mt-3">
-                    {t.scansLeftFull.replace("{n}", result.scansLeft.toString())}
-                  </p>
+                  {!isPremium && (
+                    <p className="text-xs text-ink-500 mt-3">
+                      {t.scansLeftFull.replace("{n}", result.scansLeft.toString())}
+                    </p>
+                  )}
                 </div>
               </>
             )}
