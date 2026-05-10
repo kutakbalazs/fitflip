@@ -241,19 +241,45 @@ export async function POST(req: NextRequest) {
       },
     }));
 
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1500,
-      messages: [
-        {
-          role: "user",
-          content: [
-            ...imageBlocks,
-            { type: "text", text: buildPrompt(lang || "hu", normalizedImages.length) },
-          ],
-        },
-      ],
-    });
+    const firstImage = normalizedImages[0];
+    const imagePathToSave = `${user.id}/${crypto.randomUUID()}.jpg`;
+
+    const uploadFirstImage = async (): Promise<string | null> => {
+      try {
+        const buffer = Buffer.from(firstImage.data, "base64");
+        const { error: uploadError } = await admin.storage
+          .from("scan-images")
+          .upload(imagePathToSave, buffer, {
+            contentType: "image/jpeg",
+            upsert: false,
+          });
+        if (uploadError) {
+          console.error("[analyze] image upload failed:", uploadError.message);
+          return null;
+        }
+        return imagePathToSave;
+      } catch (err) {
+        console.error("[analyze] image upload threw:", err);
+        return null;
+      }
+    };
+
+    const [response, savedImagePath] = await Promise.all([
+      client.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1500,
+        messages: [
+          {
+            role: "user",
+            content: [
+              ...imageBlocks,
+              { type: "text", text: buildPrompt(lang || "hu", normalizedImages.length) },
+            ],
+          },
+        ],
+      }),
+      uploadFirstImage(),
+    ]);
 
     const textBlock = response.content.find((b) => b.type === "text");
     if (!textBlock || textBlock.type !== "text") {
@@ -292,6 +318,7 @@ export async function POST(req: NextRequest) {
       search_query: (parsed.search_query as string) ?? null,
       selling_tip: (parsed.selling_tip as string) ?? null,
       confidence: (parsed.confidence as string) ?? null,
+      image_path: savedImagePath,
     });
 
     if (!profile.is_premium) {

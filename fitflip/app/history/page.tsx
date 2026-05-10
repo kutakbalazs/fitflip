@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,10 @@ type Scan = {
   estimated_value_max_huf: number | null;
   description: string | null;
   confidence: string | null;
+  image_path: string | null;
 };
+
+type ScanWithUrl = Scan & { imageUrl: string | null };
 
 function formatHuf(n: number | null): string {
   if (n === null) return "—";
@@ -40,11 +44,23 @@ export default async function HistoryPage() {
 
   const { data: scans } = await supabase
     .from("scans")
-    .select("id, created_at, recognized, brand, model, era, condition, estimated_value_min_huf, estimated_value_max_huf, description, confidence")
+    .select("id, created_at, recognized, brand, model, era, condition, estimated_value_min_huf, estimated_value_max_huf, description, confidence, image_path")
     .order("created_at", { ascending: false })
     .limit(100);
 
   const items = (scans ?? []) as Scan[];
+
+  const admin = createAdminClient();
+  const itemsWithUrls: ScanWithUrl[] = await Promise.all(
+    items.map(async (scan) => {
+      if (!scan.image_path) return { ...scan, imageUrl: null };
+      const { data, error } = await admin.storage
+        .from("scan-images")
+        .createSignedUrl(scan.image_path, 3600);
+      if (error || !data?.signedUrl) return { ...scan, imageUrl: null };
+      return { ...scan, imageUrl: data.signedUrl };
+    })
+  );
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -61,7 +77,7 @@ export default async function HistoryPage() {
       <section className="flex-1 px-6 py-10 max-w-2xl mx-auto w-full">
         <h1 className="text-3xl font-display tracking-tight mb-8">Scan előzmények</h1>
 
-        {items.length === 0 ? (
+        {itemsWithUrls.length === 0 ? (
           <div className="border border-ink-100 rounded-2xl p-8 bg-ink-50 text-center">
             <p className="text-ink-500">Még nincs scan-ed. Töltsd fel az elsőt!</p>
             <Link
@@ -73,48 +89,63 @@ export default async function HistoryPage() {
           </div>
         ) : (
           <ul className="space-y-3">
-            {items.map((scan) => (
+            {itemsWithUrls.map((scan) => (
               <li
                 key={scan.id}
                 className="border border-ink-100 rounded-2xl p-5"
               >
-                <div className="flex items-start justify-between gap-4 mb-2">
-                  <div>
-                    <h2 className="font-medium">
-                      {scan.recognized
-                        ? <>{scan.brand ?? "—"}{scan.model ? <span className="text-ink-500"> — {scan.model}</span> : null}</>
-                        : <span className="text-ink-500">Nem azonosított</span>
-                      }
-                    </h2>
-                    {scan.era && (
-                      <p className="text-xs text-ink-500 mt-0.5">{scan.era}</p>
+                <div className="flex gap-4">
+                  {scan.imageUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={scan.imageUrl}
+                      alt={scan.brand ?? "scan"}
+                      loading="lazy"
+                      className="w-20 h-20 rounded-lg object-cover bg-ink-50 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-lg bg-ink-50 shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="min-w-0">
+                        <h2 className="font-medium truncate">
+                          {scan.recognized
+                            ? <>{scan.brand ?? "—"}{scan.model ? <span className="text-ink-500"> — {scan.model}</span> : null}</>
+                            : <span className="text-ink-500">Nem azonosított</span>
+                          }
+                        </h2>
+                        {scan.era && (
+                          <p className="text-xs text-ink-500 mt-0.5">{scan.era}</p>
+                        )}
+                      </div>
+                      <time className="text-xs text-ink-500 shrink-0">
+                        {formatDate(scan.created_at)}
+                      </time>
+                    </div>
+                    {scan.recognized && (
+                      <div className="text-sm text-ink-700 space-y-1 mt-1">
+                        {scan.condition && (
+                          <p>
+                            <span className="text-ink-500">Állapot: </span>
+                            {scan.condition}
+                          </p>
+                        )}
+                        {(scan.estimated_value_min_huf !== null || scan.estimated_value_max_huf !== null) && (
+                          <p>
+                            <span className="text-ink-500">Becsült érték: </span>
+                            {formatHuf(scan.estimated_value_min_huf)} – {formatHuf(scan.estimated_value_max_huf)}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    {scan.description && (
+                      <p className="text-xs text-ink-500 mt-3 leading-relaxed">
+                        {scan.description}
+                      </p>
                     )}
                   </div>
-                  <time className="text-xs text-ink-500 shrink-0">
-                    {formatDate(scan.created_at)}
-                  </time>
                 </div>
-                {scan.recognized && (
-                  <div className="text-sm text-ink-700 space-y-1 mt-3">
-                    {scan.condition && (
-                      <p>
-                        <span className="text-ink-500">Állapot: </span>
-                        {scan.condition}
-                      </p>
-                    )}
-                    {(scan.estimated_value_min_huf !== null || scan.estimated_value_max_huf !== null) && (
-                      <p>
-                        <span className="text-ink-500">Becsült érték: </span>
-                        {formatHuf(scan.estimated_value_min_huf)} – {formatHuf(scan.estimated_value_max_huf)}
-                      </p>
-                    )}
-                  </div>
-                )}
-                {scan.description && (
-                  <p className="text-xs text-ink-500 mt-3 leading-relaxed">
-                    {scan.description}
-                  </p>
-                )}
               </li>
             ))}
           </ul>
