@@ -330,10 +330,13 @@ export default function HomePage() {
       .slice(0, 3);
     const brandToken = brand.split(/\s+/)[0] ?? "";
 
-    const keywords: string[] = [];
-    if (brandToken) keywords.push(brandToken);
-    keywords.push(...modelTokens);
-    if (color) keywords.push(color);
+    const must: string[] = [];
+    if (brandToken) must.push(brandToken);
+    must.push(...modelTokens);
+
+    const should: string[] = color
+      .split(/\s+/)
+      .filter(Boolean);
 
     let cancelled = false;
     setListingsLoading(true);
@@ -341,7 +344,7 @@ export default function HomePage() {
     fetch("/api/listings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, keywords }),
+      body: JSON.stringify({ query, must, should }),
     })
       .then(async (res) => {
         if (!res.ok) return { listings: [] as Listing[], exact: true };
@@ -499,10 +502,15 @@ export default function HomePage() {
   return (
     <main className="min-h-screen flex flex-col">
       <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100">
-        <div className="flex items-baseline gap-2">
+        <button
+          type="button"
+          onClick={reset}
+          aria-label="FitFlip"
+          className="flex items-baseline gap-2 hover:opacity-70 transition cursor-pointer"
+        >
           <span className="text-xl font-medium tracking-tight">FitFlip</span>
           <span className="text-xs text-ink-500 hidden sm:inline">.app</span>
-        </div>
+        </button>
         <div className="flex items-center gap-3 text-sm">
           <div className="flex items-center gap-1">
             <button

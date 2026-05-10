@@ -41,20 +41,28 @@ function aliasesFor(keyword: string): string[] {
   return [norm];
 }
 
-function titleMatchesAllKeywords(listing: Listing, keywords: string[]): boolean {
-  if (keywords.length === 0) return true;
+function titleContains(titleNorm: string, keyword: string): boolean {
+  const variants = aliasesFor(keyword);
+  return variants.some((v) => v.length > 0 && titleNorm.includes(v));
+}
+
+function matchesFilters(
+  listing: Listing,
+  must: string[],
+  should: string[]
+): boolean {
   const titleNorm = normalize(listing.title);
-  return keywords.every((kw) => {
-    const variants = aliasesFor(kw);
-    return variants.some((v) => v.length > 0 && titleNorm.includes(v));
-  });
+  if (!must.every((kw) => titleContains(titleNorm, kw))) return false;
+  if (should.length > 0 && !should.some((kw) => titleContains(titleNorm, kw))) return false;
+  return true;
 }
 
 export type SearchResult = { listings: Listing[]; exact: boolean };
 
 export async function searchAllMarketplaces(
   query: string,
-  keywords: string[] = []
+  must: string[] = [],
+  should: string[] = []
 ): Promise<SearchResult> {
   const trimmed = query.trim();
   if (!trimmed) return { listings: [], exact: true };
@@ -69,33 +77,30 @@ export async function searchAllMarketplaces(
     if (r.status === "fulfilled") all.push(...r.value);
   }
 
-  if (keywords.length === 0) {
+  if (must.length === 0 && should.length === 0) {
     return { listings: all.slice(0, 12), exact: true };
   }
 
-  // Pass 1: strict — every keyword must match (brand + model tokens + color)
-  const strict = all.filter((l) => titleMatchesAllKeywords(l, keywords));
+  // Pass 1: must + should (strict — model match AND at least one color token)
+  const strict = all.filter((l) => matchesFilters(l, must, should));
   if (strict.length > 0) {
     return { listings: strict.slice(0, 12), exact: true };
   }
 
-  // Pass 2: drop the LAST keyword (color is appended last → drop it)
-  if (keywords.length > 1) {
-    const droppedColor = keywords.slice(0, -1);
-    const broader = all.filter((l) => titleMatchesAllKeywords(l, droppedColor));
-    if (broader.length > 0) {
-      return { listings: broader.slice(0, 12), exact: false };
+  // Pass 2: drop the should constraint (color) → keep only must (brand + model)
+  if (should.length > 0) {
+    const noColor = all.filter((l) => matchesFilters(l, must, []));
+    if (noColor.length > 0) {
+      return { listings: noColor.slice(0, 12), exact: false };
     }
   }
 
-  // Pass 3: drop brand too (first keyword) → keep just model tokens
-  if (keywords.length > 2) {
-    const justModel = keywords.slice(1, -1);
-    if (justModel.length > 0) {
-      const looser = all.filter((l) => titleMatchesAllKeywords(l, justModel));
-      if (looser.length > 0) {
-        return { listings: looser.slice(0, 12), exact: false };
-      }
+  // Pass 3: drop brand from must (first must keyword) → keep only model tokens
+  if (must.length > 1) {
+    const justModel = must.slice(1);
+    const looser = all.filter((l) => matchesFilters(l, justModel, []));
+    if (looser.length > 0) {
+      return { listings: looser.slice(0, 12), exact: false };
     }
   }
 
