@@ -87,9 +87,11 @@ export default function HomePage() {
   const [isPremium, setIsPremium] = useState(false);
   const [banner, setBanner] = useState<{ kind: "success" | "info"; text: string } | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const t = translations[lang];
 
@@ -142,6 +144,26 @@ export default function HomePage() {
     const id = window.setTimeout(() => setBanner(null), 6000);
     return () => window.clearTimeout(id);
   }, [banner]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const onPointerDown = (e: MouseEvent | TouchEvent) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
+        setMobileMenuOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("touchstart", onPointerDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("touchstart", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [mobileMenuOpen]);
 
   // Live camera background on mobile
   useEffect(() => {
@@ -380,31 +402,95 @@ export default function HomePage() {
                   <span>Premium</span>
                 </span>
               )}
-              <Link
-                href="/history"
-                className="text-ink-500 hover:text-ink-900 transition"
-              >
-                {t.history}
-              </Link>
-              {isPremium && (
-                <button
-                  onClick={openPortal}
-                  className="text-ink-500 hover:text-ink-900 transition hidden sm:inline"
-                >
-                  {t.manageSubscription}
-                </button>
-              )}
-              <span className="hidden md:inline text-ink-500 text-xs truncate max-w-[140px]">
-                {userEmail}
-              </span>
-              <form action="/auth/signout" method="post">
-                <button
-                  type="submit"
+
+              <nav className="hidden sm:flex items-center gap-3">
+                <Link
+                  href="/history"
                   className="text-ink-500 hover:text-ink-900 transition"
                 >
-                  {t.logout}
+                  {t.history}
+                </Link>
+                {isPremium && (
+                  <button
+                    onClick={openPortal}
+                    className="text-ink-500 hover:text-ink-900 transition"
+                  >
+                    {t.manageSubscription}
+                  </button>
+                )}
+                <span className="hidden md:inline text-ink-500 text-xs truncate max-w-[140px]">
+                  {userEmail}
+                </span>
+                <form action="/auth/signout" method="post">
+                  <button
+                    type="submit"
+                    className="text-ink-500 hover:text-ink-900 transition"
+                  >
+                    {t.logout}
+                  </button>
+                </form>
+              </nav>
+
+              <div className="sm:hidden relative" ref={mobileMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen((v) => !v)}
+                  aria-label="Menu"
+                  aria-expanded={mobileMenuOpen}
+                  className="p-1.5 -mr-1.5 rounded-md text-ink-700 hover:bg-ink-50 transition"
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    {mobileMenuOpen ? (
+                      <>
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </>
+                    ) : (
+                      <>
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <line x1="3" y1="12" x2="21" y2="12" />
+                        <line x1="3" y1="18" x2="21" y2="18" />
+                      </>
+                    )}
+                  </svg>
                 </button>
-              </form>
+                {mobileMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-ink-100 bg-white shadow-lg overflow-hidden z-50 fade-in">
+                    {userEmail && (
+                      <div className="px-4 py-3 text-xs text-ink-500 truncate border-b border-ink-100">
+                        {userEmail}
+                      </div>
+                    )}
+                    <Link
+                      href="/history"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block px-4 py-3 text-sm text-ink-900 hover:bg-ink-50 transition"
+                    >
+                      {t.history}
+                    </Link>
+                    {isPremium && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          openPortal();
+                        }}
+                        className="block w-full text-left px-4 py-3 text-sm text-ink-900 hover:bg-ink-50 transition"
+                      >
+                        {t.manageSubscription}
+                      </button>
+                    )}
+                    <form action="/auth/signout" method="post" className="border-t border-ink-100">
+                      <button
+                        type="submit"
+                        className="block w-full text-left px-4 py-3 text-sm text-ink-700 hover:bg-ink-50 transition"
+                      >
+                        {t.logout}
+                      </button>
+                    </form>
+                  </div>
+                )}
+              </div>
             </>
           )}
           {authenticated === false && (
