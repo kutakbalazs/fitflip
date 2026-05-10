@@ -26,18 +26,24 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const query = typeof body?.query === "string" ? body.query : "";
     const sanitizeArray = (raw: unknown): string[] =>
       Array.isArray(raw)
         ? (raw as unknown[]).filter((k): k is string => typeof k === "string" && k.trim().length > 0)
         : [];
+    const queries = sanitizeArray(body?.queries);
     const must = sanitizeArray(body?.must);
     const should = sanitizeArray(body?.should);
-    if (!query.trim()) {
+
+    // Backwards-compat: accept singular `query` too.
+    if (queries.length === 0 && typeof body?.query === "string" && body.query.trim()) {
+      queries.push(body.query);
+    }
+
+    if (queries.length === 0) {
       return NextResponse.json({ error: "missing_query" }, { status: 400 });
     }
 
-    const { listings, exact } = await searchAllMarketplaces(query, must, should);
+    const { listings, exact } = await searchAllMarketplaces(queries, must, should);
     return NextResponse.json({ listings, exact });
   } catch (err) {
     console.error("[/api/listings] error:", err);

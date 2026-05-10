@@ -90,21 +90,36 @@ function balanceBySource(listings: Listing[]): Listing[] {
 }
 
 export async function searchAllMarketplaces(
-  query: string,
+  queries: string[],
   must: string[] = [],
   should: string[] = []
 ): Promise<SearchResult> {
-  const trimmed = query.trim();
-  if (!trimmed) return { listings: [], exact: true };
+  const cleaned = Array.from(
+    new Set(
+      queries
+        .map((q) => q?.trim() ?? "")
+        .filter((q) => q.length > 0)
+    )
+  ).slice(0, 3);
+  if (cleaned.length === 0) return { listings: [], exact: true };
 
-  const results = await Promise.allSettled([
-    searchVinted(trimmed, 20),
-    searchJofogas(trimmed, 20),
-  ]);
+  // Run every query against every adapter in parallel, then dedupe by URL.
+  const tasks: Promise<Listing[]>[] = [];
+  for (const q of cleaned) {
+    tasks.push(searchVinted(q, 12));
+    tasks.push(searchJofogas(q, 12));
+  }
+  const results = await Promise.allSettled(tasks);
 
+  const seen = new Set<string>();
   const all: Listing[] = [];
   for (const r of results) {
-    if (r.status === "fulfilled") all.push(...r.value);
+    if (r.status !== "fulfilled") continue;
+    for (const l of r.value) {
+      if (seen.has(l.url)) continue;
+      seen.add(l.url);
+      all.push(l);
+    }
   }
 
   if (must.length === 0 && should.length === 0) {

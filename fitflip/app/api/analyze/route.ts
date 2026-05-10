@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHash, randomUUID } from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -258,14 +259,34 @@ export async function POST(req: NextRequest) {
     }));
 
     const firstImage = normalizedImages[0];
-    const imagePathToSave = `${user.id}/${crypto.randomUUID()}.jpg`;
+    const firstImageBuffer = Buffer.from(firstImage.data, "base64");
+    const firstImageHash = createHash("sha256").update(firstImageBuffer).digest("hex");
+
+    // Look up an existing scan with the same hash for this user. If the
+    // image_hash column doesn't exist yet, this fails silently and we just
+    // proceed without dedup.
+    let existingScan: { image_path: string | null } | null = null;
+    try {
+      const { data } = await admin
+        .from("scans")
+        .select("image_path")
+        .eq("user_id", user.id)
+        .eq("image_hash", firstImageHash)
+        .limit(1)
+        .maybeSingle();
+      existingScan = data ?? null;
+    } catch (err) {
+      console.warn("[analyze] hash lookup failed (column missing?):", err);
+    }
+
+    const imagePathToSave = `${user.id}/${randomUUID()}.jpg`;
 
     const uploadFirstImage = async (): Promise<string | null> => {
+      if (existingScan) return existingScan.image_path;
       try {
-        const buffer = Buffer.from(firstImage.data, "base64");
         const { error: uploadError } = await admin.storage
           .from("scan-images")
-          .upload(imagePathToSave, buffer, {
+          .upload(imagePathToSave, firstImageBuffer, {
             contentType: "image/jpeg",
             upsert: false,
           });
@@ -319,23 +340,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Save scan to history (admin bypasses RLS but enforces user_id)
-    await admin.from("scans").insert({
-      user_id: user.id,
-      recognized: !!parsed.recognized,
-      category: (parsed.category as string) ?? null,
-      brand: (parsed.brand as string) ?? null,
-      model: (parsed.model as string) ?? null,
-      era: (parsed.era as string) ?? null,
-      condition: (parsed.condition as string) ?? null,
-      estimated_value_min_huf: (parsed.estimated_value_min_huf as number) ?? null,
-      estimated_value_max_huf: (parsed.estimated_value_max_huf as number) ?? null,
-      description: (parsed.description as string) ?? null,
-      search_query: (parsed.search_query as string) ?? null,
-      selling_tip: (parsed.selling_tip as string) ?? null,
-      confidence: (parsed.confidence as string) ?? null,
-      image_path: savedImagePath,
-    });
+    // Save scan to history (admin bypasses RLS but enforces user_id).
+    // Skip the insert when this exact image was already scanned by this user
+    // — we don't want history duplicates of the same upload.
+    if (!existingScan) {
+      const insertPayload: Record<string, unknown> = {
+        user_id: user.id,
+        recognized: !!parsed.recognized,
+        category: (parsed.category as string) ?? null,
+        brand: (parsed.brand as string) ?? null,
+        model: (parsed.model as string) ?? null,
+        era: (parsed.era as string) ?? null,
+        condition: (parsed.condition as string) ?? null,
+        estimated_value_min_huf: (parsed.estimated_value_min_huf as number) ?? null,
+        estimated_value_max_huf: (parsed.estimated_value_max_huf as number) ?? null,
+        description: (parsed.description as string) ?? null,
+        search_query: (parsed.search_query as string) ?? null,
+        selling_tip: (parsed.selling_tip as string) ?? null,
+        confidence: (parsed.confidence as string) ?? null,
+        image_path: savedImagePath,
+        image_hash: firstImageHash,
+      };
+      const { error: insertError } = await admin.from("scans").insert(insertPayload);
+      if (insertError) {
+        // Likely the image_hash column is missing — retry without it so the
+        // scan still saves (dedup just won't work until the migration runs).
+        const fallback = { ...insertPayload };
+        delete fallback.image_hash;
+        await admin.from("scans").insert(fallback);
+      }
+    }
 
     if (!profile.is_premium) {
       await admin

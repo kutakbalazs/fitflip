@@ -311,12 +311,6 @@ export default function HomePage() {
     const color = result.color?.trim() ?? "";
     const fallbackQuery = result.search_query?.trim() ?? "";
 
-    const query = [brand, model].filter(Boolean).join(" ").trim() || fallbackQuery;
-    if (!query) {
-      setListings(null);
-      return;
-    }
-
     const STOP_WORDS = new Set([
       "pants", "pant", "trousers", "trouser", "jeans",
       "shoes", "shoe", "sneakers", "sneaker", "boots", "boot",
@@ -334,9 +328,23 @@ export default function HomePage() {
     if (brandToken) must.push(brandToken);
     must.push(...modelTokens);
 
-    const should: string[] = color
-      .split(/\s+/)
-      .filter(Boolean);
+    const should: string[] = color.split(/\s+/).filter(Boolean);
+
+    // Run multiple search variants — different marketplaces respond better
+    // to different phrasings, so we cast a wider net and dedupe server-side.
+    const queries: string[] = [];
+    const primary = [brand, model].filter(Boolean).join(" ").trim();
+    if (primary) queries.push(primary);
+    if (fallbackQuery && fallbackQuery !== primary) queries.push(fallbackQuery);
+    if (brandToken && modelTokens[0]) {
+      const short = `${brandToken} ${modelTokens[0]}`;
+      if (!queries.includes(short)) queries.push(short);
+    }
+    if (queries.length === 0 && brandToken) queries.push(brandToken);
+    if (queries.length === 0) {
+      setListings(null);
+      return;
+    }
 
     let cancelled = false;
     setListingsLoading(true);
@@ -344,7 +352,7 @@ export default function HomePage() {
     fetch("/api/listings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, must, should }),
+      body: JSON.stringify({ queries, must, should }),
     })
       .then(async (res) => {
         if (!res.ok) return { listings: [] as Listing[], exact: true };
