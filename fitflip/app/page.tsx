@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { translations, type Lang } from "@/lib/translations";
+import type { Listing } from "@/lib/listings/types";
 import { createClient } from "@/lib/supabase/client";
 
 type AnalysisResult = {
@@ -88,6 +89,8 @@ export default function HomePage() {
   const [banner, setBanner] = useState<{ kind: "success" | "info"; text: string } | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [listings, setListings] = useState<Listing[] | null>(null);
+  const [listingsLoading, setListingsLoading] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -293,6 +296,45 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    if (!isPremium) {
+      setListings(null);
+      return;
+    }
+    const query = result?.search_query?.trim();
+    if (!query) {
+      setListings(null);
+      return;
+    }
+    let cancelled = false;
+    setListingsLoading(true);
+    setListings(null);
+    fetch("/api/listings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query }),
+    })
+      .then(async (res) => {
+        if (!res.ok) return [];
+        const data = await res.json();
+        return Array.isArray(data?.listings) ? (data.listings as Listing[]) : [];
+      })
+      .then((items) => {
+        if (cancelled) return;
+        setListings(items);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setListings([]);
+      })
+      .finally(() => {
+        if (!cancelled) setListingsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isPremium, result?.search_query]);
+
+  useEffect(() => {
     if (authenticated !== true) return;
     if (limitReached) return;
 
@@ -368,6 +410,7 @@ export default function HomePage() {
     setImages([]);
     setResult(null);
     setError(null);
+    setListings(null);
   };
 
   const formatHuf = (n: number | null) => {
@@ -899,22 +942,70 @@ export default function HomePage() {
                   )}
                 </div>
 
-                <div className="mt-6 border border-ink-100 rounded-2xl p-6 bg-ink-50 relative overflow-hidden">
-                  <div className="opacity-60">
-                    <p className="text-xs uppercase tracking-wider text-ink-500 mb-2">
+                {isPremium ? (
+                  <div className="mt-6">
+                    <p className="text-xs uppercase tracking-wider text-ink-500 mb-3">
                       {t.listingsTitle}
                     </p>
-                    <p className="font-medium">{t.listingsLocked}</p>
-                    <p className="text-sm text-ink-500 mt-1">{t.listingsLockedSub}</p>
+                    {listingsLoading ? (
+                      <div className="border border-ink-100 rounded-2xl p-6 bg-ink-50 text-center">
+                        <div className="inline-flex items-center gap-2 text-sm text-ink-700">
+                          <span className="w-1.5 h-1.5 bg-ink-700 rounded-full pulse-slow" />
+                          {t.listingsLoading}
+                        </div>
+                      </div>
+                    ) : listings && listings.length > 0 ? (
+                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {listings.map((l, idx) => (
+                          <li key={`${l.source}-${idx}`} className="border border-ink-100 rounded-2xl overflow-hidden bg-white hover:border-ink-300 transition">
+                            <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex gap-3 p-3">
+                              {l.imageUrl ? (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img
+                                  src={l.imageUrl}
+                                  alt={l.title}
+                                  loading="lazy"
+                                  className="w-20 h-20 rounded-lg object-cover bg-ink-50 shrink-0"
+                                />
+                              ) : (
+                                <div className="w-20 h-20 rounded-lg bg-ink-50 shrink-0" />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium line-clamp-2">{l.title}</p>
+                                <p className="text-sm text-ink-900 mt-1">{l.priceLabel}</p>
+                                <p className="text-[11px] uppercase tracking-wider text-ink-500 mt-1">
+                                  {l.source === "vinted" ? "Vinted" : l.source === "jofogas" ? "Jófogás" : "eBay"}
+                                  {l.location ? ` · ${l.location}` : ""}
+                                </p>
+                              </div>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="border border-ink-100 rounded-2xl p-6 bg-ink-50 text-center text-sm text-ink-500">
+                        {t.listingsEmpty}
+                      </div>
+                    )}
                   </div>
-                  <button
-                    onClick={startCheckout}
-                    disabled={checkoutLoading || isPremium}
-                    className="mt-4 px-5 py-2 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition disabled:opacity-50"
-                  >
-                    {isPremium ? t.premiumActive : checkoutLoading ? "…" : t.upgradeButton}
-                  </button>
-                </div>
+                ) : (
+                  <div className="mt-6 border border-ink-100 rounded-2xl p-6 bg-ink-50 relative overflow-hidden">
+                    <div className="opacity-60">
+                      <p className="text-xs uppercase tracking-wider text-ink-500 mb-2">
+                        {t.listingsTitle}
+                      </p>
+                      <p className="font-medium">{t.listingsLocked}</p>
+                      <p className="text-sm text-ink-500 mt-1">{t.listingsLockedSub}</p>
+                    </div>
+                    <button
+                      onClick={startCheckout}
+                      disabled={checkoutLoading}
+                      className="mt-4 px-5 py-2 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition disabled:opacity-50"
+                    >
+                      {checkoutLoading ? "…" : t.upgradeButton}
+                    </button>
+                  </div>
+                )}
 
                 {result.selling_tip && (
                   <div className="mt-4 border border-ink-100 rounded-2xl p-6 bg-ink-50">
