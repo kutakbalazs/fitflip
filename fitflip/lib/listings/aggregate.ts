@@ -59,6 +59,36 @@ function matchesFilters(
 
 export type SearchResult = { listings: Listing[]; exact: boolean };
 
+const PER_SOURCE_LIMIT = 6;
+
+function balanceBySource(listings: Listing[]): Listing[] {
+  const buckets = new Map<string, Listing[]>();
+  for (const l of listings) {
+    const arr = buckets.get(l.source) ?? [];
+    if (arr.length < PER_SOURCE_LIMIT) {
+      arr.push(l);
+      buckets.set(l.source, arr);
+    }
+  }
+  // Round-robin interleave so the grid alternates sources visually.
+  const interleaved: Listing[] = [];
+  const sources = Array.from(buckets.keys());
+  let i = 0;
+  while (interleaved.length < listings.length) {
+    let pushedAny = false;
+    for (const src of sources) {
+      const bucket = buckets.get(src);
+      if (bucket && i < bucket.length) {
+        interleaved.push(bucket[i]);
+        pushedAny = true;
+      }
+    }
+    if (!pushedAny) break;
+    i += 1;
+  }
+  return interleaved;
+}
+
 export async function searchAllMarketplaces(
   query: string,
   must: string[] = [],
@@ -78,20 +108,20 @@ export async function searchAllMarketplaces(
   }
 
   if (must.length === 0 && should.length === 0) {
-    return { listings: all.slice(0, 12), exact: true };
+    return { listings: balanceBySource(all), exact: true };
   }
 
   // Pass 1: must + should (strict — model match AND at least one color token)
   const strict = all.filter((l) => matchesFilters(l, must, should));
   if (strict.length > 0) {
-    return { listings: strict.slice(0, 12), exact: true };
+    return { listings: balanceBySource(strict), exact: true };
   }
 
   // Pass 2: drop the should constraint (color) → keep only must (brand + model)
   if (should.length > 0) {
     const noColor = all.filter((l) => matchesFilters(l, must, []));
     if (noColor.length > 0) {
-      return { listings: noColor.slice(0, 12), exact: false };
+      return { listings: balanceBySource(noColor), exact: false };
     }
   }
 
@@ -100,7 +130,7 @@ export async function searchAllMarketplaces(
     const justModel = must.slice(1);
     const looser = all.filter((l) => matchesFilters(l, justModel, []));
     if (looser.length > 0) {
-      return { listings: looser.slice(0, 12), exact: false };
+      return { listings: balanceBySource(looser), exact: false };
     }
   }
 
