@@ -98,17 +98,12 @@ export default function HomePage() {
   useEffect(() => {
     const stored = localStorage.getItem("ff_lang");
     if (stored === "hu" || stored === "en") setLang(stored);
-    else if (typeof navigator !== "undefined" && navigator.language.startsWith("en")) {
-      setLang("en");
-    }
 
     supabase.auth.getUser().then(({ data }) => {
       setAuthenticated(!!data.user);
       setUserEmail(data.user?.email ?? null);
       if (data.user) {
-        const currentLang =
-          (localStorage.getItem("ff_lang") as Lang | null) ??
-          (navigator.language.startsWith("en") ? "en" : "hu");
+        const currentLang = (localStorage.getItem("ff_lang") as Lang | null) ?? "hu";
         const userLang = (data.user.user_metadata as { lang?: string } | null)?.lang;
         if (userLang !== currentLang) {
           supabase.auth.updateUser({ data: { lang: currentLang } }).catch(() => {});
@@ -129,11 +124,11 @@ export default function HomePage() {
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("upgraded") === "1") {
-      const isHu = (localStorage.getItem("ff_lang") ?? (navigator.language.startsWith("en") ? "en" : "hu")) === "hu";
+      const isHu = (localStorage.getItem("ff_lang") ?? "hu") === "hu";
       setBanner({ kind: "success", text: isHu ? "Sikeres előfizetés! Mostantól korlátlan a használat." : "Subscription successful! You now have unlimited use." });
       window.history.replaceState({}, "", "/");
     } else if (params.get("upgrade") === "cancel") {
-      const isHu = (localStorage.getItem("ff_lang") ?? (navigator.language.startsWith("en") ? "en" : "hu")) === "hu";
+      const isHu = (localStorage.getItem("ff_lang") ?? "hu") === "hu";
       setBanner({ kind: "info", text: isHu ? "Az előfizetést megszakítottad." : "You cancelled the upgrade." });
       window.history.replaceState({}, "", "/");
     }
@@ -272,6 +267,37 @@ export default function HomePage() {
     const f = e.dataTransfer.files?.[0];
     if (f) processFile(f);
   };
+
+  useEffect(() => {
+    if (authenticated !== true) return;
+    if (limitReached) return;
+
+    const onPaste = (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tag = target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable) return;
+      }
+      if (loading || converting) return;
+
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === "file" && item.type.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (file) {
+            e.preventDefault();
+            processFile(file);
+          }
+          break;
+        }
+      }
+    };
+
+    document.addEventListener("paste", onPaste);
+    return () => document.removeEventListener("paste", onPaste);
+  }, [authenticated, limitReached, loading, converting, processFile]);
 
   const analyze = async () => {
     if (!imageData || !imageMediaType) return;

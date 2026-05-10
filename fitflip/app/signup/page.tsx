@@ -21,9 +21,6 @@ export default function SignupPage() {
   useEffect(() => {
     const stored = localStorage.getItem("ff_lang");
     if (stored === "hu" || stored === "en") setLang(stored);
-    else if (typeof navigator !== "undefined" && navigator.language.startsWith("en")) {
-      setLang("en");
-    }
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) router.replace("/");
     });

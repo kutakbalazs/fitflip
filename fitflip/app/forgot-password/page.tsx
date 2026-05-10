@@ -18,9 +18,6 @@ export default function ForgotPasswordPage() {
   useEffect(() => {
     const stored = localStorage.getItem("ff_lang");
     if (stored === "hu" || stored === "en") setLang(stored);
-    else if (typeof navigator !== "undefined" && navigator.language.startsWith("en")) {
-      setLang("en");
-    }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
