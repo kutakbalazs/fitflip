@@ -11,7 +11,7 @@ A nyelvválasztás automatikus a `user_metadata.lang` alapján (signup-kor mentj
 
 ### Subject
 ```
-{{ if eq .UserMetaData.lang "en" }}Confirm your FitFlip account{{ else }}Erősítsd meg a FitFlip fiókodat{{ end }}
+{{ if eq .Data.lang "en" }}Confirm your FitFlip account{{ else }}Erősítsd meg a FitFlip fiókodat{{ end }}
 ```
 
 ### Message body (HTML)
@@ -32,14 +32,14 @@ A nyelvválasztás automatikus a `user_metadata.lang` alapján (signup-kor mentj
             <tr>
               <td style="padding:32px 40px 8px 40px;">
                 <h1 style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:500;letter-spacing:-0.02em;color:#0a0a0a;line-height:1.2;">
-                  {{ if eq .UserMetaData.lang "en" }}Welcome to FitFlip{{ else }}Üdv a FitFlipben{{ end }}
+                  {{ if eq .Data.lang "en" }}Welcome to FitFlip{{ else }}Üdv a FitFlipben{{ end }}
                 </h1>
               </td>
             </tr>
             <tr>
               <td style="padding:8px 40px 24px 40px;">
                 <p style="margin:0;font-size:15px;line-height:1.6;color:#44403c;">
-                  {{ if eq .UserMetaData.lang "en" }}Tap the button below to confirm your email and start scanning sneakers, vintage, and streetwear.{{ else }}Erősítsd meg az email címedet az alábbi gombbal, és kezdheted is azonosítani a sneakerjeidet, vintage és streetwear darabjaidat.{{ end }}
+                  {{ if eq .Data.lang "en" }}Tap the button below to confirm your email and start scanning sneakers, vintage, and streetwear.{{ else }}Erősítsd meg az email címedet az alábbi gombbal, és kezdheted is azonosítani a sneakerjeidet, vintage és streetwear darabjaidat.{{ end }}
                 </p>
               </td>
             </tr>
@@ -49,7 +49,7 @@ A nyelvválasztás automatikus a `user_metadata.lang` alapján (signup-kor mentj
                   <tr>
                     <td style="background:#0a0a0a;border-radius:999px;">
                       <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 28px;font-size:14px;font-weight:500;color:#ffffff;text-decoration:none;letter-spacing:-0.005em;">
-                        {{ if eq .UserMetaData.lang "en" }}Confirm email{{ else }}Email megerősítése{{ end }}
+                        {{ if eq .Data.lang "en" }}Confirm email{{ else }}Email megerősítése{{ end }}
                       </a>
                     </td>
                   </tr>
@@ -59,7 +59,7 @@ A nyelvválasztás automatikus a `user_metadata.lang` alapján (signup-kor mentj
             <tr>
               <td style="padding:24px 40px 8px 40px;">
                 <p style="margin:0;font-size:13px;line-height:1.6;color:#78716c;">
-                  {{ if eq .UserMetaData.lang "en" }}Or paste this link into your browser:{{ else }}Vagy másold be ezt a linket a böngésződbe:{{ end }}
+                  {{ if eq .Data.lang "en" }}Or paste this link into your browser:{{ else }}Vagy másold be ezt a linket a böngésződbe:{{ end }}
                 </p>
                 <p style="margin:6px 0 0 0;font-size:13px;line-height:1.4;color:#0a0a0a;word-break:break-all;">
                   <a href="{{ .ConfirmationURL }}" style="color:#0a0a0a;text-decoration:underline;">{{ .ConfirmationURL }}</a>
@@ -69,7 +69,7 @@ A nyelvválasztás automatikus a `user_metadata.lang` alapján (signup-kor mentj
             <tr>
               <td style="padding:32px 40px 40px 40px;border-top:1px solid #f5f5f4;margin-top:24px;">
                 <p style="margin:24px 0 0 0;font-size:12px;line-height:1.6;color:#a8a29e;">
-                  {{ if eq .UserMetaData.lang "en" }}If you didn't sign up for FitFlip, you can safely ignore this email.{{ else }}Ha nem te regisztráltál a FitFlipre, nyugodtan figyelmen kívül hagyhatod ezt az emailt.{{ end }}
+                  {{ if eq .Data.lang "en" }}If you didn't sign up for FitFlip, you can safely ignore this email.{{ else }}Ha nem te regisztráltál a FitFlipre, nyugodtan figyelmen kívül hagyhatod ezt az emailt.{{ end }}
                 </p>
                 <p style="margin:16px 0 0 0;font-size:12px;color:#a8a29e;">
                   <a href="https://fitflip.app" style="color:#a8a29e;text-decoration:none;">fitflip.app</a>
@@ -90,7 +90,7 @@ A nyelvválasztás automatikus a `user_metadata.lang` alapján (signup-kor mentj
 
 ### Subject
 ```
-{{ if eq .UserMetaData.lang "en" }}Reset your FitFlip password{{ else }}FitFlip jelszó visszaállítása{{ end }}
+{{ if eq .Data.lang "en" }}Reset your FitFlip password{{ else }}FitFlip jelszó visszaállítása{{ end }}
 ```
 
 ### Message body (HTML)
@@ -111,14 +111,14 @@ A nyelvválasztás automatikus a `user_metadata.lang` alapján (signup-kor mentj
             <tr>
               <td style="padding:32px 40px 8px 40px;">
                 <h1 style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:500;letter-spacing:-0.02em;color:#0a0a0a;line-height:1.2;">
-                  {{ if eq .UserMetaData.lang "en" }}Reset your password{{ else }}Jelszó visszaállítása{{ end }}
+                  {{ if eq .Data.lang "en" }}Reset your password{{ else }}Jelszó visszaállítása{{ end }}
                 </h1>
               </td>
             </tr>
             <tr>
               <td style="padding:8px 40px 24px 40px;">
                 <p style="margin:0;font-size:15px;line-height:1.6;color:#44403c;">
-                  {{ if eq .UserMetaData.lang "en" }}Tap the button below to set a new password for your FitFlip account.{{ else }}Kattints a gombra, és állíts be új jelszót a FitFlip fiókodhoz.{{ end }}
+                  {{ if eq .Data.lang "en" }}Tap the button below to set a new password for your FitFlip account.{{ else }}Kattints a gombra, és állíts be új jelszót a FitFlip fiókodhoz.{{ end }}
                 </p>
               </td>
             </tr>
@@ -128,7 +128,7 @@ A nyelvválasztás automatikus a `user_metadata.lang` alapján (signup-kor mentj
                   <tr>
                     <td style="background:#0a0a0a;border-radius:999px;">
                       <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 28px;font-size:14px;font-weight:500;color:#ffffff;text-decoration:none;letter-spacing:-0.005em;">
-                        {{ if eq .UserMetaData.lang "en" }}Set new password{{ else }}Új jelszó beállítása{{ end }}
+                        {{ if eq .Data.lang "en" }}Set new password{{ else }}Új jelszó beállítása{{ end }}
                       </a>
                     </td>
                   </tr>
@@ -138,7 +138,7 @@ A nyelvválasztás automatikus a `user_metadata.lang` alapján (signup-kor mentj
             <tr>
               <td style="padding:24px 40px 8px 40px;">
                 <p style="margin:0;font-size:13px;line-height:1.6;color:#78716c;">
-                  {{ if eq .UserMetaData.lang "en" }}Or paste this link into your browser:{{ else }}Vagy másold be ezt a linket a böngésződbe:{{ end }}
+                  {{ if eq .Data.lang "en" }}Or paste this link into your browser:{{ else }}Vagy másold be ezt a linket a böngésződbe:{{ end }}
                 </p>
                 <p style="margin:6px 0 0 0;font-size:13px;line-height:1.4;color:#0a0a0a;word-break:break-all;">
                   <a href="{{ .ConfirmationURL }}" style="color:#0a0a0a;text-decoration:underline;">{{ .ConfirmationURL }}</a>
@@ -148,7 +148,7 @@ A nyelvválasztás automatikus a `user_metadata.lang` alapján (signup-kor mentj
             <tr>
               <td style="padding:32px 40px 40px 40px;border-top:1px solid #f5f5f4;margin-top:24px;">
                 <p style="margin:24px 0 0 0;font-size:12px;line-height:1.6;color:#a8a29e;">
-                  {{ if eq .UserMetaData.lang "en" }}If you didn't request this, you can safely ignore this email — your password will not change.{{ else }}Ha nem te kérted ezt, nyugodtan figyelmen kívül hagyhatod — a jelszavad nem fog megváltozni.{{ end }}
+                  {{ if eq .Data.lang "en" }}If you didn't request this, you can safely ignore this email — your password will not change.{{ else }}Ha nem te kérted ezt, nyugodtan figyelmen kívül hagyhatod — a jelszavad nem fog megváltozni.{{ end }}
                 </p>
                 <p style="margin:16px 0 0 0;font-size:12px;color:#a8a29e;">
                   <a href="https://fitflip.app" style="color:#a8a29e;text-decoration:none;">fitflip.app</a>
@@ -167,7 +167,7 @@ A nyelvválasztás automatikus a `user_metadata.lang` alapján (signup-kor mentj
 
 ## Megjegyzések
 
-- **Nyelv**: `{{ if eq .UserMetaData.lang "en" }}...{{ else }}...{{ end }}` — alapértelmezett a magyar, ha nincs `lang` mező a user metadatában. Régi user-eknél amíg fel nem nyitják az appot a kód automatikusan beállítja.
+- **Nyelv**: `{{ if eq .Data.lang "en" }}...{{ else }}...{{ end }}` — alapértelmezett a magyar, ha nincs `lang` mező a user metadatában. Régi user-eknél amíg fel nem nyitják az appot a kód automatikusan beállítja.
 - **Magic Link template**: ezt a flow-t kivettük az UI-ból, így alapból nem kell brandelni. Ha mégis akarod, ugyanezt a layoutot lemásolhatod hozzá.
 - **Invite user template**: jelenleg nem használunk meghívásos flow-t, hagyhatod default-on.
 - **Subject sor**: ha a Supabase-ed nem támogatja a Go template-et a subject mezőben (régebbi verziók), használj kétnyelvű subject-et: `Erősítsd meg a fiókod / Confirm your account`.

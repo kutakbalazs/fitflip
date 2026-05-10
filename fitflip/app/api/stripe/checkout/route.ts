@@ -36,6 +36,12 @@ export async function POST(req: NextRequest) {
         ? { customer: profile.stripe_customer_id }
         : { customer_email: user.email }),
       allow_promotion_codes: true,
+      automatic_tax: { enabled: true },
+      tax_id_collection: { enabled: true },
+      customer_update: profile?.stripe_customer_id
+        ? { address: "auto", name: "auto" }
+        : undefined,
+      billing_address_collection: "required",
     });
 
     if (!session.url) {
