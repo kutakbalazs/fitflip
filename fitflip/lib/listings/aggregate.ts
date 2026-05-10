@@ -50,12 +50,14 @@ function titleMatchesAllKeywords(listing: Listing, keywords: string[]): boolean 
   });
 }
 
+export type SearchResult = { listings: Listing[]; exact: boolean };
+
 export async function searchAllMarketplaces(
   query: string,
   keywords: string[] = []
-): Promise<Listing[]> {
+): Promise<SearchResult> {
   const trimmed = query.trim();
-  if (!trimmed) return [];
+  if (!trimmed) return { listings: [], exact: true };
 
   const results = await Promise.allSettled([
     searchVinted(trimmed, 20),
@@ -67,8 +69,35 @@ export async function searchAllMarketplaces(
     if (r.status === "fulfilled") all.push(...r.value);
   }
 
-  if (keywords.length === 0) return all.slice(0, 12);
+  if (keywords.length === 0) {
+    return { listings: all.slice(0, 12), exact: true };
+  }
 
-  const filtered = all.filter((l) => titleMatchesAllKeywords(l, keywords));
-  return filtered.slice(0, 12);
+  // Pass 1: strict — every keyword must match (brand + model tokens + color)
+  const strict = all.filter((l) => titleMatchesAllKeywords(l, keywords));
+  if (strict.length > 0) {
+    return { listings: strict.slice(0, 12), exact: true };
+  }
+
+  // Pass 2: drop the LAST keyword (color is appended last → drop it)
+  if (keywords.length > 1) {
+    const droppedColor = keywords.slice(0, -1);
+    const broader = all.filter((l) => titleMatchesAllKeywords(l, droppedColor));
+    if (broader.length > 0) {
+      return { listings: broader.slice(0, 12), exact: false };
+    }
+  }
+
+  // Pass 3: drop brand too (first keyword) → keep just model tokens
+  if (keywords.length > 2) {
+    const justModel = keywords.slice(1, -1);
+    if (justModel.length > 0) {
+      const looser = all.filter((l) => titleMatchesAllKeywords(l, justModel));
+      if (looser.length > 0) {
+        return { listings: looser.slice(0, 12), exact: false };
+      }
+    }
+  }
+
+  return { listings: [], exact: true };
 }

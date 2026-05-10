@@ -34,8 +34,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "missing_query" }, { status: 400 });
     }
 
-    const listings = await searchAllMarketplaces(query, keywords);
-    return NextResponse.json({ listings });
+    const { listings, exact } = await searchAllMarketplaces(query, keywords);
+    return NextResponse.json({ listings, exact });
   } catch (err) {
     console.error("[/api/listings] error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";

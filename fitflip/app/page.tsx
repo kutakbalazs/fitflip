@@ -91,6 +91,7 @@ export default function HomePage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [listings, setListings] = useState<Listing[] | null>(null);
+  const [listingsExact, setListingsExact] = useState(true);
   const [listingsLoading, setListingsLoading] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -327,9 +328,10 @@ export default function HomePage() {
       .filter(Boolean)
       .filter((w) => !STOP_WORDS.has(w.toLowerCase()))
       .slice(0, 3);
+    const brandToken = brand.split(/\s+/)[0] ?? "";
 
     const keywords: string[] = [];
-    if (brand) keywords.push(brand);
+    if (brandToken) keywords.push(brandToken);
     keywords.push(...modelTokens);
     if (color) keywords.push(color);
 
@@ -342,17 +344,20 @@ export default function HomePage() {
       body: JSON.stringify({ query, keywords }),
     })
       .then(async (res) => {
-        if (!res.ok) return [];
+        if (!res.ok) return { listings: [] as Listing[], exact: true };
         const data = await res.json();
-        return Array.isArray(data?.listings) ? (data.listings as Listing[]) : [];
+        const items = Array.isArray(data?.listings) ? (data.listings as Listing[]) : [];
+        return { listings: items, exact: data?.exact !== false };
       })
-      .then((items) => {
+      .then(({ listings: items, exact }) => {
         if (cancelled) return;
         setListings(items);
+        setListingsExact(exact);
       })
       .catch(() => {
         if (cancelled) return;
         setListings([]);
+        setListingsExact(true);
       })
       .finally(() => {
         if (!cancelled) setListingsLoading(false);
@@ -439,6 +444,7 @@ export default function HomePage() {
     setResult(null);
     setError(null);
     setListings(null);
+    setListingsExact(true);
   };
 
   const formatHuf = (n: number | null) => {
@@ -983,8 +989,14 @@ export default function HomePage() {
                         </div>
                       </div>
                     ) : listings && listings.length > 0 ? (
-                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {listings.map((l, idx) => (
+                      <>
+                        {!listingsExact && (
+                          <p className="text-xs text-ink-500 mb-3 italic">
+                            {t.listingsBroader}
+                          </p>
+                        )}
+                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {listings.map((l, idx) => (
                           <li key={`${l.source}-${idx}`} className="border border-ink-100 rounded-2xl overflow-hidden bg-white hover:border-ink-300 transition">
                             <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex gap-3 p-3">
                               {l.imageUrl ? (
@@ -1009,7 +1021,8 @@ export default function HomePage() {
                             </a>
                           </li>
                         ))}
-                      </ul>
+                        </ul>
+                      </>
                     ) : (
                       <div className="border border-ink-100 rounded-2xl p-6 bg-ink-50 text-center text-sm text-ink-500">
                         {t.listingsEmpty}
