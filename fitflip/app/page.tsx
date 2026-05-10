@@ -87,6 +87,7 @@ export default function HomePage() {
   const [isPremium, setIsPremium] = useState(false);
   const [banner, setBanner] = useState<{ kind: "success" | "info"; text: string } | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -392,14 +393,29 @@ export default function HomePage() {
   };
 
   const openPortal = async () => {
+    if (portalLoading) return;
+    setPortalLoading(true);
+    setBanner(null);
     try {
       const res = await fetch("/api/stripe/portal", { method: "POST" });
       const data = await res.json();
-      if (data.url) {
+      if (res.ok && data.url) {
         window.location.href = data.url;
+        return;
       }
+      const message =
+        data?.error === "no_subscription"
+          ? lang === "hu"
+            ? "Nincs aktív Stripe előfizetésed — a fiókod manuálisan lett prémiumra állítva."
+            : "No active Stripe subscription — your account was set to premium manually."
+          : data?.error
+            ? `${t.error} (${data.error})`
+            : t.error;
+      setBanner({ kind: "info", text: message });
     } catch {
-      setError(t.error);
+      setBanner({ kind: "info", text: t.error });
+    } finally {
+      setPortalLoading(false);
     }
   };
 
@@ -463,9 +479,10 @@ export default function HomePage() {
                 {isPremium && (
                   <button
                     onClick={openPortal}
-                    className="text-ink-500 hover:text-ink-900 transition"
+                    disabled={portalLoading}
+                    className="text-ink-500 hover:text-ink-900 transition disabled:opacity-50 disabled:cursor-wait"
                   >
-                    {t.manageSubscription}
+                    {portalLoading ? "…" : t.manageSubscription}
                   </button>
                 )}
                 <span
