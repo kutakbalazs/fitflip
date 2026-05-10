@@ -11,11 +11,22 @@ const FREE_DAILY_LIMIT = 3;
 function buildPrompt(lang: "hu" | "en", imageCount: number = 1): string {
   const multiNoteHu =
     imageCount > 1
-      ? `\n\nFONTOS: ${imageCount} kép érkezett UGYANARRÓL a darabról. Lehet több szögből vagy közeli részlet (pl. címke, hibák, kopás). Egyetlen összesített elemzést adj vissza, az összes kép alapján. A description-ben említsd ha valamelyik képen látható hiba/sérülés befolyásolja az állapotot vagy az értéket.`
+      ? `\n\nFONTOS — TÖBB KÉP KEZELÉSE (${imageCount} kép):
+- A FŐ DARAB az ELSŐ képen jól látható ruha/cipő. CSAK erre az egy darabra adj elemzést.
+- A többi kép vagy ugyanennek a darabnak más szöge / közelije (pl. címke, varrás, kopás, hiba) — ezeket használd a részletek finomítására és az állapot pontosításához.
+- Ha valamelyik képen LÁTHATÓ HIBA vagy SÉRÜLÉS van (szakadás, folt, kopás), azt vedd figyelembe az állapotnál ÉS az értékbecslésnél, és említsd a description-ben.
+- Ha egy kép más, NEM IDE TARTOZÓ darabot vagy hátteret tartalmaz, IGNORÁLD. Csak a fő darabra koncentrálj.
+- Ha a többi kép TELJESEN ELTÉRŐ darabokat mutat (nem ugyanannak a részletei), CSAK az első képet elemezd, és a description elején írd: "Megjegyzés: a többi kép más darabokat mutatott, csak az első kép elemzése."`
       : "";
   const multiNoteEn =
     imageCount > 1
-      ? `\n\nIMPORTANT: ${imageCount} images received of the SAME item. They may show different angles or close-up details (e.g., tag, defects, wear). Return a single combined analysis based on all images. In the description, mention if any visible defect/damage in the photos affects the condition or value.`
+      ? `\n\nIMPORTANT — MULTIPLE IMAGES (${imageCount} photos):
+- The PRIMARY item is whichever clothing/footwear is clearly visible in the FIRST image. Analyze ONLY this one item.
+- Other images may show: (a) different angles or close-ups of the SAME item (tag, stitching, wear, damage) — use these to refine details and condition.
+- If any photo shows VISIBLE DAMAGE or WEAR (tear, stain, fade), factor it into BOTH condition AND value estimate, and mention in description.
+- If an image contains UNRELATED items or background, IGNORE them. Focus only on the primary item.
+- If the other images show ENTIRELY DIFFERENT items (not details of the same one), analyze ONLY the first image, and start the description with: "Note: other images showed different items, only the first image was analyzed."
+- If the FIRST image contains multiple clothing/footwear items and it's unclear which the user means, pick the centered or most prominent one, and add to the description: "I saw multiple items in the photo, analyzed the most prominent one. For a more accurate match, upload a closer photo of just that item."`
       : "";
   if (lang === "hu") {
     return `Te a FitFlip vagy – egy precíziós AI azonosító divatcikkekhez (sneakerek, vintage ruhák, streetwear, designer darabok). A pontosság a legfontosabb: jobb őszintén bizonytalannak lenni, mint hibázni.${multiNoteHu}
@@ -31,6 +42,7 @@ ELEMZÉSI MÓDSZER (kövesd ezt a sorrendet):
 KRITIKUS SZABÁLYOK:
 - Ha a márkát nem látod biztosan (logó, címke), állítsd brand:null-ra. SOHA NE TIPPELJ.
 - Ha biztos vagy a márkában de a modellt nem ismered fel, töltsd ki a brand-et és model:null
+- Ha a fő képen TÖBB ruha/cipő egyértelműen látszik és nem dönthető el melyikre kell koncentrálni, válaszd a középen lévőt vagy a leghangsúlyosabbat (legnagyobb / legjobban fókuszban), és a description ELEJÉN jelezd: "Több darabot láttam a képen, a leghangsúlyosabbat elemeztem. Pontosabb találatért tölts fel közelebbi képet vagy egyetlen darabot mutató fotót."
 - A confidence mező:
   * "high" CSAK ha látható márkajelzés (logó, "swoosh", "Adidas" felirat) ÉS biztos vagy a modellben
   * "medium" ha a márka biztos de a modell tippelt, vagy fordítva
@@ -81,6 +93,7 @@ ANALYSIS METHOD (follow this order):
 CRITICAL RULES:
 - If you can't see the brand clearly (logo, tag), set brand:null. NEVER GUESS.
 - If brand is certain but model unknown, fill brand and model:null
+- If MULTIPLE clothing/footwear items are clearly visible in the main image and it's unclear which one to focus on, pick the centered or most prominent one (largest / best in focus), and start the description with: "I saw multiple items in the photo, analyzed the most prominent one. For a more accurate match, upload a closer photo or a photo showing only one item."
 - The confidence field:
   * "high" ONLY when brand markers are visible (logo, swoosh, "Adidas" text) AND model is certain
   * "medium" when brand is certain but model guessed, or vice versa

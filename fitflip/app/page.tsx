@@ -682,24 +682,25 @@ export default function HomePage() {
               </>
             ) : null}
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,.heic,.heif"
-              multiple
-              onChange={onFilePick}
-              className="hidden"
-            />
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={onFilePick}
-              className="hidden"
-            />
           </div>
         )}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,.heic,.heif"
+          multiple
+          onChange={onFilePick}
+          className="hidden"
+        />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={onFilePick}
+          className="hidden"
+        />
 
         {images.length > 0 && !result && (
           <div className="w-full fade-in">
