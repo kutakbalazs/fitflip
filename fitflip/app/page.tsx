@@ -21,6 +21,8 @@ type AnalysisResult = {
   scansLeft: number;
 };
 
+const MAX_IMAGES = 6;
+
 const isHeicFile = (file: File): boolean => {
   const name = file.name.toLowerCase();
   return (
@@ -73,9 +75,7 @@ async function compressImage(file: File, maxDim = 1600, quality = 0.85): Promise
 export default function HomePage() {
   const supabase = createClient();
   const [lang, setLang] = useState<Lang>("hu");
-  const [imageData, setImageData] = useState<string | null>(null);
-  const [imageMediaType, setImageMediaType] = useState<string | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [images, setImages] = useState<Array<{ id: string; data: string; mediaType: string; preview: string }>>([]);
   const [loading, setLoading] = useState(false);
   const [converting, setConverting] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -164,7 +164,7 @@ export default function HomePage() {
   useEffect(() => {
     if (authenticated !== true) return;
     if (typeof window === "undefined") return;
-    if (imagePreview || result || limitReached) return;
+    if (images.length > 0 || result || limitReached) return;
 
     const isMobile = window.matchMedia("(max-width: 640px)").matches;
     if (!isMobile) return;
@@ -193,7 +193,7 @@ export default function HomePage() {
       cancelled = true;
       if (stream) stream.getTracks().forEach((t) => t.stop());
     };
-  }, [authenticated, imagePreview, result, limitReached]);
+  }, [authenticated, images.length, result, limitReached]);
 
   const switchLang = (newLang: Lang) => {
     setLang(newLang);
@@ -245,9 +245,25 @@ export default function HomePage() {
         reader.onload = () => {
           const result = reader.result as string;
           const base64 = result.split(",")[1];
-          setImageData(base64);
-          setImageMediaType("image/jpeg");
-          setImagePreview(result);
+          setImages((prev) => {
+            if (prev.length >= MAX_IMAGES) {
+              setError(
+                lang === "hu"
+                  ? `Maximum ${MAX_IMAGES} kép tölthető fel egy elemzéshez.`
+                  : `You can upload up to ${MAX_IMAGES} photos per analysis.`
+              );
+              return prev;
+            }
+            return [
+              ...prev,
+              {
+                id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                data: base64,
+                mediaType: "image/jpeg",
+                preview: result,
+              },
+            ];
+          });
         };
         reader.readAsDataURL(compressed);
       } catch {
@@ -257,15 +273,22 @@ export default function HomePage() {
     [lang]
   );
 
+  const removeImage = (id: string) => {
+    setImages((prev) => prev.filter((img) => img.id !== id));
+  };
+
   const onFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) processFile(f);
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).forEach((f) => processFile(f));
+    e.target.value = "";
   };
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    const f = e.dataTransfer.files?.[0];
-    if (f) processFile(f);
+    const files = e.dataTransfer.files;
+    if (!files) return;
+    Array.from(files).forEach((f) => processFile(f));
   };
 
   useEffect(() => {
@@ -300,14 +323,17 @@ export default function HomePage() {
   }, [authenticated, limitReached, loading, converting, processFile]);
 
   const analyze = async () => {
-    if (!imageData || !imageMediaType) return;
+    if (images.length === 0) return;
     setLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: imageData, mediaType: imageMediaType, lang }),
+        body: JSON.stringify({
+          images: images.map(({ data, mediaType }) => ({ data, mediaType })),
+          lang,
+        }),
       });
       if (res.status === 401) {
         window.location.href = "/login";
@@ -338,9 +364,7 @@ export default function HomePage() {
   };
 
   const reset = () => {
-    setImageData(null);
-    setImageMediaType(null);
-    setImagePreview(null);
+    setImages([]);
     setResult(null);
     setError(null);
   };
@@ -444,7 +468,10 @@ export default function HomePage() {
                     {t.manageSubscription}
                   </button>
                 )}
-                <span className="hidden md:inline text-ink-500 text-xs truncate max-w-[140px]">
+                <span
+                  className="hidden md:inline text-ink-500 text-xs truncate max-w-[200px]"
+                  title={userEmail ?? undefined}
+                >
                   {userEmail}
                 </span>
                 <form action="/auth/signout" method="post">
@@ -483,7 +510,7 @@ export default function HomePage() {
                 {mobileMenuOpen && (
                   <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-ink-100 bg-white shadow-lg overflow-hidden z-50 fade-in">
                     {userEmail && (
-                      <div className="px-4 py-3 text-xs text-ink-500 truncate border-b border-ink-100">
+                      <div className="px-4 py-3 text-xs text-ink-500 break-all border-b border-ink-100">
                         {userEmail}
                       </div>
                     )}
@@ -548,7 +575,7 @@ export default function HomePage() {
       )}
 
       <section className="flex-1 flex flex-col items-center justify-start px-6 py-12 max-w-2xl mx-auto w-full">
-        {!imagePreview && !result && (
+        {images.length === 0 && !result && (
           <div className="w-full text-center fade-in">
             <h1 className="text-4xl sm:text-5xl font-display tracking-tight mb-3">
               {t.tagline}
@@ -659,6 +686,7 @@ export default function HomePage() {
               ref={fileInputRef}
               type="file"
               accept="image/*,.heic,.heif"
+              multiple
               onChange={onFilePick}
               className="hidden"
             />
@@ -673,15 +701,63 @@ export default function HomePage() {
           </div>
         )}
 
-        {imagePreview && !result && (
+        {images.length > 0 && !result && (
           <div className="w-full fade-in">
-            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-ink-50 mb-6">
+            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-ink-50 mb-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={imagePreview}
+                src={images[0].preview}
                 alt="preview"
                 className="w-full h-full object-contain"
               />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 mb-6">
+              {images.map((img, idx) => (
+                <div
+                  key={img.id}
+                  className={`relative w-16 h-16 rounded-lg overflow-hidden bg-ink-50 border ${idx === 0 ? "border-ink-900" : "border-ink-100"}`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={img.preview} alt={`photo ${idx + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(img.id)}
+                    aria-label={lang === "hu" ? "Kép eltávolítása" : "Remove photo"}
+                    className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-ink-900/80 text-white flex items-center justify-center hover:bg-ink-900 transition"
+                  >
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+              {images.length < MAX_IMAGES && !loading && !converting && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => cameraInputRef.current?.click()}
+                    aria-label={lang === "hu" ? "Még egy fotó kamerával" : "Take another photo"}
+                    className="sm:hidden w-16 h-16 rounded-lg border-2 border-dashed border-ink-200 flex items-center justify-center text-ink-500 hover:border-ink-400 hover:text-ink-900 transition"
+                  >
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    aria-label={lang === "hu" ? "Még egy fotó hozzáadása" : "Add another photo"}
+                    className="w-16 h-16 rounded-lg border-2 border-dashed border-ink-200 flex items-center justify-center text-ink-500 hover:border-ink-400 hover:text-ink-900 transition"
+                  >
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                  </button>
+                </>
+              )}
             </div>
 
             {loading ? (
@@ -698,11 +774,16 @@ export default function HomePage() {
                   onClick={analyze}
                   className="flex-1 px-6 py-3 rounded-full bg-ink-900 text-white font-medium hover:bg-ink-700 transition"
                 >
-                  {t.uploadCta}
+                  {images.length > 1
+                    ? lang === "hu"
+                      ? `Elemzés (${images.length} kép)`
+                      : `Analyze (${images.length} photos)`
+                    : t.uploadCta}
                 </button>
                 <button
                   onClick={reset}
                   className="px-6 py-3 rounded-full border border-ink-100 hover:bg-ink-50 transition text-sm"
+                  aria-label={lang === "hu" ? "Mégse" : "Cancel"}
                 >
                   ✕
                 </button>
@@ -717,14 +798,29 @@ export default function HomePage() {
 
         {result && (
           <div className="w-full fade-in">
-            <div className="aspect-square w-full max-w-xs mx-auto rounded-2xl overflow-hidden bg-ink-50 mb-6">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={imagePreview!}
-                alt="scanned"
-                className="w-full h-full object-contain"
-              />
-            </div>
+            {images[0] && (
+              <div className="aspect-square w-full max-w-xs mx-auto rounded-2xl overflow-hidden bg-ink-50 mb-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={images[0].preview}
+                  alt="scanned"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            )}
+            {images.length > 1 && (
+              <div className="flex justify-center gap-2 mb-6">
+                {images.slice(1).map((img, idx) => (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    key={img.id}
+                    src={img.preview}
+                    alt={`scanned ${idx + 2}`}
+                    className="w-12 h-12 rounded-md object-cover bg-ink-50 border border-ink-100"
+                  />
+                ))}
+              </div>
+            )}
 
             {!result.recognized ? (
               <div className="text-center border border-ink-100 rounded-2xl p-8">

@@ -8,9 +8,17 @@ export const dynamic = "force-dynamic";
 
 const FREE_DAILY_LIMIT = 3;
 
-function buildPrompt(lang: "hu" | "en"): string {
+function buildPrompt(lang: "hu" | "en", imageCount: number = 1): string {
+  const multiNoteHu =
+    imageCount > 1
+      ? `\n\nFONTOS: ${imageCount} kép érkezett UGYANARRÓL a darabról. Lehet több szögből vagy közeli részlet (pl. címke, hibák, kopás). Egyetlen összesített elemzést adj vissza, az összes kép alapján. A description-ben említsd ha valamelyik képen látható hiba/sérülés befolyásolja az állapotot vagy az értéket.`
+      : "";
+  const multiNoteEn =
+    imageCount > 1
+      ? `\n\nIMPORTANT: ${imageCount} images received of the SAME item. They may show different angles or close-up details (e.g., tag, defects, wear). Return a single combined analysis based on all images. In the description, mention if any visible defect/damage in the photos affects the condition or value.`
+      : "";
   if (lang === "hu") {
-    return `Te a FitFlip vagy – egy precíziós AI azonosító divatcikkekhez (sneakerek, vintage ruhák, streetwear, designer darabok). A pontosság a legfontosabb: jobb őszintén bizonytalannak lenni, mint hibázni.
+    return `Te a FitFlip vagy – egy precíziós AI azonosító divatcikkekhez (sneakerek, vintage ruhák, streetwear, designer darabok). A pontosság a legfontosabb: jobb őszintén bizonytalannak lenni, mint hibázni.${multiNoteHu}
 
 ELEMZÉSI MÓDSZER (kövesd ezt a sorrendet):
 1. Megerősítés: tényleg ruházat vagy lábbeli van a képen? Ha nem, állítsd recognized:false-ra.
@@ -60,7 +68,7 @@ VÁLASZ FORMÁTUM (CSAK ezt a JSON-t add vissza, semmi mást, semmi markdown):
   "confidence": "low" | "medium" | "high"
 }`;
   }
-  return `You are FitFlip – a precision AI identifier for fashion items (sneakers, vintage clothing, streetwear, designer pieces). Accuracy is paramount: it's better to be honestly uncertain than to be wrong.
+  return `You are FitFlip – a precision AI identifier for fashion items (sneakers, vintage clothing, streetwear, designer pieces). Accuracy is paramount: it's better to be honestly uncertain than to be wrong.${multiNoteEn}
 
 ANALYSIS METHOD (follow this order):
 1. Confirmation: does the image actually show clothing or footwear? If not, set recognized:false
@@ -184,17 +192,41 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { image, mediaType, lang } = body as {
-      image: string;
-      mediaType: string;
+    const { images, image, mediaType, lang } = body as {
+      images?: Array<{ data: string; mediaType: string }>;
+      image?: string;
+      mediaType?: string;
       lang: "hu" | "en";
     };
 
-    if (!image || !mediaType) {
+    const normalizedImages: Array<{ data: string; mediaType: string }> =
+      Array.isArray(images) && images.length > 0
+        ? images
+        : image && mediaType
+          ? [{ data: image, mediaType }]
+          : [];
+
+    if (normalizedImages.length === 0) {
       return NextResponse.json({ error: "Missing image" }, { status: 400 });
+    }
+    if (normalizedImages.length > 6) {
+      return NextResponse.json({ error: "Too many images (max 6)" }, { status: 400 });
     }
 
     const client = new Anthropic({ apiKey, baseURL: "https://api.anthropic.com" });
+
+    const imageBlocks = normalizedImages.map((img) => ({
+      type: "image" as const,
+      source: {
+        type: "base64" as const,
+        media_type: img.mediaType as
+          | "image/jpeg"
+          | "image/png"
+          | "image/webp"
+          | "image/gif",
+        data: img.data,
+      },
+    }));
 
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",
@@ -203,19 +235,8 @@ export async function POST(req: NextRequest) {
         {
           role: "user",
           content: [
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: mediaType as
-                  | "image/jpeg"
-                  | "image/png"
-                  | "image/webp"
-                  | "image/gif",
-                data: image,
-              },
-            },
-            { type: "text", text: buildPrompt(lang || "hu") },
+            ...imageBlocks,
+            { type: "text", text: buildPrompt(lang || "hu", normalizedImages.length) },
           ],
         },
       ],
