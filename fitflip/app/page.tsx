@@ -11,6 +11,7 @@ type AnalysisResult = {
   category: string | null;
   brand: string | null;
   model: string | null;
+  color: string | null;
   era: string | null;
   condition: string | null;
   estimated_value_min_huf: number | null;
@@ -300,18 +301,45 @@ export default function HomePage() {
       setListings(null);
       return;
     }
-    const query = result?.search_query?.trim();
+    if (!result) {
+      setListings(null);
+      return;
+    }
+    const brand = result.brand?.trim() ?? "";
+    const model = result.model?.trim() ?? "";
+    const color = result.color?.trim() ?? "";
+    const fallbackQuery = result.search_query?.trim() ?? "";
+
+    const query = [brand, model].filter(Boolean).join(" ").trim() || fallbackQuery;
     if (!query) {
       setListings(null);
       return;
     }
+
+    const STOP_WORDS = new Set([
+      "pants", "pant", "trousers", "trouser", "jeans",
+      "shoes", "shoe", "sneakers", "sneaker", "boots", "boot",
+      "shirt", "tshirt", "tee", "jacket", "coat", "hoodie", "sweater",
+      "the", "a", "and",
+    ]);
+    const modelTokens = model
+      .split(/\s+/)
+      .filter(Boolean)
+      .filter((w) => !STOP_WORDS.has(w.toLowerCase()))
+      .slice(0, 3);
+
+    const keywords: string[] = [];
+    if (brand) keywords.push(brand);
+    keywords.push(...modelTokens);
+    if (color) keywords.push(color);
+
     let cancelled = false;
     setListingsLoading(true);
     setListings(null);
     fetch("/api/listings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query, keywords }),
     })
       .then(async (res) => {
         if (!res.ok) return [];
@@ -332,7 +360,7 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, [isPremium, result?.search_query]);
+  }, [isPremium, result]);
 
   useEffect(() => {
     if (authenticated !== true) return;

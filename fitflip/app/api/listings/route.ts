@@ -27,11 +27,14 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json().catch(() => ({}));
     const query = typeof body?.query === "string" ? body.query : "";
+    const keywords = Array.isArray(body?.keywords)
+      ? (body.keywords as unknown[]).filter((k): k is string => typeof k === "string" && k.trim().length > 0)
+      : [];
     if (!query.trim()) {
       return NextResponse.json({ error: "missing_query" }, { status: 400 });
     }
 
-    const listings = await searchAllMarketplaces(query);
+    const listings = await searchAllMarketplaces(query, keywords);
     return NextResponse.json({ listings });
   } catch (err) {
     console.error("[/api/listings] error:", err);

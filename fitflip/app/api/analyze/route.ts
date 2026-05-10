@@ -63,6 +63,13 @@ PÉLDÁK A JÓ VÁLASZRA:
 - Egyszerű fehér póló logó nélkül → brand:null, model:null, category:"streetwear", confidence:"low"
 - Retró pulóver "Levi's" címkével de elmosódott modellnévvel → brand:"Levi's", model:null, era:"valószínűleg 80-90-es évek", confidence:"medium"
 
+SZÍN MEZŐ (FONTOS, hirdetéskereséshez használjuk):
+- A "color" mező a darab DOMINÁNS színe vagy hivatalos colorway neve, ahogyan ténylegesen megjelenik egy hirdetés címében.
+- Sneakerre: hivatalos colorway nevet használj ha biztos vagy benne (pl. "Bred", "Chicago", "Hamilton Brown"). Ha nem, akkor egyszerű színt (pl. "black", "white", "red").
+- Ruhára/streetwearre: az alapszín angolul (pl. "black", "navy", "olive", "beige", "Hamilton Brown").
+- Ha vegyes/mintás: a domináns vagy a megnevezhető szín.
+- Ha bizonytalan, állítsd null-ra inkább, mint hogy rosszat tippelj.
+
 VÁLASZ FORMÁTUM (CSAK ezt a JSON-t add vissza, semmi mást, semmi markdown):
 
 {
@@ -70,6 +77,7 @@ VÁLASZ FORMÁTUM (CSAK ezt a JSON-t add vissza, semmi mást, semmi markdown):
   "category": "sneaker" | "vintage_clothing" | "streetwear" | "designer" | "other",
   "brand": "string vagy null",
   "model": "string vagy null",
+  "color": "domináns szín vagy hivatalos colorway angolul, vagy null",
   "era": "string vagy null",
   "condition": "új | nagyon jó | jó | használt | rossz" vagy null,
   "estimated_value_min_huf": number vagy null,
@@ -114,6 +122,13 @@ GOOD ANSWER EXAMPLES:
 - Plain white t-shirt no logo → brand:null, model:null, category:"streetwear", confidence:"low"
 - Retro sweater with "Levi's" tag but blurred model name → brand:"Levi's", model:null, era:"likely 80s-90s", confidence:"medium"
 
+COLOR FIELD (IMPORTANT, used for marketplace search):
+- The "color" field is the dominant color or official colorway as it would actually appear in a listing title.
+- Sneakers: use the official colorway name if confident (e.g. "Bred", "Chicago", "Hamilton Brown"). Otherwise a plain color (e.g. "black", "white", "red").
+- Clothing/streetwear: the base color in English (e.g. "black", "navy", "olive", "beige", "Hamilton Brown").
+- For mixed/patterned items: pick the dominant or nameable color.
+- If uncertain, set to null rather than guessing wrong.
+
 RESPONSE FORMAT (return ONLY this JSON, nothing else, no markdown):
 
 {
@@ -121,6 +136,7 @@ RESPONSE FORMAT (return ONLY this JSON, nothing else, no markdown):
   "category": "sneaker" | "vintage_clothing" | "streetwear" | "designer" | "other",
   "brand": "string or null",
   "model": "string or null",
+  "color": "dominant color or official colorway in English, or null",
   "era": "string or null",
   "condition": "new | excellent | good | used | poor" or null,
   "estimated_value_min_huf": number or null,
