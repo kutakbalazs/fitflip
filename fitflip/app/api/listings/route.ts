@@ -31,8 +31,9 @@ export async function POST(req: NextRequest) {
         ? (raw as unknown[]).filter((k): k is string => typeof k === "string" && k.trim().length > 0)
         : [];
     const queries = sanitizeArray(body?.queries);
-    const must = sanitizeArray(body?.must);
-    const should = sanitizeArray(body?.should);
+    const brandTokens = sanitizeArray(body?.brandTokens);
+    const modelTokens = sanitizeArray(body?.modelTokens);
+    const colorTokens = sanitizeArray(body?.colorTokens);
 
     // Backwards-compat: accept singular `query` too.
     if (queries.length === 0 && typeof body?.query === "string" && body.query.trim()) {
@@ -43,7 +44,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "missing_query" }, { status: 400 });
     }
 
-    const { listings, exact } = await searchAllMarketplaces(queries, must, should);
+    const { listings, exact } = await searchAllMarketplaces(
+      queries,
+      brandTokens,
+      modelTokens,
+      colorTokens
+    );
     return NextResponse.json({ listings, exact });
   } catch (err) {
     console.error("[/api/listings] error:", err);

@@ -46,18 +46,15 @@ function titleContains(titleNorm: string, keyword: string): boolean {
   return variants.some((v) => v.length > 0 && titleNorm.includes(v));
 }
 
-function matchesFilters(
-  listing: Listing,
-  must: string[],
-  should: string[]
-): boolean {
-  const titleNorm = normalize(listing.title);
-  if (!must.every((kw) => titleContains(titleNorm, kw))) return false;
-  if (should.length > 0 && !should.some((kw) => titleContains(titleNorm, kw))) return false;
-  return true;
-}
-
 export type SearchResult = { listings: Listing[]; exact: boolean };
+
+type ScoredListing = {
+  listing: Listing;
+  score: number;
+  brandMatched: boolean;
+  modelMatchCount: number;
+  colorMatched: boolean;
+};
 
 const PER_SOURCE_LIMIT = 6;
 
@@ -70,11 +67,10 @@ function balanceBySource(listings: Listing[]): Listing[] {
       buckets.set(l.source, arr);
     }
   }
-  // Round-robin interleave so the grid alternates sources visually.
   const interleaved: Listing[] = [];
   const sources = Array.from(buckets.keys());
   let i = 0;
-  while (interleaved.length < listings.length) {
+  while (true) {
     let pushedAny = false;
     for (const src of sources) {
       const bucket = buckets.get(src);
@@ -89,10 +85,36 @@ function balanceBySource(listings: Listing[]): Listing[] {
   return interleaved;
 }
 
+function scoreListing(
+  listing: Listing,
+  brandTokens: string[],
+  modelTokens: string[],
+  colorTokens: string[]
+): ScoredListing {
+  const title = normalize(listing.title);
+  const brandMatched =
+    brandTokens.length === 0
+      ? true
+      : brandTokens.some((b) => titleContains(title, b));
+  const modelMatchCount = modelTokens.filter((t) => titleContains(title, t)).length;
+  const colorMatched =
+    colorTokens.length === 0
+      ? true
+      : colorTokens.some((c) => titleContains(title, c));
+
+  let score = 0;
+  if (brandTokens.length > 0 && brandMatched) score += 3;
+  score += modelMatchCount * 2;
+  if (colorTokens.length > 0 && colorMatched) score += 1;
+
+  return { listing, score, brandMatched, modelMatchCount, colorMatched };
+}
+
 export async function searchAllMarketplaces(
   queries: string[],
-  must: string[] = [],
-  should: string[] = []
+  brandTokens: string[] = [],
+  modelTokens: string[] = [],
+  colorTokens: string[] = []
 ): Promise<SearchResult> {
   const cleaned = Array.from(
     new Set(
@@ -122,32 +144,56 @@ export async function searchAllMarketplaces(
     }
   }
 
-  if (must.length === 0 && should.length === 0) {
+  if (all.length === 0) return { listings: [], exact: true };
+
+  // No filter criteria → return as-is, sorted by source balance.
+  if (brandTokens.length === 0 && modelTokens.length === 0 && colorTokens.length === 0) {
     return { listings: balanceBySource(all), exact: true };
   }
 
-  // Pass 1: must + should (strict — model match AND at least one color token)
-  const strict = all.filter((l) => matchesFilters(l, must, should));
-  if (strict.length > 0) {
-    return { listings: balanceBySource(strict), exact: true };
-  }
+  const scored = all.map((l) =>
+    scoreListing(l, brandTokens, modelTokens, colorTokens)
+  );
 
-  // Pass 2: drop the should constraint (color) → keep only must (brand + model)
-  if (should.length > 0) {
-    const noColor = all.filter((l) => matchesFilters(l, must, []));
-    if (noColor.length > 0) {
-      return { listings: balanceBySource(noColor), exact: false };
-    }
-  }
+  // Tier 1: brand-match (any brand token) AND at least one model token match.
+  const tier1 = scored.filter((s) => {
+    if (brandTokens.length > 0 && !s.brandMatched) return false;
+    if (modelTokens.length > 0 && s.modelMatchCount === 0) return false;
+    return true;
+  });
 
-  // Pass 3: drop brand from must (first must keyword) → keep only model tokens
-  if (must.length > 1) {
-    const justModel = must.slice(1);
-    const looser = all.filter((l) => matchesFilters(l, justModel, []));
-    if (looser.length > 0) {
-      return { listings: balanceBySource(looser), exact: false };
-    }
-  }
+  // Tier 2: at least one model token match, brand may miss (compound brands
+  // like "Air Jordan" where marketplace listing just says "Jordan").
+  const tier2 =
+    tier1.length > 0
+      ? tier1
+      : scored.filter(
+          (s) => modelTokens.length === 0 || s.modelMatchCount > 0
+        );
 
-  return { listings: [], exact: true };
+  // Tier 3: brand only — last resort so the user sees *something*.
+  const candidates =
+    tier2.length > 0
+      ? tier2
+      : scored.filter(
+          (s) => brandTokens.length === 0 || s.brandMatched
+        );
+
+  if (candidates.length === 0) return { listings: [], exact: true };
+
+  // Sort by score DESC (best match first). Stable sort keeps marketplace
+  // ranking as the tiebreaker.
+  candidates.sort((a, b) => b.score - a.score);
+
+  // exact = the result set contains at least one listing that matched
+  // every criterion the user cares about.
+  const anyFullMatch = candidates.some(
+    (m) =>
+      (brandTokens.length === 0 || m.brandMatched) &&
+      (modelTokens.length === 0 || m.modelMatchCount === modelTokens.length) &&
+      (colorTokens.length === 0 || m.colorMatched)
+  );
+
+  const balanced = balanceBySource(candidates.map((m) => m.listing));
+  return { listings: balanced, exact: anyFullMatch };
 }

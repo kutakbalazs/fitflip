@@ -317,18 +317,17 @@ export default function HomePage() {
       "shirt", "tshirt", "tee", "jacket", "coat", "hoodie", "sweater",
       "the", "a", "and",
     ]);
+
+    // brandTokens: every word of the brand counts as an alternative — many
+    // marketplace listings only mention one word of a compound brand
+    // (e.g. "Jordan" for "Air Jordan", "Carhartt" for "Carhartt WIP").
+    const brandTokens = brand.split(/\s+/).filter(Boolean);
     const modelTokens = model
       .split(/\s+/)
       .filter(Boolean)
       .filter((w) => !STOP_WORDS.has(w.toLowerCase()))
       .slice(0, 3);
-    const brandToken = brand.split(/\s+/)[0] ?? "";
-
-    const must: string[] = [];
-    if (brandToken) must.push(brandToken);
-    must.push(...modelTokens);
-
-    const should: string[] = color.split(/\s+/).filter(Boolean);
+    const colorTokens = color.split(/\s+/).filter(Boolean);
 
     // Run multiple search variants — different marketplaces respond better
     // to different phrasings, so we cast a wider net and dedupe server-side.
@@ -336,11 +335,11 @@ export default function HomePage() {
     const primary = [brand, model].filter(Boolean).join(" ").trim();
     if (primary) queries.push(primary);
     if (fallbackQuery && fallbackQuery !== primary) queries.push(fallbackQuery);
-    if (brandToken && modelTokens[0]) {
-      const short = `${brandToken} ${modelTokens[0]}`;
+    if (brandTokens.length > 0 && modelTokens[0]) {
+      const short = `${brandTokens[brandTokens.length - 1]} ${modelTokens[0]}`;
       if (!queries.includes(short)) queries.push(short);
     }
-    if (queries.length === 0 && brandToken) queries.push(brandToken);
+    if (queries.length === 0 && brandTokens[0]) queries.push(brandTokens[0]);
     if (queries.length === 0) {
       setListings(null);
       return;
@@ -352,7 +351,7 @@ export default function HomePage() {
     fetch("/api/listings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ queries, must, should }),
+      body: JSON.stringify({ queries, brandTokens, modelTokens, colorTokens }),
     })
       .then(async (res) => {
         if (!res.ok) return { listings: [] as Listing[], exact: true };
