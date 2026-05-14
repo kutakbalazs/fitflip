@@ -1096,7 +1096,13 @@ export default function HomePage() {
                                 <p className="text-sm font-medium line-clamp-2">{l.title}</p>
                                 <p className="text-sm text-ink-900 mt-1">{l.priceLabel}</p>
                                 <p className="text-[11px] uppercase tracking-wider text-ink-500 mt-1">
-                                  {l.source === "vinted" ? "Vinted" : l.source === "jofogas" ? "Jófogás" : "eBay"}
+                                  {l.source === "vinted"
+                                    ? "Vinted"
+                                    : l.source === "jofogas"
+                                      ? "Jófogás"
+                                      : l.source === "ebay"
+                                        ? "eBay"
+                                        : (l.source as string)}
                                   {l.location ? ` · ${l.location}` : ""}
                                 </p>
                               </div>

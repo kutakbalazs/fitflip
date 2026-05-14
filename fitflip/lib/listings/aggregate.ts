@@ -1,6 +1,7 @@
 import type { Listing } from "./types";
 import { searchVinted } from "./vinted";
 import { searchJofogas } from "./jofogas";
+import { searchEbay } from "./ebay";
 
 const HU_COLOR_ALIASES: Record<string, string[]> = {
   black: ["black", "fekete"],
@@ -130,6 +131,7 @@ export async function searchAllMarketplaces(
   for (const q of cleaned) {
     tasks.push(searchVinted(q, 12));
     tasks.push(searchJofogas(q, 12));
+    tasks.push(searchEbay(q, 12));
   }
   const results = await Promise.allSettled(tasks);
 
