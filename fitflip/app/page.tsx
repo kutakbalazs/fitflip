@@ -316,30 +316,83 @@ export default function HomePage() {
       "shoes", "shoe", "sneakers", "sneaker", "boots", "boot",
       "shirt", "tshirt", "tee", "jacket", "coat", "hoodie", "sweater",
       "the", "a", "and",
+      // Generic sneaker descriptors — appear in too many listings to be
+      // useful for distinguishing the specific product. The "high vs low"
+      // distinction matters but it's already encoded in the colorway
+      // (most Jordan colorways come in only one cut anyway).
+      "retro", "og",
     ]);
 
     // brandTokens: every word of the brand counts as an alternative — many
     // marketplace listings only mention one word of a compound brand
     // (e.g. "Jordan" for "Air Jordan", "Carhartt" for "Carhartt WIP").
     const brandTokens = brand.split(/\s+/).filter(Boolean);
-    const modelTokens = model
+
+    // Sub-brand rescue: when the AI labels the parent brand (e.g. "Nike")
+    // but the model itself starts with or mentions a well-known sub-brand,
+    // treat that sub-brand as the search-keyword brand AND strip it off
+    // the model so the leading model token isn't a brand word. Without
+    // this, a "Nike" brand + "Air Jordan 1 Retro High" model would
+    // produce a useless short query like "jordan Air" instead of "Jordan 1".
+    const SUB_BRAND_PHRASES = ["Air Jordan", "Jordan", "Yeezy", "Supreme"];
+    let cleanModel = model;
+    for (const sub of SUB_BRAND_PHRASES) {
+      const subLower = sub.toLowerCase();
+      const ml = cleanModel.toLowerCase();
+      if (
+        ml === subLower ||
+        ml.startsWith(subLower + " ") ||
+        ml.startsWith(subLower + ",")
+      ) {
+        cleanModel = cleanModel.substring(sub.length).replace(/^[\s,]+/, "");
+      }
+      const lastWord = sub.split(" ").pop() as string;
+      if (
+        ml.includes(subLower) &&
+        !brandTokens.some((b) => b.toLowerCase() === lastWord.toLowerCase())
+      ) {
+        brandTokens.push(lastWord);
+      }
+    }
+
+    const modelTokens = cleanModel
       .split(/\s+/)
       .filter(Boolean)
       .filter((w) => !STOP_WORDS.has(w.toLowerCase()))
       .slice(0, 3);
     const colorTokens = color.split(/\s+/).filter(Boolean);
 
-    // Run multiple search variants — different marketplaces respond better
-    // to different phrasings, so we cast a wider net and dedupe server-side.
+    // Run multiple search variants. Different marketplaces respond very
+    // differently to different phrasings — Jofogás in particular keys on
+    // exact word matches, so a listing titled "Jordan 1 high mocha" never
+    // shows up for "Air Jordan 1 High" but ranks first for "Jordan Mocha".
+    // We cast a wider net and dedupe server-side.
     const queries: string[] = [];
-    const primary = [brand, model].filter(Boolean).join(" ").trim();
-    if (primary) queries.push(primary);
-    if (fallbackQuery && fallbackQuery !== primary) queries.push(fallbackQuery);
-    if (brandTokens.length > 0 && modelTokens[0]) {
-      const short = `${brandTokens[brandTokens.length - 1]} ${modelTokens[0]}`;
-      if (!queries.includes(short)) queries.push(short);
+    const lastBrand = brandTokens[brandTokens.length - 1] ?? "";
+    const firstModel = modelTokens[0] ?? "";
+    const firstColor = colorTokens[0] ?? "";
+    const lastColor = colorTokens[colorTokens.length - 1] ?? "";
+    const pushQuery = (q: string) => {
+      const trimmed = q.trim();
+      if (trimmed && !queries.includes(trimmed)) queries.push(trimmed);
+    };
+
+    // 1. Full brand + model.
+    pushQuery([brand, model].filter(Boolean).join(" "));
+    // 2. AI's free-form search_query.
+    if (fallbackQuery) pushQuery(fallbackQuery);
+    // 3. Sub-brand + first model word, e.g. "Jordan 1" — captures
+    //    marketplace listings that omit the parent brand ("Nike", "Air").
+    if (lastBrand && firstModel) pushQuery(`${lastBrand} ${firstModel}`);
+    // 4. Sub-brand + first model word + color, e.g. "Jordan 1 mocha" —
+    //    typically the highest-recall query on Hungarian classifieds.
+    if (lastBrand && firstModel && firstColor) {
+      pushQuery(`${lastBrand} ${firstModel} ${firstColor}`);
     }
-    if (queries.length === 0 && brandTokens[0]) queries.push(brandTokens[0]);
+    // 5. Sub-brand + colorway alone, e.g. "Jordan Mocha".
+    if (lastBrand && lastColor) pushQuery(`${lastBrand} ${lastColor}`);
+
+    if (queries.length === 0 && brandTokens[0]) pushQuery(brandTokens[0]);
     if (queries.length === 0) {
       setListings(null);
       return;

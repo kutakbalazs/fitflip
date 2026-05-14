@@ -122,7 +122,7 @@ export async function searchAllMarketplaces(
         .map((q) => q?.trim() ?? "")
         .filter((q) => q.length > 0)
     )
-  ).slice(0, 3);
+  ).slice(0, 5);
   if (cleaned.length === 0) return { listings: [], exact: true };
 
   // Run every query against every adapter in parallel, then dedupe by URL.
