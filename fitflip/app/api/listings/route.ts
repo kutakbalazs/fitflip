@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { searchAllMarketplaces } from "@/lib/listings/aggregate";
+import { verifyListingsAgainstImage } from "@/lib/listings/verify";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,6 +35,20 @@ export async function POST(req: NextRequest) {
     const brandTokens = sanitizeArray(body?.brandTokens);
     const modelTokens = sanitizeArray(body?.modelTokens);
     const colorTokens = sanitizeArray(body?.colorTokens);
+    const originalImage =
+      body?.originalImage &&
+      typeof body.originalImage === "object" &&
+      typeof body.originalImage.data === "string" &&
+      typeof body.originalImage.mediaType === "string"
+        ? {
+            data: body.originalImage.data as string,
+            mediaType: body.originalImage.mediaType as
+              | "image/jpeg"
+              | "image/png"
+              | "image/webp"
+              | "image/gif",
+          }
+        : null;
 
     // Backwards-compat: accept singular `query` too.
     if (queries.length === 0 && typeof body?.query === "string" && body.query.trim()) {
@@ -50,7 +65,25 @@ export async function POST(req: NextRequest) {
       modelTokens,
       colorTokens
     );
-    return NextResponse.json({ listings, exact });
+
+    // If we have the user's image, ask the model to look at every listing
+    // thumbnail and drop ones that aren't actually the same product.
+    let finalListings = listings;
+    let visuallyVerified = false;
+    if (originalImage && listings.length > 0) {
+      try {
+        finalListings = await verifyListingsAgainstImage(originalImage, listings);
+        visuallyVerified = true;
+      } catch (err) {
+        console.warn("[/api/listings] verification failed, returning unfiltered:", err);
+      }
+    }
+
+    return NextResponse.json({
+      listings: finalListings,
+      exact,
+      visuallyVerified,
+    });
   } catch (err) {
     console.error("[/api/listings] error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";

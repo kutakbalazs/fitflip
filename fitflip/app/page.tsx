@@ -345,13 +345,24 @@ export default function HomePage() {
       return;
     }
 
+    const firstImage = images[0];
+    const originalImage = firstImage
+      ? { data: firstImage.data, mediaType: firstImage.mediaType }
+      : null;
+
     let cancelled = false;
     setListingsLoading(true);
     setListings(null);
     fetch("/api/listings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ queries, brandTokens, modelTokens, colorTokens }),
+      body: JSON.stringify({
+        queries,
+        brandTokens,
+        modelTokens,
+        colorTokens,
+        ...(originalImage ? { originalImage } : {}),
+      }),
     })
       .then(async (res) => {
         if (!res.ok) return { listings: [] as Listing[], exact: true };
