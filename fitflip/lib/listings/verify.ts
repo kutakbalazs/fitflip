@@ -16,18 +16,17 @@ type FetchedImage = {
 const FETCH_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-const VERIFY_PROMPT = `You are verifying marketplace listings against a target product image.
+const VERIFY_PROMPT = `You are visually comparing marketplace listings to a target product image.
 
-The first image (Image 0) is the target product the user wants to find.
+Image 0 is the target product the user wants to find.
 The remaining images (Image 1, Image 2, …) are thumbnails from marketplace listings.
 
-For EACH listing image, decide whether it shows the EXACT SAME product as the target:
-- Same BRAND
-- Same MODEL (e.g. "Air Jordan 1" is NOT the same as "Air Jordan 4")
-- Same COLORWAY (e.g. "Dark Mocha" is NOT the same as "Travis Scott", "Lucky Green", "Light Fusion Red", etc.)
-- Same CUT / silhouette (high-top vs low-top vs mid)
+For EACH listing image, decide if it shows the SAME product as the target — same brand, same model, same colorway, same general cut (e.g. high-top vs low-top). Compare them VISUALLY, not just by name.
 
-Be STRICT. If you cannot tell from the thumbnail (blurry, angle hides key features), default to "same: false" — it is better to drop a maybe-match than to mislead the user.
+Decision rules:
+- Mark "same: true" when the listing clearly shows the same product, even if the angle, lighting, or thumbnail quality differs from the target.
+- Mark "same: false" ONLY when you can clearly see a DIFFERENT brand, a different model, a different colorway, or a different silhouette. Examples: Jordan 4 vs Jordan 1, low-top vs high-top, white/red vs brown/cream colorway.
+- If the thumbnail is small, blurry, or partially shown, but what IS visible looks consistent with the target, lean toward "same: true". It is worse to drop a real match than to occasionally include a maybe.
 
 Output ONLY a valid JSON object, NO markdown fences, NO other commentary:
 { "matches": [{"i": 1, "same": true|false}, {"i": 2, "same": true|false}, …] }
