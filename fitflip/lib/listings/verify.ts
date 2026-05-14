@@ -8,6 +8,12 @@ type OriginalImage = {
   mediaType: ImageMediaType;
 };
 
+export type VerifyHints = {
+  brand?: string;
+  model?: string;
+  color?: string;
+};
+
 type FetchedImage = {
   data: string;
   mediaType: ImageMediaType;
@@ -62,9 +68,15 @@ async function fetchAsBase64(url: string): Promise<FetchedImage | null> {
 type VerifyMatch = { i: number; same: boolean };
 type VerifyResponse = { matches: VerifyMatch[] };
 
+// Safety net: never drop more than this fraction of the listings. If the
+// verifier wants to drop more, we suspect over-filtering and return the
+// unverified list — better to show maybe-relevant items than nothing.
+const MAX_DROP_RATIO = 0.7;
+
 export async function verifyListingsAgainstImage(
   original: OriginalImage,
-  listings: Listing[]
+  listings: Listing[],
+  hints: VerifyHints = {}
 ): Promise<Listing[]> {
   const apiKey = process.env.ANTHROPIC_API_KEY || process.env.FITFLIP_ANTHROPIC_KEY;
   if (!apiKey) {
@@ -118,7 +130,16 @@ export async function verifyListingsAgainstImage(
     });
   });
 
-  content.push({ type: "text", text: VERIFY_PROMPT });
+  const hintLines: string[] = [];
+  if (hints.brand) hintLines.push(`- Brand: ${hints.brand}`);
+  if (hints.model) hintLines.push(`- Model: ${hints.model}`);
+  if (hints.color) hintLines.push(`- Colorway: ${hints.color}`);
+  const hintBlock =
+    hintLines.length > 0
+      ? `\n\nText context for the target product (use as a tiebreaker when the photo is ambiguous):\n${hintLines.join("\n")}`
+      : "";
+
+  content.push({ type: "text", text: VERIFY_PROMPT + hintBlock });
 
   let parsed: VerifyResponse | null = null;
   try {
@@ -157,6 +178,18 @@ export async function verifyListingsAgainstImage(
       if (typeof origIdx === "number") droppedIdx.add(origIdx);
     }
   }
+
+  // Safety net: if the verifier wants to drop too many, fall back to the
+  // unverified list. Better to show maybe-relevant listings than nothing.
+  const dropRatio = droppedIdx.size / listings.length;
+  if (dropRatio > MAX_DROP_RATIO) {
+    console.warn(
+      `[verify] dropping ${droppedIdx.size}/${listings.length} (${Math.round(dropRatio * 100)}%) — over ${Math.round(MAX_DROP_RATIO * 100)}% threshold, returning unfiltered`
+    );
+    return listings;
+  }
+
+  console.log(`[verify] kept ${listings.length - droppedIdx.size}/${listings.length}`);
 
   // Keep listings we couldn't verify (no image / fetch failed) as conservative
   // fallback — only explicitly-rejected ones get dropped.

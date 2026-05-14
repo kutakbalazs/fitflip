@@ -35,6 +35,9 @@ export async function POST(req: NextRequest) {
     const brandTokens = sanitizeArray(body?.brandTokens);
     const modelTokens = sanitizeArray(body?.modelTokens);
     const colorTokens = sanitizeArray(body?.colorTokens);
+    const brandHint = typeof body?.brand === "string" ? body.brand : "";
+    const modelHint = typeof body?.model === "string" ? body.model : "";
+    const colorHint = typeof body?.color === "string" ? body.color : "";
     const originalImage =
       body?.originalImage &&
       typeof body.originalImage === "object" &&
@@ -72,7 +75,11 @@ export async function POST(req: NextRequest) {
     let visuallyVerified = false;
     if (originalImage && listings.length > 0) {
       try {
-        finalListings = await verifyListingsAgainstImage(originalImage, listings);
+        finalListings = await verifyListingsAgainstImage(originalImage, listings, {
+          brand: brandHint || undefined,
+          model: modelHint || undefined,
+          color: colorHint || undefined,
+        });
         visuallyVerified = true;
       } catch (err) {
         console.warn("[/api/listings] verification failed, returning unfiltered:", err);

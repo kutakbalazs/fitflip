@@ -361,6 +361,9 @@ export default function HomePage() {
         brandTokens,
         modelTokens,
         colorTokens,
+        brand,
+        model,
+        color,
         ...(originalImage ? { originalImage } : {}),
       }),
     })
