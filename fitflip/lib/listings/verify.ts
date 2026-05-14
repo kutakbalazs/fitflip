@@ -27,12 +27,12 @@ const VERIFY_PROMPT = `You are visually comparing marketplace listings to a targ
 Image 0 is the target product the user wants to find.
 The remaining images (Image 1, Image 2, …) are thumbnails from marketplace listings.
 
-For EACH listing image, decide if it shows the SAME product as the target — same brand, same model, same colorway, same general cut (e.g. high-top vs low-top). Compare them VISUALLY, not just by name.
+For EACH listing image, decide if it shows the SAME product as the target. Compare them VISUALLY — same brand markers, same model, same colorway pattern, same general cut (high-top vs low-top, length, fit).
 
-Decision rules:
-- Mark "same: true" when the listing clearly shows the same product, even if the angle, lighting, or thumbnail quality differs from the target.
-- Mark "same: false" ONLY when you can clearly see a DIFFERENT brand, a different model, a different colorway, or a different silhouette. Examples: Jordan 4 vs Jordan 1, low-top vs high-top, white/red vs brown/cream colorway.
-- If the thumbnail is small, blurry, or partially shown, but what IS visible looks consistent with the target, lean toward "same: true". It is worse to drop a real match than to occasionally include a maybe.
+Decision rules (be precise, not biased either way):
+- "same: true" — the listing clearly shows the same model AND the same colorway pattern as the target. Different angle, lighting, background or photo quality are fine; the product itself must look like the same item.
+- "same: false" — the listing shows any of: a different model number (e.g. Jordan 4 vs Jordan 1), a different cut (low-top vs high-top), a different dominant colorway (e.g. green vs brown, red vs white), or a different brand. Be willing to mark false: a wrong colorway with the right model is still wrong.
+- If you genuinely cannot tell from the thumbnail (extremely blurry, key area not visible), pick whichever side you find slightly more likely — do not lean systematically either way.
 
 Output ONLY a valid JSON object, NO markdown fences, NO other commentary:
 { "matches": [{"i": 1, "same": true|false}, {"i": 2, "same": true|false}, …] }
@@ -68,10 +68,11 @@ async function fetchAsBase64(url: string): Promise<FetchedImage | null> {
 type VerifyMatch = { i: number; same: boolean };
 type VerifyResponse = { matches: VerifyMatch[] };
 
-// Safety net: never drop more than this fraction of the listings. If the
-// verifier wants to drop more, we suspect over-filtering and return the
-// unverified list — better to show maybe-relevant items than nothing.
-const MAX_DROP_RATIO = 0.7;
+// Safety net: only when the verifier wants to drop everything (>90%) do we
+// suspect over-filtering. In that case, fall back to the top half of the
+// aggregator's already-scored listings — never to the full unfiltered set,
+// otherwise we'd surface the bad matches we tried to filter out.
+const MAX_DROP_RATIO = 0.9;
 
 export async function verifyListingsAgainstImage(
   original: OriginalImage,
@@ -179,19 +180,23 @@ export async function verifyListingsAgainstImage(
     }
   }
 
-  // Safety net: if the verifier wants to drop too many, fall back to the
-  // unverified list. Better to show maybe-relevant listings than nothing.
   const dropRatio = droppedIdx.size / listings.length;
-  if (dropRatio > MAX_DROP_RATIO) {
+  const kept = listings.filter((_, idx) => !droppedIdx.has(idx));
+
+  // Safety net: only when essentially everything dropped — keep the top
+  // few candidates from the aggregator so the panel isn't empty. We don't
+  // restore everything (that would resurface the listings the AI rejected).
+  if (dropRatio > MAX_DROP_RATIO && kept.length === 0) {
+    const topFew = listings.slice(0, Math.min(3, listings.length));
     console.warn(
-      `[verify] dropping ${droppedIdx.size}/${listings.length} (${Math.round(dropRatio * 100)}%) — over ${Math.round(MAX_DROP_RATIO * 100)}% threshold, returning unfiltered`
+      `[verify] dropped ${droppedIdx.size}/${listings.length} — over ${Math.round(MAX_DROP_RATIO * 100)}% threshold, returning top ${topFew.length} as best-guess fallback`
     );
-    return listings;
+    return topFew;
   }
 
-  console.log(`[verify] kept ${listings.length - droppedIdx.size}/${listings.length}`);
+  console.log(`[verify] kept ${kept.length}/${listings.length}`);
 
-  // Keep listings we couldn't verify (no image / fetch failed) as conservative
-  // fallback — only explicitly-rejected ones get dropped.
-  return listings.filter((_, idx) => !droppedIdx.has(idx));
+  // Listings without imageUrl couldn't be verified → they're not in droppedIdx,
+  // so they survive the filter as a conservative default.
+  return kept;
 }
