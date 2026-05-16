@@ -16,8 +16,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   const challengeCode = req.nextUrl.searchParams.get("challenge_code");
-  const verificationToken = process.env.EBAY_VERIFICATION_TOKEN;
-  const endpointUrl = process.env.EBAY_ENDPOINT_URL;
+  // Trim defensively — copy-paste into Vercel env vars sometimes drags in a
+  // trailing newline that silently breaks the hash comparison with eBay.
+  const verificationToken = (process.env.EBAY_VERIFICATION_TOKEN ?? "").trim();
+  const endpointUrl = (process.env.EBAY_ENDPOINT_URL ?? "").trim();
 
   if (!challengeCode) {
     return NextResponse.json({ error: "missing_challenge_code" }, { status: 400 });
@@ -32,6 +34,13 @@ export async function GET(req: NextRequest) {
     .update(verificationToken)
     .update(endpointUrl)
     .digest("hex");
+
+  // Lightweight debug signal so eBay save failures can be diagnosed without
+  // leaking the token: we expose the lengths and the first/last char of each
+  // value, never the values themselves.
+  console.log(
+    `[ebay-deletion] challenge="${challengeCode.length}ch" token="${verificationToken.length}ch (${verificationToken[0]}…${verificationToken[verificationToken.length - 1]})" url="${endpointUrl}"`
+  );
 
   return NextResponse.json({ challengeResponse });
 }
