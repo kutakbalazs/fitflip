@@ -39,8 +39,10 @@ function toHuf(amount: number, currency: string): number | null {
 }
 
 async function getAppToken(): Promise<string | null> {
-  const clientId = process.env.EBAY_CLIENT_ID;
-  const clientSecret = process.env.EBAY_CLIENT_SECRET;
+  // Trim defensively — copy-paste into Vercel sometimes drags in trailing
+  // whitespace that silently breaks Basic auth without showing why.
+  const clientId = (process.env.EBAY_CLIENT_ID ?? "").trim();
+  const clientSecret = (process.env.EBAY_CLIENT_SECRET ?? "").trim();
   if (!clientId || !clientSecret) {
     return null;
   }
