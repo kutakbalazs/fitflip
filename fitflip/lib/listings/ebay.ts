@@ -108,12 +108,18 @@ export async function searchEbay(query: string, limit = 12): Promise<Listing[]> 
             ? `${priceAmount.toFixed(2)} ${currency}`
             : "—";
 
+      // Strip session/tracking params (?_skw, ?hash, ?amdata, …). They change
+      // every request, which breaks dedup across queries and makes the same
+      // item appear multiple times in the result pool, crowding out others.
+      const rawUrl = item.itemWebUrl ?? "https://www.ebay.de/";
+      const stableUrl = rawUrl.split("?")[0];
+
       return {
         source: "ebay",
         title: item.title ?? "eBay listing",
         priceHuf,
         priceLabel,
-        url: item.itemWebUrl ?? "https://www.ebay.de/",
+        url: stableUrl,
         imageUrl:
           item.image?.imageUrl ?? item.thumbnailImages?.[0]?.imageUrl ?? null,
         location: item.itemLocation?.country ?? null,
