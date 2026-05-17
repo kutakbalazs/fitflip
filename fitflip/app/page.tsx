@@ -605,24 +605,54 @@ export default function HomePage() {
     return new Intl.NumberFormat("hu-HU").format(n) + " Ft";
   };
 
+  // Heuristic: does a listing read as new vs used? Marketplace titles and
+  // their built-in condition field both tend to leak the same words.
+  const NEW_WORDS = /\b(új|new|nwt|bnib|deadstock|neu|neuwertig|ungetragen|ovp|tags|címkével|újszerű)\b/i;
+  const listingLooksNew = (l: Listing): boolean => {
+    const blob = `${l.condition ?? ""} ${l.title}`;
+    return NEW_WORDS.test(blob);
+  };
+
   // Derive a "market range" from verified listings' prices. Q1 and Q3 are
   // robust to the cheap outliers and ambitious high-asks that marketplace
   // sellers post, so the user sees a realistic typical-ask band rather
   // than a misleading min/max.
   //
-  // Only computed when we have an EXACT match set — broader/visual-similar
-  // results would skew the range and mislead the user about their item's
-  // value (it would be like pricing a Jordan 1 Mocha using random Jordan 1
-  // listings of different colorways).
-  const marketStats: { q1: number; q3: number; count: number } | null = (() => {
+  // Filter rules:
+  // - Only when the AI identified the brand AND the listing set is exact —
+  //   broader/visual-similar results would skew the range.
+  // - Only listings whose condition roughly matches the scanned item's
+  //   condition feed into the calculation. A new item shouldn't be priced
+  //   using used listings (and vice versa). The grid still shows every
+  //   listing — this filter only affects the price band.
+  // - Falls back to the full set if the condition filter leaves < 2 priced
+  //   listings, so we still display something.
+  const marketStats:
+    | { q1: number; q3: number; count: number; conditionTag: "new" | "used" | "mixed" }
+    | null = (() => {
     if (!listings) return null;
     if (!listingsExact) return null;
     if (!result?.brand?.trim()) return null;
-    const prices = listings
-      .map((l) => l.priceHuf)
-      .filter((p): p is number => typeof p === "number" && p > 0)
-      .sort((a, b) => a - b);
-    if (prices.length < 3) return null;
+
+    const priced = listings.filter(
+      (l): l is Listing & { priceHuf: number } =>
+        typeof l.priceHuf === "number" && l.priceHuf > 0
+    );
+    if (priced.length === 0) return null;
+
+    const scannedIsNew =
+      result.condition === "új" || result.condition === "nagyon jó";
+
+    const matching = priced.filter((l) =>
+      scannedIsNew ? listingLooksNew(l) : !listingLooksNew(l)
+    );
+
+    // Use the condition-matched subset when we have ≥ 2; otherwise fall
+    // back to all priced listings so the user gets *some* range.
+    const useFiltered = matching.length >= 2;
+    const subset = useFiltered ? matching : priced;
+    const prices = subset.map((l) => l.priceHuf).sort((a, b) => a - b);
+
     const quantile = (q: number) => {
       const pos = (prices.length - 1) * q;
       const lo = Math.floor(pos);
@@ -630,7 +660,13 @@ export default function HomePage() {
       if (lo === hi) return prices[lo];
       return Math.round(prices[lo] + (prices[hi] - prices[lo]) * (pos - lo));
     };
-    return { q1: quantile(0.25), q3: quantile(0.75), count: prices.length };
+
+    return {
+      q1: quantile(0.25),
+      q3: quantile(0.75),
+      count: prices.length,
+      conditionTag: useFiltered ? (scannedIsNew ? "new" : "used") : "mixed",
+    };
   })();
 
   const startCheckout = async () => {
@@ -1165,10 +1201,17 @@ export default function HomePage() {
                         <dt className="text-ink-500">{t.marketRangeLabel}</dt>
                         <dd className="font-medium text-right">
                           <div>
-                            {formatHuf(marketStats.q1)} – {formatHuf(marketStats.q3)}
+                            {marketStats.q1 === marketStats.q3
+                              ? formatHuf(marketStats.q1)
+                              : `${formatHuf(marketStats.q1)} – ${formatHuf(marketStats.q3)}`}
                           </div>
                           <div className="text-[11px] font-normal text-ink-500 mt-0.5">
-                            {t.marketRangeSub.replace("{n}", String(marketStats.count))}
+                            {(marketStats.conditionTag === "new"
+                              ? t.marketRangeSubNew
+                              : marketStats.conditionTag === "used"
+                                ? t.marketRangeSubUsed
+                                : t.marketRangeSub
+                            ).replace("{n}", String(marketStats.count))}
                           </div>
                         </dd>
                       </div>
