@@ -605,6 +605,34 @@ export default function HomePage() {
     return new Intl.NumberFormat("hu-HU").format(n) + " Ft";
   };
 
+  // Derive a "market range" from verified listings' prices. Q1 and Q3 are
+  // robust to the cheap outliers and ambitious high-asks that marketplace
+  // sellers post, so the user sees a realistic typical-ask band rather
+  // than a misleading min/max.
+  //
+  // Only computed when we have an EXACT match set — broader/visual-similar
+  // results would skew the range and mislead the user about their item's
+  // value (it would be like pricing a Jordan 1 Mocha using random Jordan 1
+  // listings of different colorways).
+  const marketStats: { q1: number; q3: number; count: number } | null = (() => {
+    if (!listings) return null;
+    if (!listingsExact) return null;
+    if (!result?.brand?.trim()) return null;
+    const prices = listings
+      .map((l) => l.priceHuf)
+      .filter((p): p is number => typeof p === "number" && p > 0)
+      .sort((a, b) => a - b);
+    if (prices.length < 3) return null;
+    const quantile = (q: number) => {
+      const pos = (prices.length - 1) * q;
+      const lo = Math.floor(pos);
+      const hi = Math.ceil(pos);
+      if (lo === hi) return prices[lo];
+      return Math.round(prices[lo] + (prices[hi] - prices[lo]) * (pos - lo));
+    };
+    return { q1: quantile(0.25), q3: quantile(0.75), count: prices.length };
+  })();
+
   const startCheckout = async () => {
     setCheckoutLoading(true);
     try {
@@ -1132,6 +1160,19 @@ export default function HomePage() {
                         )}
                       </dd>
                     </div>
+                    {marketStats && (
+                      <div className="flex justify-between px-6 py-3 text-sm">
+                        <dt className="text-ink-500">{t.marketRangeLabel}</dt>
+                        <dd className="font-medium text-right">
+                          <div>
+                            {formatHuf(marketStats.q1)} – {formatHuf(marketStats.q3)}
+                          </div>
+                          <div className="text-[11px] font-normal text-ink-500 mt-0.5">
+                            {t.marketRangeSub.replace("{n}", String(marketStats.count))}
+                          </div>
+                        </dd>
+                      </div>
+                    )}
                   </dl>
 
                   {Array.isArray(result.defects) && result.defects.length > 0 && (
