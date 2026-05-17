@@ -69,21 +69,38 @@ export async function POST(req: NextRequest) {
       colorTokens
     );
 
+    // Strict mode: when the AI couldn't identify the brand we have less to
+    // anchor on, so we ask the verifier to be much pickier and cap the
+    // result count. Better to show 2 high-confidence matches than 10 noisy
+    // ones in this scenario.
+    const strict = !brandHint;
+
     // If we have the user's image, ask the model to look at every listing
     // thumbnail and drop ones that aren't actually the same product.
     let finalListings = listings;
     let visuallyVerified = false;
     if (originalImage && listings.length > 0) {
       try {
-        finalListings = await verifyListingsAgainstImage(originalImage, listings, {
-          brand: brandHint || undefined,
-          model: modelHint || undefined,
-          color: colorHint || undefined,
-        });
+        finalListings = await verifyListingsAgainstImage(
+          originalImage,
+          listings,
+          {
+            brand: brandHint || undefined,
+            model: modelHint || undefined,
+            color: colorHint || undefined,
+          },
+          { strict }
+        );
         visuallyVerified = true;
       } catch (err) {
         console.warn("[/api/listings] verification failed, returning unfiltered:", err);
       }
+    }
+
+    // In strict mode we also cap the final result: 6 high-confidence is much
+    // friendlier than 12 "maybe".
+    if (strict && finalListings.length > 6) {
+      finalListings = finalListings.slice(0, 6);
     }
 
     return NextResponse.json({

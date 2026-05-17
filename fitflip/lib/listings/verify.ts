@@ -14,6 +14,15 @@ export type VerifyHints = {
   color?: string;
 };
 
+export type VerifyOptions = {
+  /**
+   * Strict mode: the AI couldn't identify the brand, so we have less to go
+   * on. The verifier prompt becomes much pickier, the safety-net fallback
+   * is disabled (empty beats junk), and we cap the result count.
+   */
+  strict?: boolean;
+};
+
 type FetchedImage = {
   data: string;
   mediaType: ImageMediaType;
@@ -35,6 +44,24 @@ Decision rules (be precise, not biased either way):
 - If you genuinely cannot tell from the thumbnail (extremely blurry, key area not visible), pick whichever side you find slightly more likely — do not lean systematically either way.
 
 Output ONLY a valid JSON object, NO markdown fences, NO other commentary:
+{ "matches": [{"i": 1, "same": true|false}, {"i": 2, "same": true|false}, …] }
+
+Include EVERY listing image (1..N) in the matches array.`;
+
+const VERIFY_PROMPT_STRICT = `You are visually comparing marketplace listings to a target product image. The brand of the target couldn't be identified — there is no logo or label hint to fall back on, only the look of the item itself. Be EXTRA picky.
+
+Image 0 is the target product. Images 1, 2, … are listing thumbnails.
+
+For EACH listing, decide "same: true" ONLY if the listing visually shows what looks like THE SAME specific product as the target:
+- Same general category (sneaker / shirt / jacket / pants / hoodie / dress / etc.)
+- Same silhouette and cut (high-top vs low-top, hooded vs crew, slim vs loose, length, sleeve)
+- Same dominant colors AND same color distribution / pattern (a black-and-white shoe is NOT the same as an all-black shoe even if both have a swoosh)
+- Same material look (leather vs canvas vs knit, denim wash, suede vs smooth)
+- Same distinctive design cues (stripes, panels, prints, logos placement if any)
+
+Be HEAVILY biased toward "same: false". When in doubt, mark FALSE. It is much worse to show a wrong item to a user with no brand context than to show an empty result. Only return "same: true" when you'd confidently tell a friend "yes, that's the same thing".
+
+Output ONLY a valid JSON object, NO markdown fences, NO commentary:
 { "matches": [{"i": 1, "same": true|false}, {"i": 2, "same": true|false}, …] }
 
 Include EVERY listing image (1..N) in the matches array.`;
@@ -77,8 +104,10 @@ const MAX_DROP_RATIO = 0.9;
 export async function verifyListingsAgainstImage(
   original: OriginalImage,
   listings: Listing[],
-  hints: VerifyHints = {}
+  hints: VerifyHints = {},
+  options: VerifyOptions = {}
 ): Promise<Listing[]> {
+  const strict = options.strict === true;
   const apiKey = process.env.ANTHROPIC_API_KEY || process.env.FITFLIP_ANTHROPIC_KEY;
   if (!apiKey) {
     console.warn("[verify] no API key set, skipping verification");
@@ -140,7 +169,8 @@ export async function verifyListingsAgainstImage(
       ? `\n\nText context for the target product (use as a tiebreaker when the photo is ambiguous):\n${hintLines.join("\n")}`
       : "";
 
-  content.push({ type: "text", text: VERIFY_PROMPT + hintBlock });
+  const basePrompt = strict ? VERIFY_PROMPT_STRICT : VERIFY_PROMPT;
+  content.push({ type: "text", text: basePrompt + hintBlock });
 
   let parsed: VerifyResponse | null = null;
   try {
@@ -186,7 +216,9 @@ export async function verifyListingsAgainstImage(
   // Safety net: only when essentially everything dropped — keep the top
   // few candidates from the aggregator so the panel isn't empty. We don't
   // restore everything (that would resurface the listings the AI rejected).
-  if (dropRatio > MAX_DROP_RATIO && kept.length === 0) {
+  // Disabled in strict mode: when we couldn't identify the brand, an empty
+  // result is far better than presenting unrelated items as "best guesses".
+  if (!strict && dropRatio > MAX_DROP_RATIO && kept.length === 0) {
     const topFew = listings.slice(0, Math.min(3, listings.length));
     console.warn(
       `[verify] dropped ${droppedIdx.size}/${listings.length} — over ${Math.round(MAX_DROP_RATIO * 100)}% threshold, returning top ${topFew.length} as best-guess fallback`
@@ -194,9 +226,14 @@ export async function verifyListingsAgainstImage(
     return topFew;
   }
 
-  console.log(`[verify] kept ${kept.length}/${listings.length}`);
+  console.log(`[verify] kept ${kept.length}/${listings.length}${strict ? " (strict)" : ""}`);
 
   // Listings without imageUrl couldn't be verified → they're not in droppedIdx,
-  // so they survive the filter as a conservative default.
+  // so they survive the filter as a conservative default. In strict mode we
+  // drop them too: with no brand to anchor on, an unverifiable listing is
+  // more likely to be noise.
+  if (strict) {
+    return kept.filter((l) => l.imageUrl);
+  }
   return kept;
 }
