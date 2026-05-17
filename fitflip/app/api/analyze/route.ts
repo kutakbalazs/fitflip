@@ -88,6 +88,22 @@ VIZUÁLIS KULCSSZAVAK (kritikus a brand-null esetekre, MINDIG töltsd ki):
 - Példák: ["leather brown high-top sneaker", "oversized denim jacket", "ribbed beige cardigan"]
 - Ne tartalmazzon brand-et — vizuális leírás (szín, anyag, szabás, jelleg). Ezt használjuk fallback search-höz amikor a márka ismeretlen.
 
+HIBÁK / SÉRÜLÉSEK (KRITIKUS — közvetlenül az értékbecslésbe folyik):
+- AKTÍVAN keresd a látható hibákat: szakadás, lyuk, folt, fakulás, kopás (talp, sarok, könyök, gallér), pilling, hiányzó rész (fűző, gomb, cipzár), beszáradt anyag, deformálódás, sárgulás. KÖZELI képeken különösen figyelj a részletekre.
+- A "defects" mezőbe sorold fel KONKRÉTAN amit látsz, MAGYARUL, rövid jelzős kifejezésekkel:
+  * "2-3 cm-es szakadás a bal hátsó zsebnél"
+  * "halvány folt a jobb sarokrészen"
+  * "talp kopás a cipő külső oldalán"
+  * "elszíneződés a hónaljnál"
+- Ha NINCS látható hiba, állítsd defects:[] üres tömbre. NE TIPPELJ — ha bizonytalan vagy, ne sorold fel.
+- A "condition_discount_pct" a hibákból eredő ÖSSZESÍTETT értékvesztés százalékban (0-100):
+  * Apró kopás / minor jel: 5-10%
+  * Látható folt / kisebb szakadás: 10-25%
+  * Nagy szakadás / mély kopás / hiányzó alkatrész: 25-50%
+  * Súlyos károsodás (nagy lyuk, nagy folt, deformáció): 50%+
+  * Ha defects üres → condition_discount_pct: 0
+- AZ "estimated_value_min_huf" és "estimated_value_max_huf" mezők MÁR EZ ALAPJÁN diszkontált értékeket adjanak meg (vagyis a hibátlan piaci árból már levontad a condition_discount_pct-et). NE külön add meg a hibátlan árat.
+
 VÁLASZ FORMÁTUM (CSAK ezt a JSON-t add vissza, semmi mást, semmi markdown):
 
 {
@@ -99,8 +115,10 @@ VÁLASZ FORMÁTUM (CSAK ezt a JSON-t add vissza, semmi mást, semmi markdown):
   "visual_keywords": ["3-5 vizuális kereső-kifejezés angolul, brand nélkül"],
   "era": "string vagy null",
   "condition": "új | nagyon jó | jó | használt | rossz" vagy null,
-  "estimated_value_min_huf": number vagy null,
-  "estimated_value_max_huf": number vagy null,
+  "defects": ["konkrét hibák magyarul, üres tömb ha nincs"],
+  "condition_discount_pct": number (0-100, hibákból eredő értékvesztés, 0 ha defects üres),
+  "estimated_value_min_huf": number vagy null (MÁR diszkontált),
+  "estimated_value_max_huf": number vagy null (MÁR diszkontált),
   "description": "2-3 mondat magyarul – mit látsz, mi az érdekes benne, ha bizonytalan vagy akkor miért",
   "search_query": "angol kereső kifejezés (márka + modell + colorway/évjárat)",
   "selling_tip": "1-2 mondatos magyar tipp az eladáshoz",
@@ -153,6 +171,22 @@ VISUAL KEYWORDS (critical for brand-null fallback search, ALWAYS fill in):
 - Examples: ["leather brown high-top sneaker", "oversized denim jacket", "ribbed beige cardigan"]
 - DO NOT include the brand — only visual descriptors (color, material, fit, character). We use these as fallback search terms when the brand is unknown.
 
+DEFECTS / DAMAGE (CRITICAL — flows directly into the value estimate):
+- ACTIVELY scan for visible defects: tears, holes, stains, fading, wear (sole, heel, elbows, collar), pilling, missing parts (laces, buttons, zippers), discoloration, deformation, yellowing. Pay extra attention to close-up photos.
+- In "defects", list EXACTLY what you see, in ENGLISH, as short noun phrases:
+  * "2-3 cm tear on back left pocket"
+  * "faint stain on right heel"
+  * "sole wear on outer side"
+  * "discoloration at armpit"
+- If NO visible defect, set defects:[] empty. DO NOT GUESS — if uncertain, don't list it.
+- "condition_discount_pct" is the AGGREGATE percentage value loss from the defects (0-100):
+  * Minor wear / signs: 5-10%
+  * Visible stain / small tear: 10-25%
+  * Large tear / deep wear / missing part: 25-50%
+  * Severe damage (big hole, big stain, deformation): 50%+
+  * If defects is empty → condition_discount_pct: 0
+- "estimated_value_min_huf" and "estimated_value_max_huf" must ALREADY reflect this discount (i.e. you've subtracted the condition_discount_pct from a hypothetical pristine market price). DO NOT report the pristine price separately.
+
 RESPONSE FORMAT (return ONLY this JSON, nothing else, no markdown):
 
 {
@@ -164,8 +198,10 @@ RESPONSE FORMAT (return ONLY this JSON, nothing else, no markdown):
   "visual_keywords": ["3-5 visual search phrases in English, without brand"],
   "era": "string or null",
   "condition": "new | excellent | good | used | poor" or null,
-  "estimated_value_min_huf": number or null,
-  "estimated_value_max_huf": number or null,
+  "defects": ["short English phrases for each visible defect, empty array if none"],
+  "condition_discount_pct": number (0-100, aggregate value loss from defects, 0 if defects empty),
+  "estimated_value_min_huf": number or null (ALREADY discounted),
+  "estimated_value_max_huf": number or null (ALREADY discounted),
   "description": "2-3 sentences in English – what you see, what's interesting, why uncertain if applicable",
   "search_query": "English search query (brand + model + colorway/year)",
   "selling_tip": "1-2 sentence selling tip in English",

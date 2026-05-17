@@ -15,6 +15,8 @@ type AnalysisResult = {
   visual_keywords: string[] | null;
   era: string | null;
   condition: string | null;
+  defects: string[] | null;
+  condition_discount_pct: number | null;
   estimated_value_min_huf: number | null;
   estimated_value_max_huf: number | null;
   description: string | null;
@@ -1119,11 +1121,41 @@ export default function HomePage() {
                     )}
                     <div className="flex justify-between px-6 py-3 text-sm">
                       <dt className="text-ink-500">{t.estimatedValue}</dt>
-                      <dd className="font-medium">
-                        {formatHuf(result.estimated_value_min_huf)} – {formatHuf(result.estimated_value_max_huf)}
+                      <dd className="font-medium text-right">
+                        <div>
+                          {formatHuf(result.estimated_value_min_huf)} – {formatHuf(result.estimated_value_max_huf)}
+                        </div>
+                        {typeof result.condition_discount_pct === "number" && result.condition_discount_pct > 0 && (
+                          <div className="text-[11px] font-normal text-ink-500 mt-0.5">
+                            {t.estimatedValueDiscountNote.replace("{n}", String(result.condition_discount_pct))}
+                          </div>
+                        )}
                       </dd>
                     </div>
                   </dl>
+
+                  {Array.isArray(result.defects) && result.defects.length > 0 && (
+                    <div className="px-6 py-4 bg-amber-50 border-t border-amber-100 text-sm text-amber-900">
+                      <div className="flex items-center gap-2 mb-2">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                          <line x1="12" y1="9" x2="12" y2="13" />
+                          <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                        <span className="font-medium">{t.defectsTitle}</span>
+                      </div>
+                      <ul className="list-disc list-inside space-y-0.5 leading-relaxed">
+                        {result.defects.map((d, i) => (
+                          <li key={i}>{d}</li>
+                        ))}
+                      </ul>
+                      {typeof result.condition_discount_pct === "number" && result.condition_discount_pct > 0 && (
+                        <p className="text-[12px] text-amber-700 mt-3">
+                          {t.defectsImpactNote.replace("{n}", String(result.condition_discount_pct))}
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   {result.description && (
                     <div className="px-6 py-4 bg-ink-50 text-sm text-ink-700 leading-relaxed">
