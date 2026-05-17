@@ -606,8 +606,11 @@ export default function HomePage() {
   };
 
   // Heuristic: does a listing read as new vs used? Marketplace titles and
-  // their built-in condition field both tend to leak the same words.
-  const NEW_WORDS = /\b(új|new|nwt|bnib|deadstock|neu|neuwertig|ungetragen|ovp|tags|címkével|újszerű)\b/i;
+  // built-in condition fields leak condition wording in many languages.
+  // Vinted in particular pulls from across the EU (Polish, Romanian, Czech,
+  // Slovak listings appear on vinted.hu), so the regex covers those too.
+  const NEW_WORDS =
+    /\b(új|újszerű|címkével|csak felpróbált|kihagy(t|va)|new|nwt|bnib|deadstock|ds|unworn|brand new|with tags|tags attached|neu|neuwertig|ungetragen|ovp|nie getragen|nowe|nowy|nowa|nieuży|z met(k|ką)|nou|nouă|neoplata|nové|nový|nepoužitý)\b/i;
   const listingLooksNew = (l: Listing): boolean => {
     const blob = `${l.condition ?? ""} ${l.title}`;
     return NEW_WORDS.test(blob);
@@ -651,7 +654,18 @@ export default function HomePage() {
     // back to all priced listings so the user gets *some* range.
     const useFiltered = matching.length >= 2;
     const subset = useFiltered ? matching : priced;
-    const prices = subset.map((l) => l.priceHuf).sort((a, b) => a - b);
+    const rawPrices = subset.map((l) => l.priceHuf).sort((a, b) => a - b);
+
+    // Outlier trim: even after the condition filter, a single mispriced
+    // listing (collector hold-out, mislabelled lot, currency conversion
+    // miss) skews Q1/Q3. Drop anything beyond [0.4× median, 2.5× median].
+    // Below 5 listings we keep all — the sample is small enough that
+    // removing items would leave too little to compute a meaningful band.
+    const median = rawPrices[Math.floor(rawPrices.length / 2)];
+    const prices =
+      rawPrices.length >= 5
+        ? rawPrices.filter((p) => p >= median * 0.4 && p <= median * 2.5)
+        : rawPrices;
 
     const quantile = (q: number) => {
       const pos = (prices.length - 1) * q;
