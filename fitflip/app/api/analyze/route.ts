@@ -9,7 +9,19 @@ export const dynamic = "force-dynamic";
 
 const FREE_DAILY_LIMIT = 3;
 
-function buildPrompt(lang: "hu" | "en", imageCount: number = 1): string {
+function buildPrompt(lang: "hu" | "en", imageCount: number = 1, userHint?: string): string {
+  const userHintBlockHu = userHint
+    ? `\n\nFELHASZNÁLÓI PONTOSÍTÁS (priorizálandó, a user maga adta meg, az AI-nál többet tud a darabról):
+"${userHint}"
+
+Ezt használd ELSŐDLEGES forrásként a brand/model azonosításhoz, akkor is ha a képből magában nem lennél biztos. A megadott infóval összhangban válaszolj, kivéve ha a kép EGYÉRTELMŰEN ellentmond (akkor a description-ben jelezd a feszültséget).`
+    : "";
+  const userHintBlockEn = userHint
+    ? `\n\nUSER CLARIFICATION (prioritise this — the user provided it because they know more about the item than the AI):
+"${userHint}"
+
+Use this as your PRIMARY source for brand/model identification, even when the image alone wouldn't be conclusive. Stay consistent with the user-provided info unless the image CLEARLY contradicts it (in which case, note the discrepancy in the description).`
+    : "";
   const multiNoteHu =
     imageCount > 1
       ? `\n\nFONTOS — TÖBB KÉP KEZELÉSE (${imageCount} kép):
@@ -30,7 +42,7 @@ function buildPrompt(lang: "hu" | "en", imageCount: number = 1): string {
 - If the FIRST image contains multiple clothing/footwear items and it's unclear which the user means, pick the centered or most prominent one, and add to the description: "I saw multiple items in the photo, analyzed the most prominent one. For a more accurate match, upload a closer photo of just that item."`
       : "";
   if (lang === "hu") {
-    return `Te a FitFlip vagy – egy precíziós AI azonosító divatcikkekhez (sneakerek, vintage ruhák, streetwear, designer darabok). A pontosság a legfontosabb: jobb őszintén bizonytalannak lenni, mint hibázni.${multiNoteHu}
+    return `Te a FitFlip vagy – egy precíziós AI azonosító divatcikkekhez (sneakerek, vintage ruhák, streetwear, designer darabok). A pontosság a legfontosabb: jobb őszintén bizonytalannak lenni, mint hibázni.${userHintBlockHu}${multiNoteHu}
 
 ELEMZÉSI MÓDSZER (kövesd ezt a sorrendet):
 1. Megerősítés: tényleg ruházat vagy lábbeli van a képen? Ha nem, állítsd recognized:false-ra.
@@ -71,6 +83,11 @@ SZÍN MEZŐ (FONTOS, hirdetéskereséshez használjuk):
 - Ha vegyes/mintás: a domináns vagy a megnevezhető szín.
 - Ha bizonytalan, állítsd null-ra inkább, mint hogy rosszat tippelj.
 
+VIZUÁLIS KULCSSZAVAK (kritikus a brand-null esetekre, MINDIG töltsd ki):
+- A "visual_keywords" 3-5 angol nyelvű, kereső-barát kifejezés ami a darabot vizuálisan jellemzi.
+- Példák: ["leather brown high-top sneaker", "oversized denim jacket", "ribbed beige cardigan"]
+- Ne tartalmazzon brand-et — vizuális leírás (szín, anyag, szabás, jelleg). Ezt használjuk fallback search-höz amikor a márka ismeretlen.
+
 VÁLASZ FORMÁTUM (CSAK ezt a JSON-t add vissza, semmi mást, semmi markdown):
 
 {
@@ -79,6 +96,7 @@ VÁLASZ FORMÁTUM (CSAK ezt a JSON-t add vissza, semmi mást, semmi markdown):
   "brand": "string vagy null",
   "model": "string vagy null",
   "color": "domináns szín vagy hivatalos colorway angolul, vagy null",
+  "visual_keywords": ["3-5 vizuális kereső-kifejezés angolul, brand nélkül"],
   "era": "string vagy null",
   "condition": "új | nagyon jó | jó | használt | rossz" vagy null,
   "estimated_value_min_huf": number vagy null,
@@ -89,7 +107,7 @@ VÁLASZ FORMÁTUM (CSAK ezt a JSON-t add vissza, semmi mást, semmi markdown):
   "confidence": "low" | "medium" | "high"
 }`;
   }
-  return `You are FitFlip – a precision AI identifier for fashion items (sneakers, vintage clothing, streetwear, designer pieces). Accuracy is paramount: it's better to be honestly uncertain than to be wrong.${multiNoteEn}
+  return `You are FitFlip – a precision AI identifier for fashion items (sneakers, vintage clothing, streetwear, designer pieces). Accuracy is paramount: it's better to be honestly uncertain than to be wrong.${userHintBlockEn}${multiNoteEn}
 
 ANALYSIS METHOD (follow this order):
 1. Confirmation: does the image actually show clothing or footwear? If not, set recognized:false
@@ -130,6 +148,11 @@ COLOR FIELD (IMPORTANT, used for marketplace search):
 - For mixed/patterned items: pick the dominant or nameable color.
 - If uncertain, set to null rather than guessing wrong.
 
+VISUAL KEYWORDS (critical for brand-null fallback search, ALWAYS fill in):
+- "visual_keywords" is an array of 3-5 search-friendly English phrases describing the item visually.
+- Examples: ["leather brown high-top sneaker", "oversized denim jacket", "ribbed beige cardigan"]
+- DO NOT include the brand — only visual descriptors (color, material, fit, character). We use these as fallback search terms when the brand is unknown.
+
 RESPONSE FORMAT (return ONLY this JSON, nothing else, no markdown):
 
 {
@@ -138,6 +161,7 @@ RESPONSE FORMAT (return ONLY this JSON, nothing else, no markdown):
   "brand": "string or null",
   "model": "string or null",
   "color": "dominant color or official colorway in English, or null",
+  "visual_keywords": ["3-5 visual search phrases in English, without brand"],
   "era": "string or null",
   "condition": "new | excellent | good | used | poor" or null,
   "estimated_value_min_huf": number or null,
@@ -222,12 +246,17 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { images, image, mediaType, lang } = body as {
+    const { images, image, mediaType, lang, hint } = body as {
       images?: Array<{ data: string; mediaType: string }>;
       image?: string;
       mediaType?: string;
       lang: "hu" | "en";
+      hint?: string;
     };
+    const userHint =
+      typeof hint === "string" && hint.trim().length > 0
+        ? hint.trim().slice(0, 200) // soft cap, prevents prompt injection bloat
+        : undefined;
 
     const normalizedImages: Array<{ data: string; mediaType: string }> =
       Array.isArray(images) && images.length > 0
@@ -310,7 +339,7 @@ export async function POST(req: NextRequest) {
             role: "user",
             content: [
               ...imageBlocks,
-              { type: "text", text: buildPrompt(lang || "hu", normalizedImages.length) },
+              { type: "text", text: buildPrompt(lang || "hu", normalizedImages.length, userHint) },
             ],
           },
         ],

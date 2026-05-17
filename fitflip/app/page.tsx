@@ -12,6 +12,7 @@ type AnalysisResult = {
   brand: string | null;
   model: string | null;
   color: string | null;
+  visual_keywords: string[] | null;
   era: string | null;
   condition: string | null;
   estimated_value_min_huf: number | null;
@@ -93,6 +94,11 @@ export default function HomePage() {
   const [listings, setListings] = useState<Listing[] | null>(null);
   const [listingsExact, setListingsExact] = useState(true);
   const [listingsLoading, setListingsLoading] = useState(false);
+  // Refinement flow: when the AI is uncertain (brand=null or confidence=low),
+  // we pause the listings fetch and offer a tiny "Pontosítás" widget.
+  const [refinementText, setRefinementText] = useState("");
+  const [refinementDismissed, setRefinementDismissed] = useState(false);
+  const [refinementLoading, setRefinementLoading] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -310,6 +316,18 @@ export default function HomePage() {
     const model = result.model?.trim() ?? "";
     const color = result.color?.trim() ?? "";
     const fallbackQuery = result.search_query?.trim() ?? "";
+    const visualKeywords = Array.isArray(result.visual_keywords)
+      ? result.visual_keywords.map((k) => k?.trim()).filter((k): k is string => !!k)
+      : [];
+
+    // Pause the listings fetch when the AI was honest about being unsure
+    // and the user hasn't told us to proceed yet. We render a refinement
+    // widget instead so they can either provide a hint or dismiss.
+    const isUncertain = !brand || result.confidence === "low";
+    if (isUncertain && !refinementDismissed) {
+      setListings(null);
+      return;
+    }
 
     const STOP_WORDS = new Set([
       "pants", "pant", "trousers", "trouser", "jeans",
@@ -377,22 +395,34 @@ export default function HomePage() {
       if (trimmed && !queries.includes(trimmed)) queries.push(trimmed);
     };
 
-    // 1. Full brand + model.
-    pushQuery([brand, model].filter(Boolean).join(" "));
-    // 2. AI's free-form search_query.
-    if (fallbackQuery) pushQuery(fallbackQuery);
-    // 3. Sub-brand + first model word, e.g. "Jordan 1" — captures
-    //    marketplace listings that omit the parent brand ("Nike", "Air").
-    if (lastBrand && firstModel) pushQuery(`${lastBrand} ${firstModel}`);
-    // 4. Sub-brand + first model word + color, e.g. "Jordan 1 mocha" —
-    //    typically the highest-recall query on Hungarian classifieds.
-    if (lastBrand && firstModel && firstColor) {
-      pushQuery(`${lastBrand} ${firstModel} ${firstColor}`);
+    if (brand) {
+      // Standard path: brand + model based queries.
+      // 1. Full brand + model.
+      pushQuery([brand, model].filter(Boolean).join(" "));
+      // 2. AI's free-form search_query.
+      if (fallbackQuery) pushQuery(fallbackQuery);
+      // 3. Sub-brand + first model word, e.g. "Jordan 1" — captures
+      //    marketplace listings that omit the parent brand ("Nike", "Air").
+      if (lastBrand && firstModel) pushQuery(`${lastBrand} ${firstModel}`);
+      // 4. Sub-brand + first model word + color, e.g. "Jordan 1 mocha" —
+      //    typically the highest-recall query on Hungarian classifieds.
+      if (lastBrand && firstModel && firstColor) {
+        pushQuery(`${lastBrand} ${firstModel} ${firstColor}`);
+      }
+      // 5. Sub-brand + colorway alone, e.g. "Jordan Mocha".
+      if (lastBrand && lastColor) pushQuery(`${lastBrand} ${lastColor}`);
+      if (queries.length === 0 && brandTokens[0]) pushQuery(brandTokens[0]);
+    } else {
+      // Brand-null fallback: use the AI's visual_keywords as search phrases.
+      // Each keyword is already crafted to be marketplace-search-friendly
+      // (e.g. "leather brown high-top sneaker"). Visual verification is what
+      // saves us from random matches here, not text filtering.
+      for (const kw of visualKeywords.slice(0, 3)) pushQuery(kw);
+      if (fallbackQuery) pushQuery(fallbackQuery);
+      // Also try the user's hint phrase mixed with color as a last resort.
+      if (visualKeywords.length === 0 && color) pushQuery(color + " clothing");
     }
-    // 5. Sub-brand + colorway alone, e.g. "Jordan Mocha".
-    if (lastBrand && lastColor) pushQuery(`${lastBrand} ${lastColor}`);
 
-    if (queries.length === 0 && brandTokens[0]) pushQuery(brandTokens[0]);
     if (queries.length === 0) {
       setListings(null);
       return;
@@ -442,7 +472,7 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, [isPremium, result]);
+  }, [isPremium, result, refinementDismissed]);
 
   useEffect(() => {
     if (authenticated !== true) return;
@@ -475,8 +505,13 @@ export default function HomePage() {
     return () => document.removeEventListener("paste", onPaste);
   }, [authenticated, limitReached, loading, converting, processFile]);
 
-  const analyze = async () => {
+  const analyze = async (hint?: string) => {
     if (images.length === 0) return;
+    if (!hint) {
+      // Fresh scan — reset any refinement state from a previous result.
+      setRefinementDismissed(false);
+      setRefinementText("");
+    }
     setLoading(true);
     setError(null);
     try {
@@ -486,6 +521,7 @@ export default function HomePage() {
         body: JSON.stringify({
           images: images.map(({ data, mediaType }) => ({ data, mediaType })),
           lang,
+          ...(hint ? { hint } : {}),
         }),
       });
       if (res.status === 401) {
@@ -522,6 +558,44 @@ export default function HomePage() {
     setError(null);
     setListings(null);
     setListingsExact(true);
+    setRefinementText("");
+    setRefinementDismissed(false);
+    setRefinementLoading(false);
+  };
+
+  const submitRefinement = async () => {
+    const hint = refinementText.trim();
+    if (!hint || refinementLoading) return;
+    setRefinementLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          images: images.map(({ data, mediaType }) => ({ data, mediaType })),
+          lang,
+          hint,
+        }),
+      });
+      if (res.status === 401) {
+        window.location.href = "/login";
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setError(t.error);
+        return;
+      }
+      setResult(data);
+      // If the AI is now confident the listings panel will fetch on its own.
+      // Keep refinementDismissed = false so the user can refine again if the
+      // hint didn't help.
+    } catch {
+      setError(t.error);
+    } finally {
+      setRefinementLoading(false);
+    }
   };
 
   const formatHuf = (n: number | null) => {
@@ -948,7 +1022,7 @@ export default function HomePage() {
             ) : (
               <div className="flex gap-3">
                 <button
-                  onClick={analyze}
+                  onClick={() => analyze()}
                   className="flex-1 px-6 py-3 rounded-full bg-ink-900 text-white font-medium hover:bg-ink-700 transition"
                 >
                   {images.length > 1
@@ -1063,7 +1137,43 @@ export default function HomePage() {
                     <p className="text-xs uppercase tracking-wider text-ink-500 mb-3">
                       {t.listingsTitle}
                     </p>
-                    {listingsLoading ? (
+                    {(!result.brand?.trim() || result.confidence === "low") && !refinementDismissed ? (
+                      <div className="border border-ink-100 rounded-2xl p-5 bg-ink-50">
+                        <p className="font-medium text-sm mb-1">{t.refineTitle}</p>
+                        <p className="text-xs text-ink-500 mb-4">{t.refineSub}</p>
+                        <input
+                          type="text"
+                          value={refinementText}
+                          onChange={(e) => setRefinementText(e.target.value)}
+                          placeholder={t.refinePlaceholder}
+                          disabled={refinementLoading}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && refinementText.trim()) {
+                              submitRefinement();
+                            }
+                          }}
+                          className="w-full px-3 py-2 rounded-lg border border-ink-100 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-ink-900/10 disabled:opacity-60"
+                        />
+                        <div className="flex flex-wrap items-center gap-3 mt-3">
+                          <button
+                            type="button"
+                            onClick={submitRefinement}
+                            disabled={refinementLoading || refinementText.trim().length === 0}
+                            className="px-4 py-2 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            {refinementLoading ? "…" : t.refineSubmit}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setRefinementDismissed(true)}
+                            disabled={refinementLoading}
+                            className="text-xs text-ink-500 hover:text-ink-900 transition disabled:opacity-50"
+                          >
+                            {t.refineSkip}
+                          </button>
+                        </div>
+                      </div>
+                    ) : listingsLoading ? (
                       <div className="border border-ink-100 rounded-2xl p-6 bg-ink-50 text-center">
                         <div className="inline-flex items-center gap-2 text-sm text-ink-700">
                           <span className="w-1.5 h-1.5 bg-ink-700 rounded-full pulse-slow" />
@@ -1072,11 +1182,15 @@ export default function HomePage() {
                       </div>
                     ) : listings && listings.length > 0 ? (
                       <>
-                        {!listingsExact && (
+                        {!result.brand?.trim() ? (
+                          <p className="text-xs text-ink-500 mb-3 italic">
+                            {t.listingsBrandUncertain}
+                          </p>
+                        ) : !listingsExact ? (
                           <p className="text-xs text-ink-500 mb-3 italic">
                             {t.listingsBroader}
                           </p>
-                        )}
+                        ) : null}
                         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {listings.map((l, idx) => (
                           <li key={`${l.source}-${idx}`} className="border border-ink-100 rounded-2xl overflow-hidden bg-white hover:border-ink-300 transition">
