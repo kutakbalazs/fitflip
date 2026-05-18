@@ -77,18 +77,21 @@ KRITIKUS SZABÁLYOK:
   * "high" CSAK ha látható márkajelzés (logó, "swoosh", "Adidas" felirat) ÉS biztos vagy a modellben
   * "medium" ha a márka biztos de a modell tippelt, vagy fordítva
   * "low" ha bármi bizonytalan – a legtöbb esetben ez a helyes
-- ÉRTÉKBECSLÉS magyar piaci viszonyok (Vinted HU, Jófogás) szerint, **szigorú szűk sávval**:
-  * **Ismert sneaker/streetwear esetén** (Air Jordan, Yeezy, Air Max, Dunk, New Balance, Supreme, Stüssy, Off-White, stb.): gondolj StockX / GOAT resell árazásra. A US/EU StockX "Last Sale" ár x 0.75-0.85 = tipikus magyar használt eladási ár (HU secondhand általában 15-25%-kal a US asking alatt). Ismert modelleknél VAN egy konkrét, kiszámítható "tipikus piaci ár" — használd ezt mid-point-nak.
+- ÉRTÉKBECSLÉS: **Vinted HU / Jófogás tipikus asking ár** az alap. Gondold el konkrétan hogy ez a darab milyen áron lenne kiírva ma egy magyar eladótól ezen az állapotban. NE a StockX Last Sale-t használd közvetlenül — az általában lényegesen alacsonyabb mint a HU asking, és kétszer szorozva alábecsülnél.
+  * **Ismert sneaker/streetwear** (Air Jordan, Yeezy, Air Max, Dunk, New Balance, Supreme, Stüssy, Off-White, Travis Scott, stb.): a StockX/GOAT pricing csak referencia ahhoz hogy a darab piacképes / hype-os-e. A tényleges HU asking sokszor MAGASABB mint a US StockX Last Sale, mert kisebb piac + szállítási prémium. Például egy Travis Scott AJ1 a StockX-en lehet $500-$700, viszont magyar Vinted/Jófogás eladókon 250.000-350.000 Ft-on hirdetik.
   * **Vintage Levi's, retró**: 6.000-25.000 Ft tipikus
-  * **Designer (LV, Gucci eredeti)**: 80.000+ Ft
+  * **Designer (LV, Gucci eredeti)**: 80.000+ Ft, ritka darabok 200.000+ Ft
   * **Fast fashion (Zara, H&M)**: 1.500-5.000 Ft
-  * **Az állapotot vond le előbb** (condition_discount_pct) a hibátlan piaci árból
-  * **KRITIKUS sávszabály**: a megadott "estimated_value_min_huf" és "estimated_value_max_huf" között a különbség MAX a max érték 15%-a legyen. Vagyis: \`estimated_value_min_huf >= 0.85 × estimated_value_max_huf\`. SOHA ne adj 50-100%-os sávot — egy kerekített tipikus érték körüli szűk konfidenciát adj.
-  * Példák a HELYES sávra:
-    – Air Jordan 1 Mocha "új" állapot → 90 000 - 105 000 Ft (15% spread, NEM 90-140k)
-    – Levi's 501 "használt" állapot → 5 500 - 6 400 Ft
-    – Carhartt WIP Double Knee "nagyon jó" → 17 000 - 20 000 Ft
-  * A méret befolyásolhatja a középértéket (méret-specifikus árak), de a sáv-szélesség marad max 15%.
+  * **Az állapotot vond le** (condition_discount_pct) a hibátlan piaci árból — de a hibátlan ár MÁR a HU asking szint legyen.
+  * **KRITIKUS sávszabály**: a megadott "estimated_value_min_huf" és "estimated_value_max_huf" között a különbség MAX a max érték 15%-a legyen. Vagyis: \`estimated_value_min_huf >= 0.85 × estimated_value_max_huf\`. SOHA ne adj 50-100%-os sávot — egy kerekített tipikus HU asking érték körüli szűk konfidencia.
+  * Példák a HELYES sávra (HU Vinted/Jófogás asking szint):
+    – Air Jordan 1 Mocha "új" → 130.000 - 150.000 Ft
+    – Air Jordan 4 Bred "új" → 180.000 - 210.000 Ft
+    – Travis Scott AJ1 Low "új" → 280.000 - 320.000 Ft
+    – Levi's 501 "használt" → 5.500 - 6.400 Ft
+    – Carhartt WIP Double Knee "nagyon jó" → 17.000 - 20.000 Ft
+    – Nike Air Force 1 fehér "használt" → 12.000 - 14.000 Ft
+  * A méret befolyásolhatja a középértéket (ritka méretek prémium vagy diszkont), de a sáv-szélesség marad max 15%.
 - A search_query ANGOLUL legyen, és tartalmazza márkát + modellt + colorway-t/évjáratot ha tudod (pl. "Air Jordan 4 Bred 2019" vagy "Levi's 501 vintage 90s")
 - Ha bizonytalan vagy, a description-ben ÍRD MEG hogy "valószínűleg X, de Y miatt nem 100% biztos"
 
@@ -165,18 +168,21 @@ CRITICAL RULES:
   * "high" ONLY when brand markers are visible (logo, swoosh, "Adidas" text) AND model is certain
   * "medium" when brand is certain but model guessed, or vice versa
   * "low" when anything is uncertain – most of the time this is the correct answer
-- VALUE ESTIMATES based on European secondhand market (Vinted, Jófogás), with a **strict tight range**:
-  * **Known sneakers/streetwear** (Air Jordan, Yeezy, Air Max, Dunk, New Balance, Supreme, Stüssy, Off-White, etc.): think StockX / GOAT resell pricing. The US/EU StockX "Last Sale" × 0.75-0.85 = typical Hungarian secondhand asking price (HU secondhand is usually 15-25% below US asking). For known models there IS a calculable "typical market price" — use it as your midpoint.
+- VALUE ESTIMATES: anchor on **typical Vinted HU / Jófogás asking prices** for a Hungarian seller in this condition. DON'T use US StockX "Last Sale" directly — HU asking prices are usually higher than US Last Sale because of the smaller market + shipping premium. Multiplying StockX down would underestimate.
+  * **Known sneakers/streetwear** (Air Jordan, Yeezy, Air Max, Dunk, New Balance, Supreme, Stüssy, Off-White, Travis Scott, etc.): StockX/GOAT is only a hype/demand reference. Actual HU asking is often **higher** than US Last Sale. Example: a Travis Scott AJ1 may be $500-700 on StockX but Hungarian Vinted/Jófogás sellers ask 250,000-350,000 HUF.
   * **Vintage Levi's, retro**: 6.000-25.000 HUF typical
-  * **Designer (LV, Gucci authentic)**: 80.000+ HUF
+  * **Designer (LV, Gucci authentic)**: 80.000+ HUF, rare pieces 200.000+ HUF
   * **Fast fashion (Zara, H&M)**: 1.500-5.000 HUF
-  * **Apply condition_discount_pct first** to the pristine market price.
-  * **CRITICAL range rule**: the gap between "estimated_value_min_huf" and "estimated_value_max_huf" must be AT MOST 15% of the max value. That is: \`estimated_value_min_huf >= 0.85 × estimated_value_max_huf\`. NEVER give a 50-100% range — give a tight confidence interval around a rounded typical value.
-  * Correct range examples:
-    – Air Jordan 1 Mocha "new" → 90,000 - 105,000 HUF (15% spread, NOT 90-140k)
+  * **Apply condition_discount_pct** to the pristine price, but the pristine price must itself be at the HU asking level.
+  * **CRITICAL range rule**: the gap between "estimated_value_min_huf" and "estimated_value_max_huf" must be AT MOST 15% of the max value. That is: \`estimated_value_min_huf >= 0.85 × estimated_value_max_huf\`. NEVER give a 50-100% range — give a tight confidence interval around a rounded typical HU asking value.
+  * Correct range examples (HU Vinted/Jófogás asking level):
+    – Air Jordan 1 Mocha "new" → 130,000 - 150,000 HUF
+    – Air Jordan 4 Bred "new" → 180,000 - 210,000 HUF
+    – Travis Scott AJ1 Low "new" → 280,000 - 320,000 HUF
     – Levi's 501 "used" → 5,500 - 6,400 HUF
     – Carhartt WIP Double Knee "very good" → 17,000 - 20,000 HUF
-  * Size can shift the midpoint (size-specific pricing) but the range width stays ≤ 15%.
+    – Nike Air Force 1 white "used" → 12,000 - 14,000 HUF
+  * Size can shift the midpoint (rare sizes premium or discount) but the range width stays ≤ 15%.
 - search_query must be in English: brand + model + colorway/year if known
 - If uncertain, EXPLAIN in the description: "likely X, but uncertain because Y"
 

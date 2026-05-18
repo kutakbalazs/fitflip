@@ -30,7 +30,7 @@ export const translations = {
     condition: "Állapot",
     estimatedValue: "Becsült érték",
     estimatedValueDiscountNote: "{n}% levonva sérülés miatt",
-    marketRangeLabel: "Piaci ár sávja",
+    marketRangeLabel: "Piaci ár",
     marketRangeSub: "{n} hirdetésből",
     marketRangeSubNew: "{n} új hirdetésből",
     marketRangeSubUsed: "{n} használt hirdetésből",
