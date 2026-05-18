@@ -9,7 +9,12 @@ export const dynamic = "force-dynamic";
 
 const FREE_DAILY_LIMIT = 3;
 
-function buildPrompt(lang: "hu" | "en", imageCount: number = 1, userHint?: string): string {
+function buildPrompt(
+  lang: "hu" | "en",
+  imageCount: number = 1,
+  userHint?: string,
+  userSize?: string
+): string {
   const userHintBlockHu = userHint
     ? `\n\nFELHASZNÁLÓI PONTOSÍTÁS (priorizálandó, a user maga adta meg, az AI-nál többet tud a darabról):
 "${userHint}"
@@ -21,6 +26,18 @@ Ezt használd ELSŐDLEGES forrásként a brand/model azonosításhoz, akkor is h
 "${userHint}"
 
 Use this as your PRIMARY source for brand/model identification, even when the image alone wouldn't be conclusive. Stay consistent with the user-provided info unless the image CLEARLY contradicts it (in which case, note the discrepancy in the description).`
+    : "";
+  const userSizeBlockHu = userSize
+    ? `\n\nMÉRET (a felhasználó megadta, használd a pontosabb árazáshoz):
+"${userSize}"
+
+Sneakerre/cipőre: a méret befolyásolja a piaci árat (ritka méretek olcsóbbak vagy drágábbak lehetnek). Vedd figyelembe a becsült értéknél.`
+    : "";
+  const userSizeBlockEn = userSize
+    ? `\n\nSIZE (provided by the user, use for more accurate pricing):
+"${userSize}"
+
+For sneakers/footwear: size affects the market price (rare sizes can be cheaper or more expensive). Factor this into your estimate.`
     : "";
   const multiNoteHu =
     imageCount > 1
@@ -42,7 +59,7 @@ Use this as your PRIMARY source for brand/model identification, even when the im
 - If the FIRST image contains multiple clothing/footwear items and it's unclear which the user means, pick the centered or most prominent one, and add to the description: "I saw multiple items in the photo, analyzed the most prominent one. For a more accurate match, upload a closer photo of just that item."`
       : "";
   if (lang === "hu") {
-    return `Te a FitFlip vagy – egy precíziós AI azonosító divatcikkekhez (sneakerek, vintage ruhák, streetwear, designer darabok). A pontosság a legfontosabb: jobb őszintén bizonytalannak lenni, mint hibázni.${userHintBlockHu}${multiNoteHu}
+    return `Te a FitFlip vagy – egy precíziós AI azonosító divatcikkekhez (sneakerek, vintage ruhák, streetwear, designer darabok). A pontosság a legfontosabb: jobb őszintén bizonytalannak lenni, mint hibázni.${userHintBlockHu}${userSizeBlockHu}${multiNoteHu}
 
 ELEMZÉSI MÓDSZER (kövesd ezt a sorrendet):
 1. Megerősítés: tényleg ruházat vagy lábbeli van a képen? Ha nem, állítsd recognized:false-ra.
@@ -60,13 +77,18 @@ KRITIKUS SZABÁLYOK:
   * "high" CSAK ha látható márkajelzés (logó, "swoosh", "Adidas" felirat) ÉS biztos vagy a modellben
   * "medium" ha a márka biztos de a modell tippelt, vagy fordítva
   * "low" ha bármi bizonytalan – a legtöbb esetben ez a helyes
-- ÉRTÉKBECSLÉS magyar piaci viszonyok (Vinted HU, Hardverapró, Jófogás, sneakerszobotka.hu) szerint:
-  * Sneaker: $1 ≈ 360 Ft, használt cipők 30-60%-a a retail árnak
-  * Vintage Levi's, retró: 6.000-25.000 Ft
-  * Streetwear (Supreme, Off-White, eredeti): 30.000-150.000 Ft
-  * Designer (LV, Gucci eredeti): 80.000+ Ft
-  * Fast fashion (Zara, H&M): 1.500-5.000 Ft
-  * Ha nem vagy biztos, adj szélesebb sávot (pl. min 5000, max 25000)
+- ÉRTÉKBECSLÉS magyar piaci viszonyok (Vinted HU, Jófogás) szerint, **szigorú szűk sávval**:
+  * **Ismert sneaker/streetwear esetén** (Air Jordan, Yeezy, Air Max, Dunk, New Balance, Supreme, Stüssy, Off-White, stb.): gondolj StockX / GOAT resell árazásra. A US/EU StockX "Last Sale" ár x 0.75-0.85 = tipikus magyar használt eladási ár (HU secondhand általában 15-25%-kal a US asking alatt). Ismert modelleknél VAN egy konkrét, kiszámítható "tipikus piaci ár" — használd ezt mid-point-nak.
+  * **Vintage Levi's, retró**: 6.000-25.000 Ft tipikus
+  * **Designer (LV, Gucci eredeti)**: 80.000+ Ft
+  * **Fast fashion (Zara, H&M)**: 1.500-5.000 Ft
+  * **Az állapotot vond le előbb** (condition_discount_pct) a hibátlan piaci árból
+  * **KRITIKUS sávszabály**: a megadott "estimated_value_min_huf" és "estimated_value_max_huf" között a különbség MAX a max érték 15%-a legyen. Vagyis: \`estimated_value_min_huf >= 0.85 × estimated_value_max_huf\`. SOHA ne adj 50-100%-os sávot — egy kerekített tipikus érték körüli szűk konfidenciát adj.
+  * Példák a HELYES sávra:
+    – Air Jordan 1 Mocha "új" állapot → 90 000 - 105 000 Ft (15% spread, NEM 90-140k)
+    – Levi's 501 "használt" állapot → 5 500 - 6 400 Ft
+    – Carhartt WIP Double Knee "nagyon jó" → 17 000 - 20 000 Ft
+  * A méret befolyásolhatja a középértéket (méret-specifikus árak), de a sáv-szélesség marad max 15%.
 - A search_query ANGOLUL legyen, és tartalmazza márkát + modellt + colorway-t/évjáratot ha tudod (pl. "Air Jordan 4 Bred 2019" vagy "Levi's 501 vintage 90s")
 - Ha bizonytalan vagy, a description-ben ÍRD MEG hogy "valószínűleg X, de Y miatt nem 100% biztos"
 
@@ -125,7 +147,7 @@ VÁLASZ FORMÁTUM (CSAK ezt a JSON-t add vissza, semmi mást, semmi markdown):
   "confidence": "low" | "medium" | "high"
 }`;
   }
-  return `You are FitFlip – a precision AI identifier for fashion items (sneakers, vintage clothing, streetwear, designer pieces). Accuracy is paramount: it's better to be honestly uncertain than to be wrong.${userHintBlockEn}${multiNoteEn}
+  return `You are FitFlip – a precision AI identifier for fashion items (sneakers, vintage clothing, streetwear, designer pieces). Accuracy is paramount: it's better to be honestly uncertain than to be wrong.${userHintBlockEn}${userSizeBlockEn}${multiNoteEn}
 
 ANALYSIS METHOD (follow this order):
 1. Confirmation: does the image actually show clothing or footwear? If not, set recognized:false
@@ -143,13 +165,18 @@ CRITICAL RULES:
   * "high" ONLY when brand markers are visible (logo, swoosh, "Adidas" text) AND model is certain
   * "medium" when brand is certain but model guessed, or vice versa
   * "low" when anything is uncertain – most of the time this is the correct answer
-- VALUE ESTIMATES based on European secondhand market (Vinted, eBay):
-  * Sneakers: 30-60% of retail when used
-  * Vintage Levi's, retro: 6.000-25.000 HUF
-  * Streetwear (Supreme, Off-White, authentic): 30.000-150.000 HUF
-  * Designer (LV, Gucci authentic): 80.000+ HUF
-  * Fast fashion (Zara, H&M): 1.500-5.000 HUF
-  * If uncertain, give a wider range
+- VALUE ESTIMATES based on European secondhand market (Vinted, Jófogás), with a **strict tight range**:
+  * **Known sneakers/streetwear** (Air Jordan, Yeezy, Air Max, Dunk, New Balance, Supreme, Stüssy, Off-White, etc.): think StockX / GOAT resell pricing. The US/EU StockX "Last Sale" × 0.75-0.85 = typical Hungarian secondhand asking price (HU secondhand is usually 15-25% below US asking). For known models there IS a calculable "typical market price" — use it as your midpoint.
+  * **Vintage Levi's, retro**: 6.000-25.000 HUF typical
+  * **Designer (LV, Gucci authentic)**: 80.000+ HUF
+  * **Fast fashion (Zara, H&M)**: 1.500-5.000 HUF
+  * **Apply condition_discount_pct first** to the pristine market price.
+  * **CRITICAL range rule**: the gap between "estimated_value_min_huf" and "estimated_value_max_huf" must be AT MOST 15% of the max value. That is: \`estimated_value_min_huf >= 0.85 × estimated_value_max_huf\`. NEVER give a 50-100% range — give a tight confidence interval around a rounded typical value.
+  * Correct range examples:
+    – Air Jordan 1 Mocha "new" → 90,000 - 105,000 HUF (15% spread, NOT 90-140k)
+    – Levi's 501 "used" → 5,500 - 6,400 HUF
+    – Carhartt WIP Double Knee "very good" → 17,000 - 20,000 HUF
+  * Size can shift the midpoint (size-specific pricing) but the range width stays ≤ 15%.
 - search_query must be in English: brand + model + colorway/year if known
 - If uncertain, EXPLAIN in the description: "likely X, but uncertain because Y"
 
@@ -282,16 +309,21 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { images, image, mediaType, lang, hint } = body as {
+    const { images, image, mediaType, lang, hint, size } = body as {
       images?: Array<{ data: string; mediaType: string }>;
       image?: string;
       mediaType?: string;
       lang: "hu" | "en";
       hint?: string;
+      size?: string;
     };
     const userHint =
       typeof hint === "string" && hint.trim().length > 0
         ? hint.trim().slice(0, 200) // soft cap, prevents prompt injection bloat
+        : undefined;
+    const userSize =
+      typeof size === "string" && size.trim().length > 0
+        ? size.trim().slice(0, 60)
         : undefined;
 
     const normalizedImages: Array<{ data: string; mediaType: string }> =
@@ -375,7 +407,7 @@ export async function POST(req: NextRequest) {
             role: "user",
             content: [
               ...imageBlocks,
-              { type: "text", text: buildPrompt(lang || "hu", normalizedImages.length, userHint) },
+              { type: "text", text: buildPrompt(lang || "hu", normalizedImages.length, userHint, userSize) },
             ],
           },
         ],

@@ -101,6 +101,9 @@ export default function HomePage() {
   const [refinementText, setRefinementText] = useState("");
   const [refinementDismissed, setRefinementDismissed] = useState(false);
   const [refinementLoading, setRefinementLoading] = useState(false);
+  // Optional size, surfaced once a photo is picked. Helps the model when
+  // it's pricing sized goods (sneakers, jeans).
+  const [sizeInput, setSizeInput] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -517,6 +520,7 @@ export default function HomePage() {
     setLoading(true);
     setError(null);
     try {
+      const trimmedSize = sizeInput.trim();
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -524,6 +528,7 @@ export default function HomePage() {
           images: images.map(({ data, mediaType }) => ({ data, mediaType })),
           lang,
           ...(hint ? { hint } : {}),
+          ...(trimmedSize ? { size: trimmedSize } : {}),
         }),
       });
       if (res.status === 401) {
@@ -563,6 +568,7 @@ export default function HomePage() {
     setRefinementText("");
     setRefinementDismissed(false);
     setRefinementLoading(false);
+    setSizeInput("");
   };
 
   const submitRefinement = async () => {
@@ -571,6 +577,7 @@ export default function HomePage() {
     setRefinementLoading(true);
     setError(null);
     try {
+      const trimmedSize = sizeInput.trim();
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -578,6 +585,7 @@ export default function HomePage() {
           images: images.map(({ data, mediaType }) => ({ data, mediaType })),
           lang,
           hint,
+          ...(trimmedSize ? { size: trimmedSize } : {}),
         }),
       });
       if (res.status === 401) {
@@ -656,11 +664,22 @@ export default function HomePage() {
     const subset = useFiltered ? matching : priced;
     const rawPrices = subset.map((l) => l.priceHuf).sort((a, b) => a - b);
 
-    // Outlier trim: even after the condition filter, a single mispriced
-    // listing (collector hold-out, mislabelled lot, currency conversion
-    // miss) skews Q1/Q3. Drop anything beyond [0.4× median, 2.5× median].
-    // Below 5 listings we keep all — the sample is small enough that
-    // removing items would leave too little to compute a meaningful band.
+    // 1-listing case: derive a small synthetic ±10% band so we still show a
+    // range (as the user explicitly requested), not a flat number.
+    if (rawPrices.length === 1) {
+      const p = rawPrices[0];
+      return {
+        q1: Math.round(p * 0.9),
+        q3: Math.round(p * 1.1),
+        count: 1,
+        conditionTag: useFiltered ? (scannedIsNew ? "new" : "used") : "mixed",
+      };
+    }
+
+    // Outlier trim: a lone mispriced listing (collector hold-out, mislabelled
+    // lot, currency conversion miss) skews Q1/Q3. Drop anything beyond
+    // [0.4× median, 2.5× median] once the sample is big enough that the
+    // trim won't leave us with too few points to compute a band.
     const median = rawPrices[Math.floor(rawPrices.length / 2)];
     const prices =
       rawPrices.length >= 5
@@ -1100,25 +1119,45 @@ export default function HomePage() {
                 <p className="text-sm text-ink-500 mt-2">{t.analyzingSub}</p>
               </div>
             ) : (
-              <div className="flex gap-3">
-                <button
-                  onClick={() => analyze()}
-                  className="flex-1 px-6 py-3 rounded-full bg-ink-900 text-white font-medium hover:bg-ink-700 transition"
-                >
-                  {images.length > 1
-                    ? lang === "hu"
-                      ? `Elemzés (${images.length} kép)`
-                      : `Analyze (${images.length} photos)`
-                    : t.uploadCta}
-                </button>
-                <button
-                  onClick={reset}
-                  className="px-6 py-3 rounded-full border border-ink-100 hover:bg-ink-50 transition text-sm"
-                  aria-label={lang === "hu" ? "Mégse" : "Cancel"}
-                >
-                  ✕
-                </button>
-              </div>
+              <>
+                <div className="mb-4">
+                  <label
+                    htmlFor="ff-size-input"
+                    className="block text-xs font-medium text-ink-700 mb-1"
+                  >
+                    {t.sizeInputLabel}
+                  </label>
+                  <input
+                    id="ff-size-input"
+                    type="text"
+                    value={sizeInput}
+                    onChange={(e) => setSizeInput(e.target.value)}
+                    placeholder={t.sizeInputPlaceholder}
+                    maxLength={60}
+                    className="w-full px-3 py-2 rounded-lg border border-ink-100 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-ink-900/10"
+                  />
+                  <p className="text-[11px] text-ink-500 mt-1">{t.sizeInputHelp}</p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => analyze()}
+                    className="flex-1 px-6 py-3 rounded-full bg-ink-900 text-white font-medium hover:bg-ink-700 transition"
+                  >
+                    {images.length > 1
+                      ? lang === "hu"
+                        ? `Elemzés (${images.length} kép)`
+                        : `Analyze (${images.length} photos)`
+                      : t.uploadCta}
+                  </button>
+                  <button
+                    onClick={reset}
+                    className="px-6 py-3 rounded-full border border-ink-100 hover:bg-ink-50 transition text-sm"
+                    aria-label={lang === "hu" ? "Mégse" : "Cancel"}
+                  >
+                    ✕
+                  </button>
+                </div>
+              </>
             )}
 
             {error && (
