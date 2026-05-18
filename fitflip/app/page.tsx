@@ -15,6 +15,8 @@ type AnalysisResult = {
   visual_keywords: string[] | null;
   era: string | null;
   condition: string | null;
+  is_definitely_new: boolean | null;
+  retail_price_huf: number | null;
   defects: string[] | null;
   condition_discount_pct: number | null;
   estimated_value_min_huf: number | null;
@@ -702,6 +704,67 @@ export default function HomePage() {
     };
   })();
 
+  // Single displayed price row — replaces the old split between "Becsült
+  // érték" (AI estimate) and "Piaci ár" (listings). Four scenarios:
+  //
+  //   1. Exact listings exist AND item is_definitely_new with retail price
+  //      → max(listings median, retail × 0.875). Labelled "Piaci ár".
+  //   2. Exact listings exist (any other case)
+  //      → marketStats Q1-Q3. Labelled "Piaci ár".
+  //   3. No exact listings AND item is_definitely_new with retail price
+  //      → retail_price_huf × 0.875 ± 7.5% (≤15% spread). "Becsült piaci ár".
+  //   4. No exact listings (any other case)
+  //      → AI estimated_value_min/max. "Becsült piaci ár".
+  type DisplayedPrice = {
+    label: "market" | "estimated";
+    min: number;
+    max: number;
+    conditionTag?: "new" | "used" | "mixed";
+    count?: number;
+  };
+  const displayedPrice: DisplayedPrice | null = (() => {
+    if (!result) return null;
+    const isNew = result.is_definitely_new === true;
+    const retail = result.retail_price_huf;
+    const hasRetail = typeof retail === "number" && retail > 0;
+    const aiMin = result.estimated_value_min_huf;
+    const aiMax = result.estimated_value_max_huf;
+
+    // Helper: derive a tight ±7.5% band around a midpoint (≤15% spread).
+    const tightBand = (mid: number): { min: number; max: number } => ({
+      min: Math.round(mid * 0.925),
+      max: Math.round(mid * 1.075),
+    });
+
+    if (marketStats) {
+      // Scenarios 1 + 2: exact listings exist.
+      if (isNew && hasRetail) {
+        const listingMid = (marketStats.q1 + marketStats.q3) / 2;
+        const retailSecondhand = retail * 0.875;
+        const mid = Math.max(listingMid, retailSecondhand);
+        const { min, max } = tightBand(mid);
+        return { label: "market", min, max, conditionTag: marketStats.conditionTag, count: marketStats.count };
+      }
+      return {
+        label: "market",
+        min: marketStats.q1,
+        max: marketStats.q3,
+        conditionTag: marketStats.conditionTag,
+        count: marketStats.count,
+      };
+    }
+
+    // Scenarios 3 + 4: no exact listings.
+    if (isNew && hasRetail) {
+      const { min, max } = tightBand(retail * 0.875);
+      return { label: "estimated", min, max };
+    }
+    if (typeof aiMin === "number" && typeof aiMax === "number") {
+      return { label: "estimated", min: aiMin, max: aiMax };
+    }
+    return null;
+  })();
+
   const startCheckout = async () => {
     setCheckoutLoading(true);
     try {
@@ -1236,40 +1299,51 @@ export default function HomePage() {
                         <dd className="font-medium">{result.condition}</dd>
                       </div>
                     )}
-                    <div className="flex justify-between px-6 py-3 text-sm">
-                      <dt className="text-ink-500">{t.estimatedValue}</dt>
-                      <dd className="font-medium text-right">
-                        <div>
-                          {formatHuf(result.estimated_value_min_huf)} – {formatHuf(result.estimated_value_max_huf)}
-                        </div>
-                        {typeof result.condition_discount_pct === "number" && result.condition_discount_pct > 0 && (
-                          <div className="text-[11px] font-normal text-ink-500 mt-0.5">
-                            {t.estimatedValueDiscountNote.replace("{n}", String(result.condition_discount_pct))}
-                          </div>
-                        )}
-                      </dd>
-                    </div>
-                    {marketStats && (
+                    {displayedPrice && (
                       <div className="flex justify-between px-6 py-3 text-sm">
-                        <dt className="text-ink-500">{t.marketRangeLabel}</dt>
+                        <dt className="text-ink-500">
+                          {displayedPrice.label === "market" ? t.marketRangeLabel : t.estimatedMarketLabel}
+                        </dt>
                         <dd className="font-medium text-right">
                           <div>
-                            {marketStats.q1 === marketStats.q3
-                              ? formatHuf(marketStats.q1)
-                              : `${formatHuf(marketStats.q1)} – ${formatHuf(marketStats.q3)}`}
+                            {displayedPrice.min === displayedPrice.max
+                              ? formatHuf(displayedPrice.min)
+                              : `${formatHuf(displayedPrice.min)} – ${formatHuf(displayedPrice.max)}`}
                           </div>
-                          <div className="text-[11px] font-normal text-ink-500 mt-0.5">
-                            {(marketStats.conditionTag === "new"
-                              ? t.marketRangeSubNew
-                              : marketStats.conditionTag === "used"
-                                ? t.marketRangeSubUsed
-                                : t.marketRangeSub
-                            ).replace("{n}", String(marketStats.count))}
-                          </div>
+                          {typeof result.condition_discount_pct === "number" &&
+                            result.condition_discount_pct > 0 &&
+                            result.is_definitely_new !== true && (
+                              <div className="text-[11px] font-normal text-ink-500 mt-0.5">
+                                {t.estimatedValueDiscountNote.replace("{n}", String(result.condition_discount_pct))}
+                              </div>
+                            )}
+                          {displayedPrice.count !== undefined && displayedPrice.conditionTag && (
+                            <div className="text-[11px] font-normal text-ink-500 mt-0.5">
+                              {(displayedPrice.conditionTag === "new"
+                                ? t.marketRangeSubNew
+                                : displayedPrice.conditionTag === "used"
+                                  ? t.marketRangeSubUsed
+                                  : t.marketRangeSub
+                              ).replace("{n}", String(displayedPrice.count))}
+                            </div>
+                          )}
                         </dd>
                       </div>
                     )}
                   </dl>
+
+                  {displayedPrice && displayedPrice.max >= 100000 && (
+                    <div className="px-6 py-3 bg-amber-50 border-t border-amber-100 text-xs text-amber-900 flex items-start gap-2">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0 mt-0.5">
+                        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                        <line x1="12" y1="9" x2="12" y2="13" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                      </svg>
+                      <div>
+                        <strong>{t.authenticityWarningTitle}:</strong> {t.authenticityWarningText}
+                      </div>
+                    </div>
+                  )}
 
                   {Array.isArray(result.defects) && result.defects.length > 0 && (
                     <div className="px-6 py-4 bg-amber-50 border-t border-amber-100 text-sm text-amber-900">
