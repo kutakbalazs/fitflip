@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { translations, type Lang } from "@/lib/translations";
+import LegalFooter from "@/components/LegalFooter";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -105,6 +106,9 @@ export default function ResetPasswordPage() {
           )}
         </div>
       </section>
+      <footer className="px-6 py-6 border-t border-ink-100">
+        <LegalFooter />
+      </footer>
     </main>
   );
 }

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { translations, type Lang } from "@/lib/translations";
+import LegalFooter from "@/components/LegalFooter";
 
 export default function ForgotPasswordPage() {
   const supabase = createClient();
@@ -97,6 +98,9 @@ export default function ForgotPasswordPage() {
           </p>
         </div>
       </section>
+      <footer className="px-6 py-6 border-t border-ink-100">
+        <LegalFooter />
+      </footer>
     </main>
   );
 }
