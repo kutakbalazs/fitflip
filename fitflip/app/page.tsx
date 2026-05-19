@@ -1573,7 +1573,7 @@ export default function HomePage() {
                       <p className="text-sm text-ink-500 mt-1">{t.listingsLockedSub}</p>
                     </div>
                     <button
-                      onClick={startCheckout}
+                      onClick={openUpgradeConsent}
                       disabled={checkoutLoading}
                       className="mt-4 px-5 py-2 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition disabled:opacity-50"
                     >
