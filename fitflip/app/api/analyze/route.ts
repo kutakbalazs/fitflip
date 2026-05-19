@@ -80,13 +80,10 @@ KRITIKUS SZABÁLYOK:
 - KRITIKUS ÁRBECSLÉS-MEZŐK:
 
 is_definitely_new (boolean, alapból FALSE):
-- CSAK akkor TRUE, ha LÁTHATÓ "vadonatúj" jelek vannak a képen:
-  * Címke a darabon (hangtag, swing tag, méret-címke)
-  * Eredeti doboz a képen
-  * Gyári fólia / tissue paper / cellofán csomagolás
-  * Hibátlan állapot + EGY a fentiek közül
-- FALSE minden más esetben — KÜLÖNÖSEN: csak "tisztának tűnik", csak "nem látok kopást", "valószínűleg új". HA BIZONYTALAN, FALSE.
-- Ezt szigorúan kezeld — a downstream pricing logika erre épül, NE TIPPELJ.
+- TRUE ha a darab vizuálisan VADONATÚJ benyomást kelt: NINCS látható kopás, sérülés, folt, gyűrődés, sárgulás; a felület, talp, varrás makulátlan.
+- A címke / doboz / fólia látszása ERŐS plusz jel, de NEM kötelező — egy tisztán fényképezett, hibátlan, viseletnyom-mentes darab is lehet TRUE.
+- FALSE ha bármilyen viselet, kopás, sérülés, folt látszik, vagy ha a kép minősége miatt nem ítélhető meg.
+- Ha is_definitely_new TRUE, akkor defects:[] és condition_discount_pct:0 KÖTELEZŐ.
 
 retail_price_huf (number HUF-ban, vagy null):
 - A darab JELENLEGI ÚJONNANI vételára HUF-ban — ami egy mai vásárló fizetne egy MEGBÍZHATÓ helyen ÚJON. NEM az MSRP, hanem a tényleges mai piaci ár.
@@ -169,7 +166,7 @@ VÁLASZ FORMÁTUM (CSAK ezt a JSON-t add vissza, semmi mást, semmi markdown):
   "condition_discount_pct": number (0-100, hibákból eredő értékvesztés, 0 ha defects üres),
   "estimated_value_min_huf": number vagy null (MÁR diszkontált),
   "estimated_value_max_huf": number vagy null (MÁR diszkontált),
-  "description": "2-3 mondat magyarul – mit látsz, mi az érdekes benne, ha bizonytalan vagy akkor miért",
+  "description": "2-3 mondat TISZTA magyarul a darabról – mit látsz, mi az érdekes benne, ha bizonytalan vagy akkor miért. TILOS belső mezőnevek vagy hunglish: ne írd le hogy 'is_definitely_new', 'retail_price_huf', 'new-jelzők', 'TRUE/FALSE', 'condition_discount_pct'. Természetes, eladó-szövegszerű magyar mondatok legyenek, technikai zsargon nélkül.",
   "search_query": "angol kereső kifejezés (márka + modell + colorway/évjárat)",
   "selling_tip": "1-2 mondatos magyar tipp az eladáshoz",
   "confidence": "low" | "medium" | "high"
@@ -196,13 +193,10 @@ CRITICAL RULES:
 - CRITICAL PRICING FIELDS:
 
 is_definitely_new (boolean, default FALSE):
-- TRUE ONLY when there are VISIBLE "brand-new" indicators in the photo:
-  * Tag attached to the item (hangtag, swing tag, size tag)
-  * Original box in the photo
-  * Factory plastic / tissue / cellophane packaging
-  * Pristine condition + ONE of the above
-- FALSE otherwise — ESPECIALLY: "looks clean", "no wear visible", "probably new". WHEN UNSURE, FALSE.
-- Treat strictly — downstream pricing logic depends on this, DO NOT GUESS.
+- TRUE if the item visually presents as BRAND NEW: NO visible wear, damage, stains, creasing, yellowing; pristine surface, sole, stitching.
+- Visible tag / box / packaging is a STRONG additional signal but NOT required — a cleanly photographed item with no wear can also be TRUE.
+- FALSE if any wear, damage, or stain is visible, or if the photo quality makes condition unclear.
+- If is_definitely_new is TRUE, defects MUST be [] and condition_discount_pct MUST be 0.
 
 retail_price_huf (number in HUF, or null):
 - The CURRENT price to BUY this item NEW in HUF — what a buyer would pay TODAY at a RELIABLE retailer. NOT the MSRP — the actual today's market price.
@@ -285,7 +279,7 @@ RESPONSE FORMAT (return ONLY this JSON, nothing else, no markdown):
   "condition_discount_pct": number (0-100, aggregate value loss from defects, 0 if defects empty),
   "estimated_value_min_huf": number or null (ALREADY discounted),
   "estimated_value_max_huf": number or null (ALREADY discounted),
-  "description": "2-3 sentences in English – what you see, what's interesting, why uncertain if applicable",
+  "description": "2-3 sentences in clean English about the item – what you see, what's interesting, why uncertain if applicable. FORBIDDEN: internal field names like 'is_definitely_new', 'retail_price_huf', 'condition_discount_pct', 'TRUE/FALSE'. Use natural prose, no technical jargon.",
   "search_query": "English search query (brand + model + colorway/year)",
   "selling_tip": "1-2 sentence selling tip in English",
   "confidence": "low" | "medium" | "high"
@@ -491,6 +485,16 @@ export async function POST(req: NextRequest) {
         { error: "Failed to parse model response" },
         { status: 500 }
       );
+    }
+
+    // Enforce invariants the model occasionally violates: an empty defects
+    // list (or is_definitely_new=true) must mean no damage discount.
+    const defectsArr = Array.isArray(parsed.defects)
+      ? (parsed.defects as unknown[]).filter((d) => typeof d === "string" && d.trim().length > 0)
+      : [];
+    parsed.defects = defectsArr;
+    if (defectsArr.length === 0 || parsed.is_definitely_new === true) {
+      parsed.condition_discount_pct = 0;
     }
 
     // Save scan to history (admin bypasses RLS but enforces user_id).

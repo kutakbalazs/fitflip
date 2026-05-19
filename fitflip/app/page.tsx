@@ -1123,6 +1123,18 @@ export default function HomePage() {
                 alt="preview"
                 className="w-full h-full object-contain"
               />
+              {loading && (
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute inset-0 bg-ink-900/20 scan-shimmer" />
+                  <div className="absolute inset-x-0 top-0 h-full overflow-hidden">
+                    <div className="scan-line absolute inset-x-0 h-24 bg-gradient-to-b from-transparent via-white/60 to-transparent" />
+                  </div>
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-ink-900/80 backdrop-blur-sm text-white text-xs font-medium">
+                    <span className="scan-dot w-1.5 h-1.5 bg-white rounded-full" />
+                    {t.analyzing}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-wrap items-center gap-2 mb-6">

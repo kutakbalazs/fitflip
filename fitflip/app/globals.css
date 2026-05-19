@@ -31,3 +31,31 @@ html, body {
 .pulse-slow {
   animation: pulse-slow 1.6s ease-in-out infinite;
 }
+
+@keyframes scan-line {
+  0% { transform: translateY(-100%); }
+  50% { transform: translateY(100%); }
+  100% { transform: translateY(-100%); }
+}
+
+.scan-line {
+  animation: scan-line 2.4s ease-in-out infinite;
+}
+
+@keyframes scan-shimmer {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.35; }
+}
+
+.scan-shimmer {
+  animation: scan-shimmer 2.4s ease-in-out infinite;
+}
+
+@keyframes scan-dot {
+  0%, 100% { opacity: 0.2; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+.scan-dot {
+  animation: scan-dot 1.2s ease-in-out infinite;
+}
