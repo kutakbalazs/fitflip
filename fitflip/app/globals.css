@@ -33,12 +33,12 @@ html, body {
 }
 
 @keyframes image-pulse {
-  0%, 100% { filter: grayscale(0) brightness(1); }
-  50% { filter: grayscale(0.85) brightness(0.85); }
+  0%, 100% { filter: saturate(1); }
+  50% { filter: saturate(0); }
 }
 
 .image-pulse {
-  animation: image-pulse 2.2s ease-in-out infinite;
+  animation: image-pulse 2.6s ease-in-out infinite;
 }
 
 @keyframes scan-dot {
