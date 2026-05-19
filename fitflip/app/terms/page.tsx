@@ -22,7 +22,7 @@ function ContentHu() {
         Név: Kutak Balázs e.v.<br />
         Székhely: 1222 Budapest, Bárány utca 3.<br />
         Adószám: 59900490-2-43<br />
-        Email: support@fitflip.app<br />
+        Email: support.fitflip@gmail.com<br />
         Weboldal: https://fitflip.app
       </p>
 
@@ -95,7 +95,7 @@ function ContentHu() {
 
       <h2 className="text-lg font-semibold mt-8 mb-2">12. Panaszkezelés és vitarendezés</h2>
       <p>
-        Panasz esetén a Felhasználó a support@fitflip.app email címen léphet kapcsolatba a Szolgáltatóval. A Szolgáltató a panaszra 30 napon belül érdemi választ ad.
+        Panasz esetén a Felhasználó a support.fitflip@gmail.com email címen léphet kapcsolatba a Szolgáltatóval. A Szolgáltató a panaszra 30 napon belül érdemi választ ad.
       </p>
       <p>
         Fogyasztói jogvita esetén a Felhasználó jogosult a lakóhelye szerint illetékes Békéltető Testülethez fordulni. A Szolgáltató székhelye szerint illetékes Békéltető Testület: Budapesti Békéltető Testület, 1016 Budapest, Krisztina krt. 99., email: bekelteto.testulet@bkik.hu.
@@ -128,7 +128,7 @@ function ContentEn() {
         Name: Kutak Balázs e.v.<br />
         Registered address: 1222 Budapest, Bárány utca 3., Hungary<br />
         Tax ID: 59900490-2-43<br />
-        Email: support@fitflip.app<br />
+        Email: support.fitflip@gmail.com<br />
         Website: https://fitflip.app
       </p>
 
@@ -199,7 +199,7 @@ function ContentEn() {
 
       <h2 className="text-lg font-semibold mt-8 mb-2">12. Complaints and dispute resolution</h2>
       <p>
-        For complaints, please contact the Provider at support@fitflip.app. The Provider will respond substantively within 30 days.
+        For complaints, please contact the Provider at support.fitflip@gmail.com. The Provider will respond substantively within 30 days.
       </p>
       <p>
         Hungarian consumers may turn to the competent Conciliation Board (Békéltető Testület) of their place of residence. The board competent for the Provider&apos;s seat is the Budapest Conciliation Board, 1016 Budapest, Krisztina krt. 99., email: bekelteto.testulet@bkik.hu.

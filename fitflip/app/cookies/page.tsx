@@ -90,7 +90,7 @@ function ContentHu() {
 
       <h2 className="text-lg font-semibold mt-8 mb-2">4. Kapcsolat</h2>
       <p>
-        Sütikkel kapcsolatos kérdésekkel a support@fitflip.app email címen léphet kapcsolatba az Adatkezelővel. Az adatkezelés részleteit az <a href="/privacy" className="underline hover:text-ink-700">Adatvédelmi nyilatkozat</a> tartalmazza.
+        Sütikkel kapcsolatos kérdésekkel a support.fitflip@gmail.com email címen léphet kapcsolatba az Adatkezelővel. Az adatkezelés részleteit az <a href="/privacy" className="underline hover:text-ink-700">Adatvédelmi nyilatkozat</a> tartalmazza.
       </p>
     </>
   );
@@ -170,7 +170,7 @@ function ContentEn() {
 
       <h2 className="text-lg font-semibold mt-8 mb-2">4. Contact</h2>
       <p>
-        For questions about cookies, contact the Controller at support@fitflip.app. Data processing details are in the <a href="/privacy" className="underline hover:text-ink-700">Privacy Policy</a>.
+        For questions about cookies, contact the Controller at support.fitflip@gmail.com. Data processing details are in the <a href="/privacy" className="underline hover:text-ink-700">Privacy Policy</a>.
       </p>
     </>
   );

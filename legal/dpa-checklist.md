@@ -7,7 +7,7 @@ GDPR Art. 28 alapján minden adatfeldolgozóval érvényes DPA-nak kell lennie. 
 - **Név**: Kutak Balázs e.v.
 - **Székhely**: 1222 Budapest, Bárány utca 3.
 - **Adószám**: 59900490-2-43
-- **Kontakt**: support@fitflip.app
+- **Kontakt**: support.fitflip@gmail.com
 
 ---
 

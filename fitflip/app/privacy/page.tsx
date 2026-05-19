@@ -26,7 +26,7 @@ function ContentHu() {
         Név: Kutak Balázs e.v.<br />
         Székhely: 1222 Budapest, Bárány utca 3.<br />
         Adószám: 59900490-2-43<br />
-        Email: support@fitflip.app
+        Email: support.fitflip@gmail.com
       </p>
       <p>
         Adatvédelmi tisztviselő (DPO) kijelölésére jogszabály alapján nem köteles az Adatkezelő. Adatvédelmi kérdésekkel a fenti email címen lehet az Adatkezelőhöz fordulni.
@@ -138,7 +138,7 @@ function ContentHu() {
         <li><strong>Hozzájárulás visszavonása:</strong> ha az adatkezelés hozzájáruláson alapul, az bármikor visszavonható (a visszavonás nem érinti a megelőző adatkezelés jogszerűségét).</li>
       </ul>
       <p>
-        E jogok gyakorlása érdekében a Felhasználó a support@fitflip.app email címen léphet kapcsolatba az Adatkezelővel. Az Adatkezelő a kérelemre indokolatlan késedelem nélkül, de legfeljebb 30 napon belül érdemi választ ad.
+        E jogok gyakorlása érdekében a Felhasználó a support.fitflip@gmail.com email címen léphet kapcsolatba az Adatkezelővel. Az Adatkezelő a kérelemre indokolatlan késedelem nélkül, de legfeljebb 30 napon belül érdemi választ ad.
       </p>
 
       <h2 className="text-lg font-semibold mt-8 mb-2">7. Panasz a felügyeleti hatóságnál</h2>
@@ -193,7 +193,7 @@ function ContentEn() {
         Name: Kutak Balázs e.v.<br />
         Registered address: 1222 Budapest, Bárány utca 3., Hungary<br />
         Tax ID: 59900490-2-43<br />
-        Email: support@fitflip.app
+        Email: support.fitflip@gmail.com
       </p>
       <p>
         The Controller is not legally required to appoint a Data Protection Officer (DPO). For any privacy-related matter, please contact the Controller at the email address above.
@@ -295,7 +295,7 @@ function ContentEn() {
         <li><strong>Withdrawal of consent:</strong> where processing is based on consent, you may withdraw it at any time (without affecting lawfulness of prior processing).</li>
       </ul>
       <p>
-        To exercise these rights, contact the Controller at support@fitflip.app. The Controller will respond without undue delay and within 30 days at the latest.
+        To exercise these rights, contact the Controller at support.fitflip@gmail.com. The Controller will respond without undue delay and within 30 days at the latest.
       </p>
 
       <h2 className="text-lg font-semibold mt-8 mb-2">7. Complaint to the supervisory authority</h2>
