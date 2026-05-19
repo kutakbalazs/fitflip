@@ -1116,13 +1116,27 @@ export default function HomePage() {
 
         {images.length > 0 && !result && (
           <div className="w-full fade-in">
-            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-ink-50 mb-4">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={images[0].preview}
-                alt="preview"
-                className={`w-full h-full object-contain ${loading ? "image-pulse" : ""}`}
-              />
+            <div className="relative aspect-square w-full rounded-2xl overflow-hidden mb-4">
+              {loading && (
+                <div
+                  aria-hidden
+                  className="absolute inset-[-25%] ai-spin"
+                  style={{
+                    background:
+                      "conic-gradient(from 0deg, transparent 0deg, transparent 230deg, rgba(10,10,10,0.85) 340deg, transparent 360deg)",
+                  }}
+                />
+              )}
+              <div
+                className={`absolute rounded-[14px] overflow-hidden bg-ink-50 ${loading ? "inset-[3px]" : "inset-0 rounded-2xl"}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={images[0].preview}
+                  alt="preview"
+                  className="w-full h-full object-contain"
+                />
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 mb-6">

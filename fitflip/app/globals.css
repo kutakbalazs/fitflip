@@ -32,20 +32,10 @@ html, body {
   animation: pulse-slow 1.6s ease-in-out infinite;
 }
 
-@keyframes image-pulse {
-  0%, 100% { filter: saturate(1); }
-  50% { filter: saturate(0); }
+@keyframes ai-spin {
+  to { transform: rotate(360deg); }
 }
 
-.image-pulse {
-  animation: image-pulse 2.6s ease-in-out infinite;
-}
-
-@keyframes scan-dot {
-  0%, 100% { opacity: 0.3; transform: scale(0.85); }
-  50% { opacity: 1; transform: scale(1); }
-}
-
-.scan-dot {
-  animation: scan-dot 1.4s ease-in-out infinite;
+.ai-spin {
+  animation: ai-spin 2.6s linear infinite;
 }
