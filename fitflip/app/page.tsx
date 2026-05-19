@@ -751,10 +751,11 @@ export default function HomePage() {
     });
 
     // Cap any band at 15% spread (min >= 0.85 × max). Anchored on the
-    // midpoint so we stay centered on the original signal.
+    // upper value so the ceiling reflects the strongest market signal and
+    // we shrink upward from the bottom.
     const clampSpread = (min: number, max: number): { min: number; max: number } => {
       if (max <= 0 || min >= max * 0.85) return { min, max };
-      return tightBand((min + max) / 2);
+      return { min: Math.round(max * 0.85), max };
     };
 
     if (marketStats) {
