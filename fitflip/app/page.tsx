@@ -96,6 +96,8 @@ export default function HomePage() {
   const [isPremium, setIsPremium] = useState(false);
   const [banner, setBanner] = useState<{ kind: "success" | "info"; text: string } | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [showUpgradeConsent, setShowUpgradeConsent] = useState(false);
+  const [upgradeConsentChecked, setUpgradeConsentChecked] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [listings, setListings] = useState<Listing[] | null>(null);
   const [listingsExact, setListingsExact] = useState(true);
@@ -790,10 +792,20 @@ export default function HomePage() {
     return null;
   })();
 
+  const openUpgradeConsent = () => {
+    setUpgradeConsentChecked(false);
+    setShowUpgradeConsent(true);
+  };
+
   const startCheckout = async () => {
+    if (!upgradeConsentChecked) return;
     setCheckoutLoading(true);
     try {
-      const res = await fetch("/api/stripe/checkout", { method: "POST" });
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ withdrawalConsent: true }),
+      });
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
@@ -896,6 +908,12 @@ export default function HomePage() {
                 >
                   {t.history}
                 </Link>
+                <Link
+                  href="/account"
+                  className="text-ink-500 hover:text-ink-900 transition"
+                >
+                  {lang === "hu" ? "Fiók" : "Account"}
+                </Link>
                 {isPremium && (
                   <button
                     onClick={openPortal}
@@ -957,6 +975,13 @@ export default function HomePage() {
                       className="block px-4 py-3 text-sm text-ink-900 hover:bg-ink-50 transition"
                     >
                       {t.history}
+                    </Link>
+                    <Link
+                      href="/account"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block px-4 py-3 text-sm text-ink-900 hover:bg-ink-50 transition"
+                    >
+                      {lang === "hu" ? "Fiók" : "Account"}
                     </Link>
                     {isPremium && (
                       <button
@@ -1035,7 +1060,7 @@ export default function HomePage() {
                 <h2 className="text-xl font-medium mb-2">{t.limitReached}</h2>
                 <p className="text-ink-500 text-sm mb-5">{t.limitReachedSub}</p>
                 <button
-                  onClick={startCheckout}
+                  onClick={openUpgradeConsent}
                   disabled={checkoutLoading}
                   className="px-6 py-2.5 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition disabled:opacity-50"
                 >
@@ -1586,6 +1611,84 @@ export default function HomePage() {
           </div>
         )}
       </section>
+
+      {showUpgradeConsent && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-xl fade-in">
+            <h3 className="text-lg font-medium mb-3">
+              {lang === "hu" ? "Megerősítés a prémium előfizetés előtt" : "Confirm before upgrading"}
+            </h3>
+            <p className="text-sm text-ink-700 mb-4 leading-relaxed">
+              {lang === "hu"
+                ? "A prémium szolgáltatás azonnal aktiválódik a fizetés után. Ehhez a 14 napos elállási jogról szóló jogszabály alapján a hozzájárulásodat kérjük."
+                : "Premium is activated immediately after payment. Under the 14-day right of withdrawal we need your explicit consent."}
+            </p>
+            <label className="flex items-start gap-3 mb-5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={upgradeConsentChecked}
+                onChange={(e) => setUpgradeConsentChecked(e.target.checked)}
+                className="mt-1 w-4 h-4 accent-ink-900 shrink-0"
+              />
+              <span className="text-xs text-ink-700 leading-relaxed">
+                {lang === "hu" ? (
+                  <>
+                    Hozzájárulok, hogy a teljesítés a 14 napos elállási határidő lejárta előtt
+                    megkezdődjön, és tudomásul veszem, hogy ezzel a 45/2014. (II. 26.) Korm.
+                    rendelet 29. § (1) bek. m) pontja alapján az elállási jogomat elveszítem,
+                    amint a teljesítés megkezdődött. Elolvastam és elfogadom az{" "}
+                    <Link href="/terms" target="_blank" className="underline hover:text-ink-900">
+                      ÁSZF-et
+                    </Link>{" "}
+                    és az{" "}
+                    <Link href="/privacy" target="_blank" className="underline hover:text-ink-900">
+                      Adatvédelmi nyilatkozatot
+                    </Link>
+                    .
+                  </>
+                ) : (
+                  <>
+                    I expressly consent to immediate performance of the service before the
+                    14-day withdrawal period expires, and I acknowledge that I thereby lose
+                    my right of withdrawal once performance has begun, pursuant to § 29(1)(m)
+                    of Hungarian Decree 45/2014 (II. 26.). I have read and accept the{" "}
+                    <Link href="/terms" target="_blank" className="underline hover:text-ink-900">
+                      Terms
+                    </Link>{" "}
+                    and{" "}
+                    <Link href="/privacy" target="_blank" className="underline hover:text-ink-900">
+                      Privacy Policy
+                    </Link>
+                    .
+                  </>
+                )}
+              </span>
+            </label>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setShowUpgradeConsent(false)}
+                disabled={checkoutLoading}
+                className="px-4 py-2 rounded-full border border-ink-200 text-sm hover:bg-ink-50 transition disabled:opacity-50"
+              >
+                {lang === "hu" ? "Mégse" : "Cancel"}
+              </button>
+              <button
+                type="button"
+                onClick={startCheckout}
+                disabled={!upgradeConsentChecked || checkoutLoading}
+                className="px-4 py-2 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {checkoutLoading
+                  ? "…"
+                  : lang === "hu"
+                    ? "Folytatás a fizetéshez"
+                    : "Continue to payment"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer className="px-6 py-6 border-t border-ink-100 text-center text-xs text-ink-500 space-y-2">
         <p>{t.footer}</p>

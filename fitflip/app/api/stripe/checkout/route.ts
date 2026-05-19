@@ -12,6 +12,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
 
+    const body = await req.json().catch(() => ({}));
+    if (body?.withdrawalConsent !== true) {
+      return NextResponse.json({ error: "consent_required" }, { status: 400 });
+    }
+    const consentAt = new Date().toISOString();
+
     const priceId = process.env.STRIPE_PRICE_ID;
     if (!priceId) {
       return NextResponse.json({ error: "STRIPE_PRICE_ID not set" }, { status: 500 });
@@ -42,6 +48,17 @@ export async function POST(req: NextRequest) {
         ? { address: "auto", name: "auto" }
         : undefined,
       billing_address_collection: "required",
+      metadata: {
+        user_id: user.id,
+        withdrawal_consent_at: consentAt,
+        withdrawal_consent_basis: "HU 45/2014 (II.26.) Korm. rendelet 29. § (1) m)",
+      },
+      subscription_data: {
+        metadata: {
+          user_id: user.id,
+          withdrawal_consent_at: consentAt,
+        },
+      },
     });
 
     if (!session.url) {
