@@ -750,6 +750,13 @@ export default function HomePage() {
       max: Math.round(mid * 1.075),
     });
 
+    // Cap any band at 15% spread (min >= 0.85 × max). Anchored on the
+    // midpoint so we stay centered on the original signal.
+    const clampSpread = (min: number, max: number): { min: number; max: number } => {
+      if (max <= 0 || min >= max * 0.85) return { min, max };
+      return tightBand((min + max) / 2);
+    };
+
     if (marketStats) {
       // Scenarios 1 + 2: exact listings exist.
       if (isNew && hasRetail) {
@@ -759,10 +766,11 @@ export default function HomePage() {
         const { min, max } = tightBand(mid);
         return { label: "market", min, max, conditionTag: marketStats.conditionTag, count: marketStats.count };
       }
+      const { min, max } = clampSpread(marketStats.q1, marketStats.q3);
       return {
         label: "market",
-        min: marketStats.q1,
-        max: marketStats.q3,
+        min,
+        max,
         conditionTag: marketStats.conditionTag,
         count: marketStats.count,
       };
@@ -774,7 +782,8 @@ export default function HomePage() {
       return { label: "estimated", min, max };
     }
     if (typeof aiMin === "number" && typeof aiMax === "number") {
-      return { label: "estimated", min: aiMin, max: aiMax };
+      const { min, max } = clampSpread(aiMin, aiMax);
+      return { label: "estimated", min, max };
     }
     return null;
   })();
