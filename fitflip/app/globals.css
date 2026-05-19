@@ -32,22 +32,13 @@ html, body {
   animation: pulse-slow 1.6s ease-in-out infinite;
 }
 
-@keyframes shimmer-sweep {
-  0% { transform: translateX(-150%) skewX(-12deg); }
-  100% { transform: translateX(250%) skewX(-12deg); }
+@keyframes image-pulse {
+  0%, 100% { filter: grayscale(0) brightness(1); }
+  50% { filter: grayscale(0.85) brightness(0.85); }
 }
 
-.shimmer-sweep {
-  animation: shimmer-sweep 2.8s ease-in-out infinite;
-}
-
-@keyframes bracket-pulse {
-  0%, 100% { opacity: 0.35; }
-  50% { opacity: 1; }
-}
-
-.bracket-pulse {
-  animation: bracket-pulse 2.8s ease-in-out infinite;
+.image-pulse {
+  animation: image-pulse 2.2s ease-in-out infinite;
 }
 
 @keyframes scan-dot {
