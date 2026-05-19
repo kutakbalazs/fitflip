@@ -1462,6 +1462,21 @@ export default function HomePage() {
                             {t.listingsBroader}
                           </p>
                         ) : null}
+                        {sizeTokens.length > 0 && (() => {
+                          const matchCount = displayedListings.filter((e) => e.match).length;
+                          if (matchCount >= 2) return null;
+                          const msg = matchCount === 0 ? t.sizeRareWarningZero : t.sizeRareWarningOne;
+                          return (
+                            <div className="mb-3 flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5" aria-hidden="true">
+                                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                <line x1="12" y1="9" x2="12" y2="13" />
+                                <line x1="12" y1="17" x2="12.01" y2="17" />
+                              </svg>
+                              <p className="text-xs leading-snug">{msg}</p>
+                            </div>
+                          );
+                        })()}
                         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {displayedListings.map(({ listing: l, match: matched }, idx) => (
                           <li key={`${l.source}-${idx}`} className={`border rounded-2xl overflow-hidden bg-white hover:border-ink-300 transition ${matched ? "border-emerald-300 ring-1 ring-emerald-200" : "border-ink-100"}`}>
