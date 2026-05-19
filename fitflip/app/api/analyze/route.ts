@@ -517,13 +517,30 @@ export async function POST(req: NextRequest) {
         confidence: (parsed.confidence as string) ?? null,
         image_path: savedImagePath,
         image_hash: firstImageHash,
+        defects: Array.isArray(parsed.defects) ? parsed.defects : [],
+        condition_discount_pct:
+          typeof parsed.condition_discount_pct === "number"
+            ? parsed.condition_discount_pct
+            : null,
+        is_definitely_new:
+          typeof parsed.is_definitely_new === "boolean"
+            ? parsed.is_definitely_new
+            : null,
+        retail_price_huf:
+          typeof parsed.retail_price_huf === "number"
+            ? parsed.retail_price_huf
+            : null,
       };
       const { error: insertError } = await admin.from("scans").insert(insertPayload);
       if (insertError) {
-        // Likely the image_hash column is missing — retry without it so the
-        // scan still saves (dedup just won't work until the migration runs).
+        // Some columns may be missing in older DB schemas — retry without
+        // the optional ones so the scan still saves.
         const fallback = { ...insertPayload };
         delete fallback.image_hash;
+        delete fallback.defects;
+        delete fallback.condition_discount_pct;
+        delete fallback.is_definitely_new;
+        delete fallback.retail_price_huf;
         await admin.from("scans").insert(fallback);
       }
     }

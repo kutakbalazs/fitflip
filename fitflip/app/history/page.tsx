@@ -18,6 +18,8 @@ type Scan = {
   description: string | null;
   confidence: string | null;
   image_path: string | null;
+  defects: string[] | null;
+  condition_discount_pct: number | null;
 };
 
 type ScanWithUrl = Scan & { imageUrl: string | null };
@@ -42,11 +44,25 @@ export default async function HistoryPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: scans } = await supabase
+  const fullCols = "id, created_at, recognized, brand, model, era, condition, estimated_value_min_huf, estimated_value_max_huf, description, confidence, image_path, defects, condition_discount_pct";
+  const legacyCols = "id, created_at, recognized, brand, model, era, condition, estimated_value_min_huf, estimated_value_max_huf, description, confidence, image_path";
+
+  let scans: unknown[] | null = null;
+  const primary = await supabase
     .from("scans")
-    .select("id, created_at, recognized, brand, model, era, condition, estimated_value_min_huf, estimated_value_max_huf, description, confidence, image_path")
+    .select(fullCols)
     .order("created_at", { ascending: false })
     .limit(100);
+  if (primary.data) {
+    scans = primary.data;
+  } else {
+    const legacy = await supabase
+      .from("scans")
+      .select(legacyCols)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    scans = legacy.data;
+  }
 
   const items = (scans ?? []) as Scan[];
 
@@ -135,8 +151,23 @@ export default async function HistoryPage() {
                           <p>
                             <span className="text-ink-500">Becsült érték: </span>
                             {formatHuf(scan.estimated_value_min_huf)} – {formatHuf(scan.estimated_value_max_huf)}
+                            {scan.condition_discount_pct && scan.condition_discount_pct > 0 ? (
+                              <span className="text-ink-500"> ({scan.condition_discount_pct}% levonva sérülés miatt)</span>
+                            ) : null}
                           </p>
                         )}
+                      </div>
+                    )}
+                    {scan.defects && scan.defects.length > 0 && (
+                      <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200">
+                        <p className="text-[11px] uppercase tracking-wider text-amber-800 mb-1">
+                          Látható hibák
+                        </p>
+                        <ul className="text-xs text-amber-900 space-y-0.5">
+                          {scan.defects.map((d, i) => (
+                            <li key={i}>• {d}</li>
+                          ))}
+                        </ul>
                       </div>
                     )}
                     {scan.description && (
