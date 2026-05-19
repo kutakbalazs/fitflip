@@ -1125,13 +1125,18 @@ export default function HomePage() {
               />
               {loading && (
                 <div className="absolute inset-0 pointer-events-none">
-                  <div className="absolute inset-0 bg-ink-900/20 scan-shimmer" />
-                  <div className="absolute inset-x-0 top-0 h-full overflow-hidden">
-                    <div className="scan-line absolute inset-x-0 h-24 bg-gradient-to-b from-transparent via-white/60 to-transparent" />
+                  <div className="absolute inset-0 overflow-hidden">
+                    <div className="shimmer-sweep absolute -inset-y-4 w-1/3 bg-gradient-to-r from-transparent via-white/55 to-transparent" />
                   </div>
-                  <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-ink-900/80 backdrop-blur-sm text-white text-xs font-medium">
-                    <span className="scan-dot w-1.5 h-1.5 bg-white rounded-full" />
-                    {t.analyzing}
+                  <div className="bracket-pulse absolute top-3 left-3 w-5 h-5 border-t-2 border-l-2 border-white/90 rounded-tl-md" />
+                  <div className="bracket-pulse absolute top-3 right-3 w-5 h-5 border-t-2 border-r-2 border-white/90 rounded-tr-md" />
+                  <div className="bracket-pulse absolute bottom-3 left-3 w-5 h-5 border-b-2 border-l-2 border-white/90 rounded-bl-md" />
+                  <div className="bracket-pulse absolute bottom-3 right-3 w-5 h-5 border-b-2 border-r-2 border-white/90 rounded-br-md" />
+                  <div className="absolute inset-x-0 bottom-3 flex justify-center">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/85 backdrop-blur-md shadow-sm">
+                      <span className="scan-dot w-1.5 h-1.5 bg-ink-900 rounded-full" />
+                      <span className="text-[11px] font-medium text-ink-900 tracking-wide">{t.analyzing}</span>
+                    </div>
                   </div>
                 </div>
               )}

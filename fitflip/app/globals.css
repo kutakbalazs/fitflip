@@ -32,30 +32,29 @@ html, body {
   animation: pulse-slow 1.6s ease-in-out infinite;
 }
 
-@keyframes scan-line {
-  0% { transform: translateY(-100%); }
-  50% { transform: translateY(100%); }
-  100% { transform: translateY(-100%); }
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-150%) skewX(-12deg); }
+  100% { transform: translateX(250%) skewX(-12deg); }
 }
 
-.scan-line {
-  animation: scan-line 2.4s ease-in-out infinite;
+.shimmer-sweep {
+  animation: shimmer-sweep 2.8s ease-in-out infinite;
 }
 
-@keyframes scan-shimmer {
-  0%, 100% { opacity: 0.15; }
-  50% { opacity: 0.35; }
+@keyframes bracket-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
 }
 
-.scan-shimmer {
-  animation: scan-shimmer 2.4s ease-in-out infinite;
+.bracket-pulse {
+  animation: bracket-pulse 2.8s ease-in-out infinite;
 }
 
 @keyframes scan-dot {
-  0%, 100% { opacity: 0.2; transform: scale(0.85); }
+  0%, 100% { opacity: 0.3; transform: scale(0.85); }
   50% { opacity: 1; transform: scale(1); }
 }
 
 .scan-dot {
-  animation: scan-dot 1.2s ease-in-out infinite;
+  animation: scan-dot 1.4s ease-in-out infinite;
 }
