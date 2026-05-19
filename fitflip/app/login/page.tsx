@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { translations, type Lang } from "@/lib/translations";
+import LegalFooter from "@/components/LegalFooter";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -149,6 +150,9 @@ export default function LoginPage() {
               {t.loginSignupLink}
             </Link>
           </p>
+        </div>
+        <div className="mt-10">
+          <LegalFooter />
         </div>
       </section>
     </main>

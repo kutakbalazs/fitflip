@@ -1,0 +1,79 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+
+const STORAGE_KEY = "ff-cookie-consent";
+
+export default function CookieBanner() {
+  const [visible, setVisible] = useState(false);
+  const [lang, setLang] = useState<"hu" | "en">("hu");
+
+  useEffect(() => {
+    try {
+      const consented = localStorage.getItem(STORAGE_KEY);
+      if (!consented) setVisible(true);
+      const savedLang = localStorage.getItem("ff-lang");
+      if (savedLang === "en") setLang("en");
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const dismiss = (choice: "all" | "necessary") => {
+    try {
+      localStorage.setItem(STORAGE_KEY, choice);
+    } catch {
+      /* ignore */
+    }
+    setVisible(false);
+  };
+
+  if (!visible) return null;
+
+  const t =
+    lang === "hu"
+      ? {
+          text:
+            "A FitFlip működéséhez szükséges sütiket használunk (bejelentkezés, nyelvi beállítás). Analitikai vagy marketing célú harmadik féltől származó sütiket nem.",
+          more: "Részletek",
+          accept: "Rendben",
+          necessary: "Csak szükségesek",
+        }
+      : {
+          text:
+            "FitFlip uses only the cookies required to operate (authentication, language preference). No third-party analytics or marketing cookies.",
+          more: "Details",
+          accept: "OK",
+          necessary: "Only necessary",
+        };
+
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-50 px-4 pb-4 pointer-events-none">
+      <div className="pointer-events-auto max-w-3xl mx-auto bg-white border border-ink-200 rounded-2xl shadow-lg p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+        <p className="text-xs text-ink-700 leading-relaxed flex-1">
+          {t.text}{" "}
+          <Link href="/cookies" className="underline hover:text-ink-900">
+            {t.more}
+          </Link>
+        </p>
+        <div className="flex gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => dismiss("necessary")}
+            className="px-3 py-1.5 rounded-full border border-ink-200 text-xs text-ink-700 hover:bg-ink-50 transition"
+          >
+            {t.necessary}
+          </button>
+          <button
+            type="button"
+            onClick={() => dismiss("all")}
+            className="px-3 py-1.5 rounded-full bg-ink-900 text-white text-xs font-medium hover:bg-ink-700 transition"
+          >
+            {t.accept}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

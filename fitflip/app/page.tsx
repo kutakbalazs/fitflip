@@ -5,6 +5,7 @@ import Link from "next/link";
 import { translations, type Lang } from "@/lib/translations";
 import type { Listing } from "@/lib/listings/types";
 import { extractSizeTokens, listingMatchesSize } from "@/lib/listings/sizeMatch";
+import LegalFooter from "@/components/LegalFooter";
 import { createClient } from "@/lib/supabase/client";
 
 type AnalysisResult = {
@@ -1586,8 +1587,9 @@ export default function HomePage() {
         )}
       </section>
 
-      <footer className="px-6 py-6 border-t border-ink-100 text-center text-xs text-ink-500">
-        {t.footer}
+      <footer className="px-6 py-6 border-t border-ink-100 text-center text-xs text-ink-500 space-y-2">
+        <p>{t.footer}</p>
+        <LegalFooter />
       </footer>
     </main>
   );

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { translations, type Lang } from "@/lib/translations";
+import LegalFooter from "@/components/LegalFooter";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -169,8 +170,28 @@ export default function SignupPage() {
                   {t.signupLoginLink}
                 </Link>
               </p>
+              <p className="text-center text-[11px] text-ink-400 mt-6 leading-relaxed">
+                {lang === "hu" ? (
+                  <>
+                    A regisztrációval elfogadod az{" "}
+                    <Link href="/terms" className="underline hover:text-ink-700">ÁSZF-et</Link>{" "}
+                    és az{" "}
+                    <Link href="/privacy" className="underline hover:text-ink-700">Adatvédelmi nyilatkozatot</Link>.
+                  </>
+                ) : (
+                  <>
+                    By signing up you agree to our{" "}
+                    <Link href="/terms" className="underline hover:text-ink-700">Terms</Link>{" "}
+                    and{" "}
+                    <Link href="/privacy" className="underline hover:text-ink-700">Privacy Policy</Link>.
+                  </>
+                )}
+              </p>
             </>
           )}
+        </div>
+        <div className="mt-10">
+          <LegalFooter />
         </div>
       </section>
     </main>

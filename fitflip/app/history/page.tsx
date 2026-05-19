@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import LegalFooter from "@/components/LegalFooter";
 
 export const dynamic = "force-dynamic";
 
@@ -182,6 +183,10 @@ export default async function HistoryPage() {
           </ul>
         )}
       </section>
+
+      <footer className="px-6 py-6 border-t border-ink-100">
+        <LegalFooter />
+      </footer>
     </main>
   );
 }

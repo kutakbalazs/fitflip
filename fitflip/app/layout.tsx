@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import CookieBanner from "@/components/CookieBanner";
 
 export const metadata: Metadata = {
   title: "FitFlip – Snap. Identify. Sell.",
@@ -27,7 +28,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="hu">
-      <body className="min-h-screen bg-white text-ink-900">{children}</body>
+      <body className="min-h-screen bg-white text-ink-900">
+        {children}
+        <CookieBanner />
+      </body>
     </html>
   );
 }
