@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { translations, type Lang } from "@/lib/translations";
 import type { Listing } from "@/lib/listings/types";
+import { extractSizeTokens, listingMatchesSize } from "@/lib/listings/sizeMatch";
 import { createClient } from "@/lib/supabase/client";
 
 type AnalysisResult = {
@@ -640,6 +641,19 @@ export default function HomePage() {
   //   listing — this filter only affects the price band.
   // - Falls back to the full set if the condition filter leaves < 2 priced
   //   listings, so we still display something.
+  const sizeTokens = extractSizeTokens(sizeInput.trim());
+  const displayedListings: Array<{ listing: Listing; match: boolean }> | null = (() => {
+    if (!listings) return null;
+    const withMatch = listings.map((l) => ({
+      listing: l,
+      match: sizeTokens.length > 0 && listingMatchesSize(l.title, sizeTokens),
+    }));
+    if (sizeTokens.length > 0) {
+      withMatch.sort((a, b) => Number(b.match) - Number(a.match));
+    }
+    return withMatch;
+  })();
+
   const marketStats:
     | { q1: number; q3: number; count: number; conditionTag: "new" | "used" | "mixed" }
     | null = (() => {
@@ -1437,7 +1451,7 @@ export default function HomePage() {
                           {t.listingsLoading}
                         </div>
                       </div>
-                    ) : listings && listings.length > 0 ? (
+                    ) : displayedListings && displayedListings.length > 0 ? (
                       <>
                         {!result.brand?.trim() ? (
                           <p className="text-xs text-ink-500 mb-3 italic">
@@ -1449,8 +1463,8 @@ export default function HomePage() {
                           </p>
                         ) : null}
                         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {listings.map((l, idx) => (
-                          <li key={`${l.source}-${idx}`} className="border border-ink-100 rounded-2xl overflow-hidden bg-white hover:border-ink-300 transition">
+                          {displayedListings.map(({ listing: l, match: matched }, idx) => (
+                          <li key={`${l.source}-${idx}`} className={`border rounded-2xl overflow-hidden bg-white hover:border-ink-300 transition ${matched ? "border-emerald-300 ring-1 ring-emerald-200" : "border-ink-100"}`}>
                             <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex gap-3 p-3">
                               {l.imageUrl ? (
                                 /* eslint-disable-next-line @next/next/no-img-element */
@@ -1466,16 +1480,26 @@ export default function HomePage() {
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium line-clamp-2">{l.title}</p>
                                 <p className="text-sm text-ink-900 mt-1">{l.priceLabel}</p>
-                                <p className="text-[11px] uppercase tracking-wider text-ink-500 mt-1">
-                                  {l.source === "vinted"
-                                    ? "Vinted"
-                                    : l.source === "jofogas"
-                                      ? "Jófogás"
-                                      : l.source === "ebay"
-                                        ? "eBay"
-                                        : (l.source as string)}
-                                  {l.location ? ` · ${l.location}` : ""}
-                                </p>
+                                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                  <p className="text-[11px] uppercase tracking-wider text-ink-500">
+                                    {l.source === "vinted"
+                                      ? "Vinted"
+                                      : l.source === "jofogas"
+                                        ? "Jófogás"
+                                        : l.source === "ebay"
+                                          ? "eBay"
+                                          : (l.source as string)}
+                                    {l.location ? ` · ${l.location}` : ""}
+                                  </p>
+                                  {matched && (
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium">
+                                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                        <polyline points="20 6 9 17 4 12" />
+                                      </svg>
+                                      {t.sizeMatchBadge}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </a>
                           </li>
