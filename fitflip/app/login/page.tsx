@@ -151,10 +151,10 @@ export default function LoginPage() {
             </Link>
           </p>
         </div>
-        <div className="mt-10">
-          <LegalFooter />
-        </div>
       </section>
+      <footer className="px-6 py-6 border-t border-ink-100">
+        <LegalFooter />
+      </footer>
     </main>
   );
 }
