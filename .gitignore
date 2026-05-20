@@ -1,1 +1,7 @@
 .DS_Store
+
+# next-pwa generated files
+fitflip/public/sw.js
+fitflip/public/sw.js.map
+fitflip/public/workbox-*.js
+fitflip/public/workbox-*.js.map

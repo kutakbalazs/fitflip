@@ -6,7 +6,21 @@ export const metadata: Metadata = {
   title: "FitFlip – Snap. Identify. Sell.",
   description:
     "AI-alapú azonosító sneakerekhez, vintage ruhákhoz és streetwear darabokhoz. Fotózd le, és tudd meg mi az, mit ér, és hol add el.",
-  icons: { icon: "/favicon.svg" },
+  applicationName: "FitFlip",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  appleWebApp: {
+    capable: true,
+    title: "FitFlip",
+    statusBarStyle: "default",
+  },
   openGraph: {
     title: "FitFlip",
     description: "Snap. Identify. Sell.",
@@ -18,7 +32,11 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#ffffff",
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 export default function RootLayout({
