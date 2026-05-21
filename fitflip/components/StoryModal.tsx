@@ -12,7 +12,7 @@ type Props = {
 };
 
 const DISMISS_THRESHOLD = 90;
-const CLOSE_ANIM_MS = 280;
+const CLOSE_ANIM_MS = 480;
 
 export default function StoryModal({ open, onClose, title, story, lang }: Props) {
   const [drag, setDrag] = useState(0);
