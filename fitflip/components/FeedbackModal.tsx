@@ -57,7 +57,10 @@ export default function FeedbackModal({ open, onClose, lang }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: message.trim(),
-          url: typeof window !== "undefined" ? window.location.href : "",
+          url:
+            typeof window !== "undefined"
+              ? `${window.location.pathname}${window.location.search}`
+              : "",
           userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
           version: `v${process.env.NEXT_PUBLIC_APP_VERSION ?? ""}${
             process.env.NEXT_PUBLIC_GIT_SHA ? ` ${process.env.NEXT_PUBLIC_GIT_SHA}` : ""
