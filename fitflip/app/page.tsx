@@ -8,6 +8,7 @@ import { extractSizeTokens, listingMatchesSize } from "@/lib/listings/sizeMatch"
 import LegalFooter from "@/components/LegalFooter";
 import OnboardingModal from "@/components/OnboardingModal";
 import BackToTop from "@/components/BackToTop";
+import StoryModal from "@/components/StoryModal";
 import { haptic } from "@/lib/haptics";
 import { createClient } from "@/lib/supabase/client";
 
@@ -30,10 +31,21 @@ type AnalysisResult = {
   search_query: string | null;
   selling_tip: string | null;
   confidence: "low" | "medium" | "high" | null;
+  story: string | null;
+  hype_score: number | null;
+  hype_label: string | null;
   scansLeft: number;
 };
 
 const MAX_IMAGES = 6;
+
+function hypeBadgeStyle(score: number): string {
+  // Score-tiered palette, FitFlip-stílus: monokróm ink alapok meleg accentekkel.
+  if (score >= 9) return "bg-ink-900 text-white";
+  if (score >= 7) return "bg-amber-100 text-amber-900";
+  if (score >= 5) return "bg-emerald-100 text-emerald-900";
+  return "bg-white text-ink-700 border border-ink-200";
+}
 
 const isHeicFile = (file: File): boolean => {
   const name = file.name.toLowerCase();
@@ -102,6 +114,7 @@ export default function HomePage() {
   const [showUpgradeConsent, setShowUpgradeConsent] = useState(false);
   const [upgradeConsentChecked, setUpgradeConsentChecked] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showStory, setShowStory] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [listings, setListings] = useState<Listing[] | null>(null);
   const [listingsExact, setListingsExact] = useState(true);
@@ -1312,13 +1325,19 @@ export default function HomePage() {
         {result && (
           <div className="w-full fade-in">
             {images[0] && (
-              <div className="aspect-square w-full max-w-xs mx-auto rounded-2xl overflow-hidden bg-ink-50 mb-3">
+              <div className="relative aspect-square w-full max-w-xs mx-auto rounded-2xl overflow-hidden bg-ink-50 mb-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={images[0].preview}
                   alt="scanned"
                   className="w-full h-full object-contain"
                 />
+                {result.hype_label && typeof result.hype_score === "number" && result.hype_score >= 4 && (
+                  <div className={`absolute top-2 right-2 px-2.5 py-1 rounded-full text-[11px] font-semibold shadow-sm backdrop-blur-sm ${hypeBadgeStyle(result.hype_score)}`}>
+                    {result.hype_score >= 9 && <span className="mr-1">🔥</span>}
+                    {result.hype_label}
+                  </div>
+                )}
               </div>
             )}
             {images.length > 1 && (
@@ -1452,6 +1471,29 @@ export default function HomePage() {
                     <div className="px-6 py-4 bg-ink-50 text-sm text-ink-700 leading-relaxed">
                       {result.description}
                     </div>
+                  )}
+
+                  {result.story && result.story.trim().length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        haptic("tap");
+                        setShowStory(true);
+                      }}
+                      className="w-full flex items-center justify-between gap-3 px-6 py-3.5 border-t border-ink-100 text-left hover:bg-ink-50 transition group"
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <span className="w-7 h-7 rounded-full bg-ink-900 text-white text-sm flex items-center justify-center" aria-hidden="true">
+                          ★
+                        </span>
+                        <span className="text-sm font-medium">
+                          {lang === "hu" ? "A darab története" : "The story of this piece"}
+                        </span>
+                      </span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-500 group-hover:text-ink-900 transition" aria-hidden="true">
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </button>
                   )}
                 </div>
 
@@ -1725,6 +1767,15 @@ export default function HomePage() {
         onClose={() => setShowOnboarding(false)}
         lang={lang}
       />
+      {result?.story && (
+        <StoryModal
+          open={showStory}
+          onClose={() => setShowStory(false)}
+          title={`${result.brand ?? ""}${result.model ? ` — ${result.model}` : ""}`.trim() || (lang === "hu" ? "Sztori" : "Story")}
+          story={result.story}
+          lang={lang}
+        />
+      )}
       {displayedListings && displayedListings.length >= 6 && (
         <BackToTop lang={lang} />
       )}

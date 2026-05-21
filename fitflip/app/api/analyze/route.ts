@@ -167,6 +167,9 @@ VÁLASZ FORMÁTUM (CSAK ezt a JSON-t add vissza, semmi mást, semmi markdown):
   "estimated_value_min_huf": number vagy null (MÁR diszkontált),
   "estimated_value_max_huf": number vagy null (MÁR diszkontált),
   "description": "2-3 mondat TISZTA magyarul a darabról – mit látsz, mi az érdekes benne, ha bizonytalan vagy akkor miért. TILOS belső mezőnevek vagy hunglish: ne írd le hogy 'is_definitely_new', 'retail_price_huf', 'new-jelzők', 'TRUE/FALSE', 'condition_discount_pct'. Természetes, eladó-szövegszerű magyar mondatok legyenek, technikai zsargon nélkül.",
+  "story": "string vagy null — HA a darab kulturálisan jelentős (ikonikus colorway, híres kollaboráció, jelentős release, sneakerhead-számára aranyat-érő háttér: pl. Air Jordan 1 'Shattered Backboard', Travis Scott AJ1, Yeezy Boost 350 'Zebra', Off-White Air Presto, Supreme x Louis Vuitton, Cactus Plant Flea Market kollabok, stb.), akkor 3-5 mondatos magyar sztori: release dátum/év, kollab vagy designer háttér, kulturális relevancia (mi tette ikonikussá), eredeti retail vs. mai resell, érdekesség (pl. milyen sztárok hordták, milyen kampányhoz kapcsolódott). Ha NEM kulturálisan jelentős (átlagos sneaker, generic vintage, ismeretlen darab), akkor null. NE találj ki sztorit, csak tényleges, kulturálisan dokumentált háttér esetén. NE szerepeltesd a sztoriban az árbecslést.",
+  "hype_score": "number 1-10 vagy null — kulturális/resell hype mértéke. 10 = grail-tier (limited Travis Scott, Off-White, Dior x AJ1), 8-9 = highly sought (Mocha, Bred, Chicago), 6-7 = popular but accessible (Yeezy 350 classics, Jordan 4 White Cement), 4-5 = solid mainstream (Air Force 1, Stan Smith, Chuck Taylor), 1-3 = generic/no hype. Null ha nem azonosított vagy nem ismered.",
+  "hype_label": "string vagy null — RÖVID magyar/angol badge (max 14 karakter): 'Holy Grail' (9-10), 'Heat' (7-8), 'Hyped' (6-7), 'Klasszikus' (4-6 timeless darabok), 'Vintage Gem' (régi vintage tételek), 'Streetwear Staple' (alap streetwear). Null ha hype_score null vagy ≤3.",
   "search_query": "angol kereső kifejezés (márka + modell + colorway/évjárat)",
   "selling_tip": "1-2 mondatos magyar tipp az eladáshoz",
   "confidence": "low" | "medium" | "high"
@@ -280,6 +283,9 @@ RESPONSE FORMAT (return ONLY this JSON, nothing else, no markdown):
   "estimated_value_min_huf": number or null (ALREADY discounted),
   "estimated_value_max_huf": number or null (ALREADY discounted),
   "description": "2-3 sentences in clean English about the item – what you see, what's interesting, why uncertain if applicable. FORBIDDEN: internal field names like 'is_definitely_new', 'retail_price_huf', 'condition_discount_pct', 'TRUE/FALSE'. Use natural prose, no technical jargon.",
+  "story": "string or null — IF the item is culturally significant (iconic colorway, famous collab, landmark release with real backstory: e.g. Air Jordan 1 'Shattered Backboard', Travis Scott AJ1, Yeezy 350 'Zebra', Off-White Air Presto, Supreme x Louis Vuitton, Cactus Plant Flea Market collabs, etc.) provide a 3-5 sentence English story: release year, collab/designer background, cultural relevance (what made it iconic), original retail vs current resell, fun fact (who wore it, what campaign). If NOT culturally significant (generic sneaker, anonymous vintage), return null. DO NOT invent stories, only real documented context. DO NOT include price estimate in the story.",
+  "hype_score": "number 1-10 or null — cultural/resell hype level. 10 = grail-tier (limited Travis Scott, Off-White, Dior x AJ1), 8-9 = highly sought (Mocha, Bred, Chicago), 6-7 = popular but accessible (Yeezy 350 classics, Jordan 4 White Cement), 4-5 = solid mainstream (Air Force 1, Stan Smith, Chuck Taylor), 1-3 = generic/no hype. Null if unidentified or unknown.",
+  "hype_label": "string or null — SHORT English badge (max 14 chars): 'Holy Grail' (9-10), 'Heat' (7-8), 'Hyped' (6-7), 'Classic' (4-6 timeless), 'Vintage Gem' (older vintage), 'Streetwear Staple' (basic streetwear). Null if hype_score is null or ≤3.",
   "search_query": "English search query (brand + model + colorway/year)",
   "selling_tip": "1-2 sentence selling tip in English",
   "confidence": "low" | "medium" | "high"
@@ -530,6 +536,13 @@ export async function POST(req: NextRequest) {
           typeof parsed.retail_price_huf === "number"
             ? parsed.retail_price_huf
             : null,
+        story: typeof parsed.story === "string" && parsed.story.trim().length > 0 ? parsed.story : null,
+        hype_score:
+          typeof parsed.hype_score === "number" ? parsed.hype_score : null,
+        hype_label:
+          typeof parsed.hype_label === "string" && parsed.hype_label.trim().length > 0
+            ? parsed.hype_label
+            : null,
       };
       const { error: insertError } = await admin.from("scans").insert(insertPayload);
       if (insertError) {
@@ -541,6 +554,9 @@ export async function POST(req: NextRequest) {
         delete fallback.condition_discount_pct;
         delete fallback.is_definitely_new;
         delete fallback.retail_price_huf;
+        delete fallback.story;
+        delete fallback.hype_score;
+        delete fallback.hype_label;
         await admin.from("scans").insert(fallback);
       }
     }
