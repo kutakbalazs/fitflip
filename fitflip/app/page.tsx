@@ -1036,10 +1036,10 @@ export default function HomePage() {
         </div>
       )}
 
-      <section className="flex-1 flex flex-col items-center justify-start px-6 py-6 sm:py-12 max-w-2xl mx-auto w-full">
+      <section className="flex-1 flex flex-col items-center justify-start px-6 py-4 sm:py-12 max-w-2xl mx-auto w-full">
         {images.length === 0 && !result && (
           <div className="w-full text-center fade-in">
-            <h1 className="text-3xl sm:text-5xl font-display tracking-tight mb-6 sm:mb-8">
+            <h1 className="text-3xl sm:text-5xl font-display tracking-tight mb-4 sm:mb-8">
               {t.tagline}
             </h1>
 
@@ -1689,7 +1689,7 @@ export default function HomePage() {
         </div>
       )}
 
-      <footer className="px-6 py-6 border-t border-ink-100 text-center text-xs text-ink-500 space-y-2">
+      <footer className="px-6 py-3 sm:py-6 border-t border-ink-100 text-center text-[11px] sm:text-xs text-ink-500 space-y-1 sm:space-y-2">
         <p>{t.footer}</p>
         <LegalFooter />
       </footer>
