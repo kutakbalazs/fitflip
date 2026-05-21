@@ -43,6 +43,7 @@ export default function PullToRefresh({ children }: { children: React.ReactNode 
       startY.current = null;
       triggered.current = false;
       if (wasTriggered) {
+        haptic("success");
         setRefreshing(true);
         setPull(40);
         try {

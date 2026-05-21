@@ -1,13 +1,27 @@
 "use client";
 
+import { useState } from "react";
+
 type Props = {
   open: boolean;
   onClose: () => void;
   lang: "hu" | "en";
 };
 
-export default function OnboardingModal({ open, onClose, lang }: Props) {
+export default function OnboardingModal({ open, onClose, lang: initialLang }: Props) {
+  const [lang, setLang] = useState<"hu" | "en">(initialLang);
+
   if (!open) return null;
+
+  const switchLang = (l: "hu" | "en") => {
+    setLang(l);
+    try {
+      localStorage.setItem("ff_lang", l);
+      localStorage.setItem("ff-lang", l);
+    } catch {
+      /* ignore */
+    }
+  };
 
   const t =
     lang === "hu"
@@ -46,6 +60,24 @@ export default function OnboardingModal({ open, onClose, lang }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-xl fade-in">
+        <div className="flex justify-end mb-2 -mt-2 -mr-2">
+          <div className="flex items-center text-xs">
+            <button
+              type="button"
+              onClick={() => switchLang("hu")}
+              className={`px-2 py-1 rounded ${lang === "hu" ? "bg-ink-900 text-white" : "text-ink-500 hover:text-ink-900"}`}
+            >
+              HU
+            </button>
+            <button
+              type="button"
+              onClick={() => switchLang("en")}
+              className={`px-2 py-1 rounded ${lang === "en" ? "bg-ink-900 text-white" : "text-ink-500 hover:text-ink-900"}`}
+            >
+              EN
+            </button>
+          </div>
+        </div>
         <h2 className="text-2xl font-display tracking-tight mb-1">{t.title}</h2>
         <p className="text-sm text-ink-500 mb-6 leading-relaxed">{t.sub}</p>
 

@@ -6,7 +6,6 @@ import { translations, type Lang } from "@/lib/translations";
 import type { Listing } from "@/lib/listings/types";
 import { extractSizeTokens, listingMatchesSize } from "@/lib/listings/sizeMatch";
 import LegalFooter from "@/components/LegalFooter";
-import FeedbackModal from "@/components/FeedbackModal";
 import OnboardingModal from "@/components/OnboardingModal";
 import BackToTop from "@/components/BackToTop";
 import { haptic } from "@/lib/haptics";
@@ -102,7 +101,6 @@ export default function HomePage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showUpgradeConsent, setShowUpgradeConsent] = useState(false);
   const [upgradeConsentChecked, setUpgradeConsentChecked] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [listings, setListings] = useState<Listing[] | null>(null);
@@ -930,13 +928,6 @@ export default function HomePage() {
                 >
                   {lang === "hu" ? "Fiók" : "Account"}
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => setShowFeedback(true)}
-                  className="text-ink-500 hover:text-ink-900 transition"
-                >
-                  {lang === "hu" ? "Visszajelzés" : "Feedback"}
-                </button>
                 {isPremium && (
                   <button
                     onClick={openPortal}
@@ -1006,16 +997,6 @@ export default function HomePage() {
                     >
                       {lang === "hu" ? "Fiók" : "Account"}
                     </Link>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        setShowFeedback(true);
-                      }}
-                      className="block w-full text-left px-4 py-3 text-sm text-ink-900 hover:bg-ink-50 transition"
-                    >
-                      {lang === "hu" ? "Visszajelzés" : "Feedback"}
-                    </button>
                     {isPremium && (
                       <button
                         type="button"
@@ -1739,17 +1720,12 @@ export default function HomePage() {
         </div>
       )}
 
-      <FeedbackModal
-        open={showFeedback}
-        onClose={() => setShowFeedback(false)}
-        lang={lang}
-      />
       <OnboardingModal
         open={showOnboarding}
         onClose={() => setShowOnboarding(false)}
         lang={lang}
       />
-      {displayedListings && displayedListings.length >= 8 && (
+      {displayedListings && displayedListings.length >= 6 && (
         <BackToTop lang={lang} />
       )}
 
