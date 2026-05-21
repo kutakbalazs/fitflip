@@ -12,15 +12,21 @@ type Props = {
 };
 
 const DISMISS_THRESHOLD = 90;
+const CLOSE_ANIM_MS = 280;
 
 export default function StoryModal({ open, onClose, title, story, lang }: Props) {
   const [drag, setDrag] = useState(0);
+  const [released, setReleased] = useState(false);
+  const [closing, setClosing] = useState(false);
   const startY = useRef<number | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const cardHeightRef = useRef<number>(0);
 
   useEffect(() => {
     if (!open) {
       setDrag(0);
+      setReleased(false);
+      setClosing(false);
       startY.current = null;
       return;
     }
@@ -39,12 +45,26 @@ export default function StoryModal({ open, onClose, title, story, lang }: Props)
 
   const paragraphs = story.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
 
+  // Run a smooth slide-down animation, then unmount via onClose.
+  const animateClose = () => {
+    if (closing) return;
+    haptic("tap");
+    setReleased(false);
+    setClosing(true);
+    window.setTimeout(() => {
+      onClose();
+    }, CLOSE_ANIM_MS);
+  };
+
   const onTouchStart = (e: React.TouchEvent) => {
+    if (closing) return;
     startY.current = e.touches[0]?.clientY ?? null;
+    cardHeightRef.current = cardRef.current?.getBoundingClientRect().height ?? 0;
+    setReleased(false);
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
-    if (startY.current === null) return;
+    if (startY.current === null || closing) return;
     // Only allow downward drag, and only when the card itself isn't scrolled.
     const scrollTop = cardRef.current?.scrollTop ?? 0;
     if (scrollTop > 0) {
@@ -56,28 +76,43 @@ export default function StoryModal({ open, onClose, title, story, lang }: Props)
   };
 
   const onTouchEnd = () => {
+    if (closing) return;
+    startY.current = null;
     if (drag >= DISMISS_THRESHOLD) {
-      haptic("tap");
-      onClose();
+      animateClose();
     } else {
+      setReleased(true);
       setDrag(0);
     }
-    startY.current = null;
   };
+
+  // Translate value: while dragging follow finger; while closing, animate
+  // fully off the bottom of the screen.
+  const offBottom = (cardHeightRef.current || 600) + 40;
+  const translateY = closing ? offBottom : drag;
+  const backdropOpacity = closing
+    ? 0
+    : drag > 0
+      ? Math.max(0.15, 1 - drag / (cardHeightRef.current || 600))
+      : 1;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50"
-      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      onClick={animateClose}
       onTouchMove={(e) => e.preventDefault()}
-      style={{ touchAction: "none" }}
+      style={{
+        touchAction: "none",
+        background: `rgba(0,0,0,${0.5 * backdropOpacity})`,
+        transition: closing || released ? "background 0.25s ease" : "none",
+      }}
     >
       <div
         ref={cardRef}
         className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-2xl shadow-xl max-h-[85dvh] overflow-y-auto overscroll-contain"
         style={{
-          transform: `translateY(${drag}px)`,
-          transition: drag > 0 && startY.current === null ? "transform 0.25s ease" : "none",
+          transform: `translateY(${translateY}px)`,
+          transition: closing || released ? `transform ${CLOSE_ANIM_MS}ms cubic-bezier(0.32, 0.72, 0, 1)` : "none",
           touchAction: "pan-y",
         }}
         onClick={(e) => e.stopPropagation()}
@@ -92,7 +127,7 @@ export default function StoryModal({ open, onClose, title, story, lang }: Props)
           <div className="sm:hidden w-10 h-1 rounded-full bg-ink-200" aria-hidden="true" />
           <button
             type="button"
-            onClick={onClose}
+            onClick={animateClose}
             aria-label={lang === "hu" ? "Bezárás" : "Close"}
             className="absolute right-3 top-3 w-8 h-8 rounded-full hover:bg-ink-50 text-ink-500 hover:text-ink-900 flex items-center justify-center transition"
           >
