@@ -78,7 +78,7 @@ export default function SignupPage() {
     <main className="min-h-dvh flex flex-col">
       <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100">
         <Link href="/" className="flex items-baseline gap-2">
-          <span className="text-xl font-medium tracking-tight">FitFlip</span>
+          <span className="text-xl font-display tracking-tight">FitFlip</span>
           <span className="text-xs text-ink-500 hidden sm:inline">.app</span>
         </Link>
       </header>

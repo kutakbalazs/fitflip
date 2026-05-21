@@ -882,7 +882,7 @@ export default function HomePage() {
           aria-label="FitFlip"
           className="flex items-baseline gap-2 hover:opacity-70 transition cursor-pointer"
         >
-          <span className="text-xl font-medium tracking-tight">FitFlip</span>
+          <span className="text-xl font-display tracking-tight">FitFlip</span>
           <span className="text-xs text-ink-500 hidden sm:inline">.app</span>
         </button>
         <div className="flex items-center gap-3 text-sm">
