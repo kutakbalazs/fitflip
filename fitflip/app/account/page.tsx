@@ -98,7 +98,7 @@ export default function AccountPage() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col bg-white">
+    <main className="min-h-dvh flex flex-col bg-white">
       <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100">
         <Link href="/" className="flex items-baseline gap-2">
           <span className="text-xl font-medium tracking-tight">FitFlip</span>

@@ -50,14 +50,14 @@ export default function ResetPasswordPage() {
 
   if (!authChecked) {
     return (
-      <main className="min-h-screen flex items-center justify-center">
+      <main className="min-h-dvh flex items-center justify-center">
         <p className="text-ink-500 text-sm">…</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen flex flex-col">
+    <main className="min-h-dvh flex flex-col">
       <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100">
         <Link href="/" className="flex items-baseline gap-2">
           <span className="text-xl font-medium tracking-tight">FitFlip</span>

@@ -46,7 +46,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="hu">
-      <body className="min-h-screen bg-white text-ink-900">
+      <body className="min-h-dvh bg-white text-ink-900">
         {children}
         <CookieBanner />
       </body>
