@@ -6,6 +6,10 @@ import { translations, type Lang } from "@/lib/translations";
 import type { Listing } from "@/lib/listings/types";
 import { extractSizeTokens, listingMatchesSize } from "@/lib/listings/sizeMatch";
 import LegalFooter from "@/components/LegalFooter";
+import FeedbackModal from "@/components/FeedbackModal";
+import OnboardingModal from "@/components/OnboardingModal";
+import BackToTop from "@/components/BackToTop";
+import { haptic } from "@/lib/haptics";
 import { createClient } from "@/lib/supabase/client";
 
 type AnalysisResult = {
@@ -98,6 +102,8 @@ export default function HomePage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showUpgradeConsent, setShowUpgradeConsent] = useState(false);
   const [upgradeConsentChecked, setUpgradeConsentChecked] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [listings, setListings] = useState<Listing[] | null>(null);
   const [listingsExact, setListingsExact] = useState(true);
@@ -130,6 +136,14 @@ export default function HomePage() {
         const userLang = (data.user.user_metadata as { lang?: string } | null)?.lang;
         if (userLang !== currentLang) {
           supabase.auth.updateUser({ data: { lang: currentLang } }).catch(() => {});
+        }
+        // First-launch onboarding: show once per browser, only for signed-in users.
+        try {
+          if (!localStorage.getItem("ff-onboarded")) {
+            setShowOnboarding(true);
+          }
+        } catch {
+          /* ignore */
         }
       }
     });
@@ -554,12 +568,14 @@ export default function HomePage() {
         return;
       }
       setResult(data);
+      haptic("success");
       if (typeof data.scansLeft === "number") {
         setScansLeft(data.scansLeft);
         if (data.scansLeft <= 0) setLimitReached(true);
       }
     } catch {
       setError(t.error);
+      haptic("error");
     } finally {
       setLoading(false);
     }
@@ -914,6 +930,13 @@ export default function HomePage() {
                 >
                   {lang === "hu" ? "Fiók" : "Account"}
                 </Link>
+                <button
+                  type="button"
+                  onClick={() => setShowFeedback(true)}
+                  className="text-ink-500 hover:text-ink-900 transition"
+                >
+                  {lang === "hu" ? "Visszajelzés" : "Feedback"}
+                </button>
                 {isPremium && (
                   <button
                     onClick={openPortal}
@@ -983,6 +1006,16 @@ export default function HomePage() {
                     >
                       {lang === "hu" ? "Fiók" : "Account"}
                     </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setShowFeedback(true);
+                      }}
+                      className="block w-full text-left px-4 py-3 text-sm text-ink-900 hover:bg-ink-50 transition"
+                    >
+                      {lang === "hu" ? "Visszajelzés" : "Feedback"}
+                    </button>
                     {isPremium && (
                       <button
                         type="button"
@@ -1071,7 +1104,10 @@ export default function HomePage() {
                 {/* Mobile: live camera viewfinder background — tap to capture */}
                 <div
                   className="sm:hidden relative aspect-[4/5] rounded-2xl overflow-hidden bg-ink-900 mb-3 cursor-pointer"
-                  onClick={() => cameraInputRef.current?.click()}
+                  onClick={() => {
+                    haptic("tap");
+                    cameraInputRef.current?.click();
+                  }}
                 >
                   <video
                     ref={videoRef}
@@ -1480,12 +1516,20 @@ export default function HomePage() {
                         </div>
                       </div>
                     ) : listingsLoading ? (
-                      <div className="border border-ink-100 rounded-2xl p-6 bg-ink-50 text-center">
-                        <div className="inline-flex items-center gap-2 text-sm text-ink-700">
-                          <span className="w-1.5 h-1.5 bg-ink-700 rounded-full pulse-slow" />
-                          {t.listingsLoading}
-                        </div>
-                      </div>
+                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3" aria-busy="true" aria-label={t.listingsLoading}>
+                        {Array.from({ length: 6 }).map((_, i) => (
+                          <li key={i} className="border border-ink-100 rounded-2xl overflow-hidden bg-white">
+                            <div className="flex gap-3 p-3">
+                              <div className="w-20 h-20 rounded-lg bg-ink-100 shrink-0 pulse-slow" />
+                              <div className="flex-1 min-w-0 space-y-2 py-1">
+                                <div className="h-3 w-4/5 rounded bg-ink-100 pulse-slow" />
+                                <div className="h-3 w-2/5 rounded bg-ink-100 pulse-slow" />
+                                <div className="h-2.5 w-3/5 rounded bg-ink-100 pulse-slow" />
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
                     ) : displayedListings && displayedListings.length > 0 ? (
                       <>
                         {!result.brand?.trim() ? (
@@ -1557,8 +1601,14 @@ export default function HomePage() {
                         </ul>
                       </>
                     ) : (
-                      <div className="border border-ink-100 rounded-2xl p-6 bg-ink-50 text-center text-sm text-ink-500">
-                        {t.listingsEmpty}
+                      <div className="border border-ink-100 rounded-2xl p-8 bg-ink-50 text-center">
+                        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-white border border-ink-100 flex items-center justify-center text-ink-400">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.3-4.3" />
+                          </svg>
+                        </div>
+                        <p className="text-sm text-ink-700 font-medium">{t.listingsEmpty}</p>
                       </div>
                     )}
                   </div>
@@ -1687,6 +1737,20 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+      )}
+
+      <FeedbackModal
+        open={showFeedback}
+        onClose={() => setShowFeedback(false)}
+        lang={lang}
+      />
+      <OnboardingModal
+        open={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        lang={lang}
+      />
+      {displayedListings && displayedListings.length >= 8 && (
+        <BackToTop lang={lang} />
       )}
 
       <footer className="px-6 py-3 sm:py-6 border-t border-ink-100 text-center text-[11px] sm:text-xs text-ink-500 space-y-1 sm:space-y-2">

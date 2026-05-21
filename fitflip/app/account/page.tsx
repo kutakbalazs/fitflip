@@ -170,7 +170,11 @@ export default function AccountPage() {
         </div>
       </section>
 
-      <footer className="px-6 py-6 border-t border-ink-100">
+      <footer className="px-6 py-6 border-t border-ink-100 space-y-2">
+        <p className="text-center text-[10px] text-ink-400 font-mono">
+          v{process.env.NEXT_PUBLIC_APP_VERSION}
+          {process.env.NEXT_PUBLIC_GIT_SHA ? ` · ${process.env.NEXT_PUBLIC_GIT_SHA}` : ""}
+        </p>
         <LegalFooter />
       </footer>
     </main>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import LegalFooter from "@/components/LegalFooter";
+import PullToRefresh from "@/components/PullToRefresh";
 
 export const dynamic = "force-dynamic";
 
@@ -81,6 +82,7 @@ export default async function HistoryPage() {
 
   return (
     <main className="min-h-dvh flex flex-col">
+      <PullToRefresh>
       <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100">
         <Link href="/" className="flex items-baseline gap-2">
           <span className="text-xl font-medium tracking-tight">FitFlip</span>
@@ -95,11 +97,19 @@ export default async function HistoryPage() {
         <h1 className="text-3xl font-display tracking-tight mb-8">Scan előzmények</h1>
 
         {itemsWithUrls.length === 0 ? (
-          <div className="border border-ink-100 rounded-2xl p-8 bg-ink-50 text-center">
-            <p className="text-ink-500">Még nincs scan-ed. Töltsd fel az elsőt!</p>
+          <div className="border border-ink-100 rounded-2xl p-10 bg-ink-50 text-center">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-white border border-ink-100 flex items-center justify-center text-ink-400">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="3" />
+                <circle cx="9" cy="9" r="2" />
+                <path d="m21 15-4-4-8 8" />
+              </svg>
+            </div>
+            <p className="font-medium mb-1">Még nincs scan-ed</p>
+            <p className="text-sm text-ink-500 mb-5">Töltsd fel az első darabodat — sneakert, ruhát, bármit.</p>
             <Link
               href="/"
-              className="mt-4 inline-block px-6 py-2 rounded-full bg-ink-900 text-white text-sm hover:bg-ink-700 transition"
+              className="inline-block px-6 py-2.5 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition"
             >
               Új scan
             </Link>
@@ -187,6 +197,7 @@ export default async function HistoryPage() {
       <footer className="px-6 py-6 border-t border-ink-100">
         <LegalFooter />
       </footer>
+      </PullToRefresh>
     </main>
   );
 }
