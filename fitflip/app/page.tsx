@@ -1036,13 +1036,12 @@ export default function HomePage() {
         </div>
       )}
 
-      <section className="flex-1 flex flex-col items-center justify-start px-6 py-12 max-w-2xl mx-auto w-full">
+      <section className="flex-1 flex flex-col items-center justify-start px-6 py-6 sm:py-12 max-w-2xl mx-auto w-full">
         {images.length === 0 && !result && (
           <div className="w-full text-center fade-in">
-            <h1 className="text-4xl sm:text-5xl font-display tracking-tight mb-3">
+            <h1 className="text-3xl sm:text-5xl font-display tracking-tight mb-6 sm:mb-8">
               {t.tagline}
             </h1>
-            <p className="text-ink-500 text-lg mb-10">{t.subtagline}</p>
 
             {authenticated === false ? (
               <div className="border border-ink-100 rounded-2xl p-8 bg-ink-50">
@@ -1071,7 +1070,7 @@ export default function HomePage() {
               <>
                 {/* Mobile: live camera viewfinder background — tap to capture */}
                 <div
-                  className="sm:hidden relative aspect-[3/4] rounded-2xl overflow-hidden bg-ink-900 mb-4 cursor-pointer"
+                  className="sm:hidden relative aspect-[4/5] rounded-2xl overflow-hidden bg-ink-900 mb-3 cursor-pointer"
                   onClick={() => cameraInputRef.current?.click()}
                 >
                   <video
@@ -1128,13 +1127,13 @@ export default function HomePage() {
 
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full mt-4 px-4 py-3 rounded-xl border border-ink-100 hover:border-ink-300 hover:bg-ink-50 transition text-sm font-medium"
+                  className="w-full mt-3 px-4 py-3 rounded-xl border border-ink-100 hover:border-ink-300 hover:bg-ink-50 transition text-sm font-medium"
                 >
                   {t.chooseFile}
                 </button>
 
                 {!isPremium && (
-                  <p className="text-xs text-ink-500 mt-6">
+                  <p className="text-xs text-ink-500 mt-4">
                     {t.scansLeftFull.replace("{n}", scansLeft.toString())}
                   </p>
                 )}
