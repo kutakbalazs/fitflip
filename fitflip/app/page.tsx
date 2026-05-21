@@ -1332,7 +1332,7 @@ export default function HomePage() {
                   alt="scanned"
                   className="w-full h-full object-contain"
                 />
-                {result.hype_label && typeof result.hype_score === "number" && result.hype_score >= 4 && (
+                {result.hype_label && typeof result.hype_score === "number" && result.hype_score >= 7 && (
                   <div className={`absolute top-2 right-2 px-2.5 py-1 rounded-full text-[11px] font-semibold shadow-sm backdrop-blur-sm ${hypeBadgeStyle(result.hype_score)}`}>
                     {result.hype_score >= 9 && <span className="mr-1">🔥</span>}
                     {result.hype_label}

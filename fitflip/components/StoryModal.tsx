@@ -22,10 +22,22 @@ export default function StoryModal({ open, onClose, title, story, lang }: Props)
     if (!open) {
       setDrag(0);
       startY.current = null;
+      return;
     }
+    // Lock background scroll while the modal is open.
+    const previousOverflow = document.body.style.overflow;
+    const previousOverscroll = document.body.style.overscrollBehavior;
+    document.body.style.overflow = "hidden";
+    document.body.style.overscrollBehavior = "contain";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.overscrollBehavior = previousOverscroll;
+    };
   }, [open]);
 
   if (!open) return null;
+
+  const paragraphs = story.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
 
   const onTouchStart = (e: React.TouchEvent) => {
     startY.current = e.touches[0]?.clientY ?? null;
@@ -57,17 +69,23 @@ export default function StoryModal({ open, onClose, title, story, lang }: Props)
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50"
       onClick={onClose}
+      onTouchMove={(e) => e.preventDefault()}
+      style={{ touchAction: "none" }}
     >
       <div
         ref={cardRef}
-        className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-2xl shadow-xl max-h-[85dvh] overflow-y-auto"
+        className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-2xl shadow-xl max-h-[85dvh] overflow-y-auto overscroll-contain"
         style={{
           transform: `translateY(${drag}px)`,
           transition: drag > 0 && startY.current === null ? "transform 0.25s ease" : "none",
+          touchAction: "pan-y",
         }}
         onClick={(e) => e.stopPropagation()}
         onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
+        onTouchMove={(e) => {
+          e.stopPropagation();
+          onTouchMove(e);
+        }}
         onTouchEnd={onTouchEnd}
       >
         <div className="sticky top-0 bg-white flex items-center justify-center pt-3 pb-1 sm:pt-4 sm:pb-2 rounded-t-3xl">
@@ -89,9 +107,13 @@ export default function StoryModal({ open, onClose, title, story, lang }: Props)
             {lang === "hu" ? "A darab története" : "The story"}
           </p>
           <h2 className="text-2xl font-display tracking-tight mb-4">{title}</h2>
-          <p className="text-sm text-ink-700 leading-relaxed whitespace-pre-line">
-            {story}
-          </p>
+          <div className="space-y-3 text-sm text-ink-700 leading-relaxed text-justify hyphens-auto">
+            {paragraphs.length > 0 ? (
+              paragraphs.map((p, i) => <p key={i}>{p}</p>)
+            ) : (
+              <p>{story}</p>
+            )}
+          </div>
         </div>
       </div>
     </div>
