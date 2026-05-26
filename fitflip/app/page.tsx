@@ -357,14 +357,10 @@ export default function HomePage() {
       ? result.visual_keywords.map((k) => k?.trim()).filter((k): k is string => !!k)
       : [];
 
-    // Pause the listings fetch when the AI was honest about being unsure
-    // and the user hasn't told us to proceed yet. We render a refinement
-    // widget instead so they can either provide a hint or dismiss.
-    const isUncertain = !brand || result.confidence === "low";
-    if (isUncertain && !refinementDismissed) {
-      setListings(null);
-      return;
-    }
+    // Always fetch — even when the AI is uncertain about the brand.
+    // The refinement widget is still rendered above the listings as a
+    // visible CTA; the user can refine to get fresh, more accurate
+    // results, but they don't have to.
 
     const STOP_WORDS = new Set([
       "pants", "pant", "trousers", "trouser", "jeans",
@@ -1504,8 +1500,8 @@ export default function HomePage() {
                     <p className="text-xs uppercase tracking-wider text-ink-500 mb-3">
                       {t.listingsTitle}
                     </p>
-                    {(!result.brand?.trim() || result.confidence === "low") && !refinementDismissed ? (
-                      <div className="border-2 border-amber-300 rounded-2xl p-5 bg-amber-50">
+                    {(!result.brand?.trim() || result.confidence === "low") && !refinementDismissed && (
+                      <div className="border-2 border-amber-300 rounded-2xl p-5 bg-amber-50 mb-4">
                         <div className="flex items-start gap-2.5 mb-3">
                           <div className="w-6 h-6 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center shrink-0 mt-0.5">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1551,7 +1547,8 @@ export default function HomePage() {
                           </button>
                         </div>
                       </div>
-                    ) : listingsLoading ? (
+                    )}
+                    {listingsLoading ? (
                       <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3" aria-busy="true" aria-label={t.listingsLoading}>
                         {Array.from({ length: 6 }).map((_, i) => (
                           <li key={i} className="border border-ink-100 rounded-2xl overflow-hidden bg-white">
