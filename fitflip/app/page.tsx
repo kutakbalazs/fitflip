@@ -15,6 +15,7 @@ import { createClient } from "@/lib/supabase/client";
 type AnalysisResult = {
   recognized: boolean;
   category: string | null;
+  item_type: string | null;
   brand: string | null;
   model: string | null;
   color: string | null;
@@ -483,6 +484,7 @@ export default function HomePage() {
         brand,
         model,
         color,
+        itemType: result.item_type ?? "",
         ...(originalImage ? { originalImage } : {}),
       }),
     })
@@ -1503,9 +1505,20 @@ export default function HomePage() {
                       {t.listingsTitle}
                     </p>
                     {(!result.brand?.trim() || result.confidence === "low") && !refinementDismissed ? (
-                      <div className="border border-ink-100 rounded-2xl p-5 bg-ink-50">
-                        <p className="font-medium text-sm mb-1">{t.refineTitle}</p>
-                        <p className="text-xs text-ink-500 mb-4">{t.refineSub}</p>
+                      <div className="border-2 border-amber-300 rounded-2xl p-5 bg-amber-50">
+                        <div className="flex items-start gap-2.5 mb-3">
+                          <div className="w-6 h-6 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center shrink-0 mt-0.5">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <circle cx="12" cy="12" r="10" />
+                              <line x1="12" y1="8" x2="12" y2="12" />
+                              <line x1="12" y1="16" x2="12.01" y2="16" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-sm text-amber-900">{t.refineTitle}</p>
+                            <p className="text-xs text-amber-800 mt-0.5 leading-relaxed">{t.refineSub}</p>
+                          </div>
+                        </div>
                         <input
                           type="text"
                           value={refinementText}
@@ -1555,15 +1568,28 @@ export default function HomePage() {
                       </ul>
                     ) : displayedListings && displayedListings.length > 0 ? (
                       <>
-                        {!result.brand?.trim() ? (
-                          <p className="text-xs text-ink-500 mb-3 italic">
-                            {t.listingsBrandUncertain}
-                          </p>
-                        ) : !listingsExact ? (
-                          <p className="text-xs text-ink-500 mb-3 italic">
-                            {t.listingsBroader}
-                          </p>
-                        ) : null}
+                        {(!result.brand?.trim() || !listingsExact) && (
+                          <div className="mb-3 flex items-start gap-2 p-3 rounded-xl bg-sky-50 border border-sky-200 text-sky-900">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5" aria-hidden="true">
+                              <circle cx="12" cy="12" r="10" />
+                              <line x1="12" y1="16" x2="12" y2="12" />
+                              <line x1="12" y1="8" x2="12.01" y2="8" />
+                            </svg>
+                            <p className="text-xs leading-snug">
+                              <strong className="font-semibold">
+                                {lang === "hu" ? "Hasonló találatok" : "Similar matches"}
+                              </strong>
+                              {" — "}
+                              {!result.brand?.trim()
+                                ? lang === "hu"
+                                  ? "nem találtunk pontos egyezést, mert a márka bizonytalan. Az alábbi hirdetések vizuálisan vagy kategóriában hasonlóak."
+                                  : "no exact match — brand is uncertain. The listings below are visually or categorically similar."
+                                : lang === "hu"
+                                  ? "ebben a pontos modell/colorway-ben nincs aktuális hirdetés. Az alábbiak kapcsolódó találatok."
+                                  : "no listings for this exact model/colorway. The ones below are related matches."}
+                            </p>
+                          </div>
+                        )}
                         {sizeTokens.length > 0 && (() => {
                           const matchCount = displayedListings.filter((e) => e.match).length;
                           if (matchCount >= 2) return null;

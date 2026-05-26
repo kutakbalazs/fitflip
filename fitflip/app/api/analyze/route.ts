@@ -154,6 +154,7 @@ VÁLASZ FORMÁTUM (CSAK ezt a JSON-t add vissza, semmi mást, semmi markdown):
 {
   "recognized": true | false,
   "category": "sneaker" | "vintage_clothing" | "streetwear" | "designer" | "other",
+  "item_type": "konkrét típus, KÖTELEZŐ kitölteni — válassz ebből a listából: sneaker | boot | sandal | t-shirt | longsleeve | hoodie | sweatshirt | jacket | coat | vest | pants | jeans | shorts | skirt | dress | cap | hat | beanie | bag | belt | scarf | gloves | accessory | other. Akkor is add meg ha brand:null. Pl. egy logó-nélküli fekete pólóra: 't-shirt'. Hirdetés-szűréshez használjuk, hogy ne dobjon fel pl. telefont egy pólóra.",
   "brand": "string vagy null",
   "model": "string vagy null",
   "color": "domináns szín vagy hivatalos colorway angolul, vagy null",
@@ -270,6 +271,7 @@ RESPONSE FORMAT (return ONLY this JSON, nothing else, no markdown):
 {
   "recognized": true | false,
   "category": "sneaker" | "vintage_clothing" | "streetwear" | "designer" | "other",
+  "item_type": "specific type, REQUIRED, pick from: sneaker | boot | sandal | t-shirt | longsleeve | hoodie | sweatshirt | jacket | coat | vest | pants | jeans | shorts | skirt | dress | cap | hat | beanie | bag | belt | scarf | gloves | accessory | other. Always fill, even when brand:null. E.g. a logo-less black tee: 't-shirt'. Used to filter listings so phones don't appear under a T-shirt query.",
   "brand": "string or null",
   "model": "string or null",
   "color": "dominant color or official colorway in English, or null",
@@ -511,6 +513,7 @@ export async function POST(req: NextRequest) {
         user_id: user.id,
         recognized: !!parsed.recognized,
         category: (parsed.category as string) ?? null,
+        item_type: typeof parsed.item_type === "string" && parsed.item_type.trim().length > 0 ? parsed.item_type : null,
         brand: (parsed.brand as string) ?? null,
         model: (parsed.model as string) ?? null,
         era: (parsed.era as string) ?? null,
@@ -557,6 +560,7 @@ export async function POST(req: NextRequest) {
         delete fallback.story;
         delete fallback.hype_score;
         delete fallback.hype_label;
+        delete fallback.item_type;
         await admin.from("scans").insert(fallback);
       }
     }

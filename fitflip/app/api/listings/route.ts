@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { searchAllMarketplaces } from "@/lib/listings/aggregate";
 import { verifyListingsAgainstImage } from "@/lib/listings/verify";
+import { filterListingsByItemType } from "@/lib/listings/itemType";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -38,6 +39,7 @@ export async function POST(req: NextRequest) {
     const brandHint = typeof body?.brand === "string" ? body.brand : "";
     const modelHint = typeof body?.model === "string" ? body.model : "";
     const colorHint = typeof body?.color === "string" ? body.color : "";
+    const itemType = typeof body?.itemType === "string" ? body.itemType : "";
     const originalImage =
       body?.originalImage &&
       typeof body.originalImage === "object" &&
@@ -62,12 +64,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "missing_query" }, { status: 400 });
     }
 
-    const { listings, exact } = await searchAllMarketplaces(
+    const { listings: rawListings, exact } = await searchAllMarketplaces(
       queries,
       brandTokens,
       modelTokens,
       colorTokens
     );
+
+    // Item-type filter: drop listings whose title clearly doesn't match the
+    // scanned type (e.g. a phone listing under a T-shirt search). Falls back
+    // to unfiltered if the filter would leave us with nothing.
+    const listings = filterListingsByItemType(rawListings, itemType);
 
     // Strict mode: when the AI couldn't identify the brand we have less to
     // anchor on, so we ask the verifier to be much pickier and cap the
