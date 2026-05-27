@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { searchAllMarketplaces } from "@/lib/listings/aggregate";
 import { verifyListingsAgainstImage } from "@/lib/listings/verify";
 import { filterListingsByItemType } from "@/lib/listings/itemType";
+import { extractSizeTokens, listingMatchesSize } from "@/lib/listings/sizeMatch";
 import type { Listing } from "@/lib/listings/types";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +23,7 @@ type WatcherRow = {
   search_brand_tokens: string[] | null;
   search_model_tokens: string[] | null;
   search_color_tokens: string[] | null;
+  size_filter: string | null;
 };
 
 export async function GET(req: NextRequest) {
@@ -36,7 +38,7 @@ export async function GET(req: NextRequest) {
   const admin = createAdminClient();
   const { data: watchers, error } = await admin
     .from("price_watchers")
-    .select("id, user_id, scan_id, target_price_huf, baseline_urls, search_brand, search_model, search_color, search_item_type, search_queries, search_brand_tokens, search_model_tokens, search_color_tokens")
+    .select("id, user_id, scan_id, target_price_huf, baseline_urls, search_brand, search_model, search_color, search_item_type, search_queries, search_brand_tokens, search_model_tokens, search_color_tokens, size_filter")
     .eq("active", true);
   if (error) {
     console.error("[cron] fetch watchers error:", error);
@@ -89,13 +91,23 @@ async function processWatcher(
 
   // Only listings (a) under target price, (b) not in baseline.
   const baseline = new Set(w.baseline_urls ?? []);
-  const candidates: Listing[] = typeFiltered.filter(
+  let candidates: Listing[] = typeFiltered.filter(
     (l) =>
       typeof l.priceHuf === "number" &&
       l.priceHuf > 0 &&
       l.priceHuf <= w.target_price_huf &&
       !baseline.has(l.url)
   );
+
+  // Optional size filter: only listings whose title contains the user's
+  // size tokens. If the filter strips everything, drop out — better an
+  // empty notification than spamming the user with mismatched sizes.
+  if (w.size_filter && w.size_filter.trim().length > 0) {
+    const tokens = extractSizeTokens(w.size_filter);
+    if (tokens.length > 0) {
+      candidates = candidates.filter((l) => listingMatchesSize(l.title, tokens));
+    }
+  }
 
   if (candidates.length === 0) {
     await admin.from("price_watchers").update({ last_checked_at: new Date().toISOString() }).eq("id", w.id);

@@ -31,9 +31,10 @@ type Props = {
 type WatcherState =
   | { kind: "loading" }
   | { kind: "none" }
-  | { kind: "active"; id: string; targetPrice: number };
+  | { kind: "active"; id: string; targetPrice: number; size: string | null };
 
 const STEP = 500;
+const PREMIUM_LIMIT = 5;
 
 export default function WatcherWidget(props: Props) {
   const {
@@ -47,13 +48,15 @@ export default function WatcherWidget(props: Props) {
   } = props;
 
   const [state, setState] = useState<WatcherState>({ kind: "loading" });
+  const [activeCount, setActiveCount] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [target, setTarget] = useState(
     Math.max(1000, Math.round(suggestedPriceHuf / STEP) * STEP),
   );
+  const [sizeInput, setSizeInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
-  const [showPremiumToast, setShowPremiumToast] = useState(false);
+  const [toast, setToast] = useState<null | "premium" | "limit">(null);
 
   useEffect(() => {
     if (!scanId) {
@@ -65,10 +68,23 @@ export default function WatcherWidget(props: Props) {
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
-        const w = (data?.watchers as Array<{ id: string; scan_id: string; target_price_huf: number }> | undefined)?.find(
-          (x) => x.scan_id === scanId,
-        );
-        if (w) setState({ kind: "active", id: w.id, targetPrice: w.target_price_huf });
+        const list = (data?.watchers as Array<{
+          id: string;
+          scan_id: string;
+          target_price_huf: number;
+          size_filter?: string | null;
+          active: boolean;
+        }> | undefined) ?? [];
+        const active = list.filter((w) => w.active !== false);
+        setActiveCount(active.length);
+        const mine = active.find((x) => x.scan_id === scanId);
+        if (mine)
+          setState({
+            kind: "active",
+            id: mine.id,
+            targetPrice: mine.target_price_huf,
+            size: mine.size_filter ?? null,
+          });
         else setState({ kind: "none" });
       })
       .catch(() => setState({ kind: "none" }));
@@ -78,17 +94,21 @@ export default function WatcherWidget(props: Props) {
   }, [scanId]);
 
   useEffect(() => {
-    if (!showPremiumToast) return;
-    const t = window.setTimeout(() => setShowPremiumToast(false), 4000);
+    if (!toast) return;
+    const t = window.setTimeout(() => setToast(null), 4000);
     return () => window.clearTimeout(t);
-  }, [showPremiumToast]);
+  }, [toast]);
 
   const t = lang === "hu"
     ? {
         label: "Árfigyelő",
         sublabelOff: "Új hirdetéseket figyelek alacsonyabb áron",
-        sublabelOn: (price: string) => `Aktív · ${price} Ft alatt értesítlek`,
+        sublabelOn: (price: string, size: string | null) =>
+          `Aktív · ${price} Ft alatt${size ? ` · méret: ${size}` : ""}`,
         sliderLabel: "Értesíts, ha az új hirdetés ennél olcsóbb:",
+        sizeLabel: "Méret (opcionális)",
+        sizePlaceholder: "pl. 42 EU, M, 32W 34L",
+        sizeHelp: "Ha üresen hagyod, MINDEN új hirdetésről értesítünk. Ha megadod, csak az ilyen méretűekről.",
         activate: "Aktiválom",
         cancel: "Mégse",
         deactivate: "Figyelő kikapcsolása",
@@ -97,17 +117,21 @@ export default function WatcherWidget(props: Props) {
         sheetTitle: "Hogy működik?",
         sheetP1: "Beállítasz egy célárat. Naponta egyszer átnézzük a Vinted, Jófogás és eBay új hirdetéseit ehhez a darabhoz.",
         sheetP2: "Ha valaki a célárad alá tesz fel egy új hirdetést, kapsz egy értesítést az Értesítések menüben. Csak a NEM-látott hirdetéseket dobjuk fel — amik a scankor még nem voltak fent.",
-        sheetP3: "",
         sheetLimit: "Egyszerre legfeljebb 5 árfigyelőd lehet (prémium).",
         premiumOnly: "Az árfigyelő prémium funkció",
+        limitReached: `Elérted a maximum ${PREMIUM_LIMIT} aktív árfigyelőt. Kapcsolj ki egy meglévőt a Követett termékeim menüben.`,
         upgradeCta: "Ugrás a fiókodra",
-        priceLabel: "Célár",
+        manageCta: "Követett termékeim",
       }
     : {
         label: "Price watcher",
         sublabelOff: "Watch for new listings under your price",
-        sublabelOn: (price: string) => `Active · ping me below ${price} Ft`,
+        sublabelOn: (price: string, size: string | null) =>
+          `Active · ping me below ${price} Ft${size ? ` · size: ${size}` : ""}`,
         sliderLabel: "Notify me if a new listing is cheaper than:",
+        sizeLabel: "Size (optional)",
+        sizePlaceholder: "e.g. 42 EU, M, 32W 34L",
+        sizeHelp: "Leave blank to be notified about ALL new listings. Provide a size to filter by size.",
         activate: "Activate",
         cancel: "Cancel",
         deactivate: "Turn watcher off",
@@ -116,27 +140,32 @@ export default function WatcherWidget(props: Props) {
         sheetTitle: "How it works",
         sheetP1: "Set a target price. Once a day we rescan Vinted, Jófogás and eBay for new listings of this item.",
         sheetP2: "If someone posts a NEW listing under your target, you get an in-app notification in the Notifications menu. Only listings that weren't in the original scan are surfaced.",
-        sheetP3: "",
         sheetLimit: "You can have up to 5 active watchers at once (premium).",
         premiumOnly: "Price watcher is a premium feature",
+        limitReached: `You've reached the max ${PREMIUM_LIMIT} active watchers. Turn one off in Followed items.`,
         upgradeCta: "Go to your account",
-        priceLabel: "Target price",
+        manageCta: "Followed items",
       };
 
   const handleCheckboxClick = () => {
     if (!isPremium) {
       haptic("error");
-      setShowPremiumToast(true);
+      setToast("premium");
       return;
     }
     if (state.kind === "active") {
-      // Confirm delete via simple inline confirm
       if (!window.confirm(lang === "hu" ? "Biztos kikapcsolod az árfigyelőt?" : "Turn off this watcher?")) return;
       void deactivate();
-    } else {
-      haptic("tap");
-      setExpanded((v) => !v);
+      return;
     }
+    // Pre-emptive limit check before opening the slider.
+    if (activeCount >= PREMIUM_LIMIT) {
+      haptic("error");
+      setToast("limit");
+      return;
+    }
+    haptic("tap");
+    setExpanded((v) => !v);
   };
 
   const formatHuf = (n: number) => new Intl.NumberFormat("hu-HU").format(n);
@@ -160,17 +189,25 @@ export default function WatcherWidget(props: Props) {
           search_brand_tokens: search.brandTokens,
           search_model_tokens: search.modelTokens,
           search_color_tokens: search.colorTokens,
+          size_filter: sizeInput.trim() || null,
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         haptic("error");
-        if (data?.error === "premium_required") setShowPremiumToast(true);
+        if (data?.error === "premium_required") setToast("premium");
+        else if (data?.error === "watcher_limit_reached") setToast("limit");
         else alert(lang === "hu" ? "Nem sikerült aktiválni." : "Activation failed.");
         return;
       }
       haptic("success");
-      setState({ kind: "active", id: data.id, targetPrice: target });
+      setActiveCount((c) => c + 1);
+      setState({
+        kind: "active",
+        id: data.id,
+        targetPrice: target,
+        size: sizeInput.trim() || null,
+      });
       setExpanded(false);
     } finally {
       setSubmitting(false);
@@ -184,8 +221,10 @@ export default function WatcherWidget(props: Props) {
     try {
       await fetch(`/api/watchers/${id}`, { method: "DELETE" });
       haptic("tap");
+      setActiveCount((c) => Math.max(0, c - 1));
       setState({ kind: "none" });
       setExpanded(false);
+      setSizeInput("");
     } finally {
       setSubmitting(false);
     }
@@ -222,8 +261,8 @@ export default function WatcherWidget(props: Props) {
             <span className="flex-1 min-w-0">
               <span className="text-sm font-medium block">{t.label}</span>
               <span className="text-xs text-ink-500 dark:text-ink-400 block leading-relaxed">
-                {isActive
-                  ? t.sublabelOn(formatHuf(state.targetPrice))
+                {state.kind === "active"
+                  ? t.sublabelOn(formatHuf(state.targetPrice), state.size)
                   : t.sublabelOff}
               </span>
             </span>
@@ -238,7 +277,7 @@ export default function WatcherWidget(props: Props) {
           </button>
         </div>
 
-        {!isPremium && showPremiumToast && (
+        {!isPremium && toast === "premium" && (
           <div className="mt-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200 text-xs flex items-center justify-between gap-3">
             <span>{t.premiumOnly}</span>
             <Link href="/account" className="font-semibold underline whitespace-nowrap">
@@ -247,8 +286,17 @@ export default function WatcherWidget(props: Props) {
           </div>
         )}
 
+        {isPremium && toast === "limit" && (
+          <div className="mt-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200 text-xs flex items-start justify-between gap-3">
+            <span className="leading-snug">{t.limitReached}</span>
+            <Link href="/watchers" className="font-semibold underline whitespace-nowrap shrink-0">
+              {t.manageCta} →
+            </Link>
+          </div>
+        )}
+
         {isPremium && !isActive && expanded && (
-          <div className="mt-4 space-y-3">
+          <div className="mt-4 space-y-4">
             <label className="block">
               <span className="text-xs text-ink-500 dark:text-ink-400 block mb-1">
                 {t.sliderLabel}
@@ -272,6 +320,23 @@ export default function WatcherWidget(props: Props) {
                 <span>{formatHuf(sliderMax)} Ft</span>
               </div>
             </label>
+            <div>
+              <label htmlFor="ff-watcher-size" className="text-xs text-ink-500 dark:text-ink-400 block mb-1">
+                {t.sizeLabel}
+              </label>
+              <input
+                id="ff-watcher-size"
+                type="text"
+                value={sizeInput}
+                onChange={(e) => setSizeInput(e.target.value)}
+                placeholder={t.sizePlaceholder}
+                maxLength={60}
+                className="w-full px-3 py-2 rounded-lg border border-ink-100 dark:border-ink-700 bg-white dark:bg-ink-900 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900/10"
+              />
+              <p className="text-[11px] text-ink-500 dark:text-ink-400 mt-1 leading-relaxed">
+                {t.sizeHelp}
+              </p>
+            </div>
             <div className="flex gap-2">
               <button
                 type="button"

@@ -24,10 +24,46 @@ type WatcherRow = {
   search_brand: string | null;
   search_model: string | null;
   search_color: string | null;
+  search_item_type: string | null;
+  size_filter: string | null;
   active: boolean;
   created_at: string;
   last_checked_at: string | null;
 };
+
+// Human-readable fallback name when brand+model are unknown.
+function fallbackName(
+  itemType: string | null,
+  color: string | null,
+  lang: "hu" | "en",
+): string {
+  const TYPE_HU: Record<string, string> = {
+    sneaker: "Sneaker", boot: "Bakancs", sandal: "Szandál",
+    "t-shirt": "Póló", longsleeve: "Hosszúujjú", hoodie: "Hoodie",
+    sweatshirt: "Pulóver", jacket: "Kabát", coat: "Kabát", vest: "Mellény",
+    pants: "Nadrág", jeans: "Farmer", shorts: "Rövidnadrág",
+    skirt: "Szoknya", dress: "Ruha", cap: "Sapka", hat: "Kalap",
+    beanie: "Kötött sapka", bag: "Táska", belt: "Öv", scarf: "Sál",
+    gloves: "Kesztyű", accessory: "Kiegészítő", other: "Darab",
+  };
+  const TYPE_EN: Record<string, string> = {
+    sneaker: "Sneaker", boot: "Boot", sandal: "Sandal",
+    "t-shirt": "T-shirt", longsleeve: "Longsleeve", hoodie: "Hoodie",
+    sweatshirt: "Sweatshirt", jacket: "Jacket", coat: "Coat", vest: "Vest",
+    pants: "Pants", jeans: "Jeans", shorts: "Shorts",
+    skirt: "Skirt", dress: "Dress", cap: "Cap", hat: "Hat",
+    beanie: "Beanie", bag: "Bag", belt: "Belt", scarf: "Scarf",
+    gloves: "Gloves", accessory: "Accessory", other: "Item",
+  };
+  const map = lang === "hu" ? TYPE_HU : TYPE_EN;
+  const noun = itemType && map[itemType] ? map[itemType] : map.other;
+  if (color && color.trim().length > 0) {
+    // HU: "Fekete sneaker" / EN: "Black sneaker"
+    const cap = color.charAt(0).toUpperCase() + color.slice(1);
+    return lang === "hu" ? `${cap} ${noun.toLowerCase()}` : `${cap} ${noun.toLowerCase()}`;
+  }
+  return noun;
+}
 
 type NotificationRow = {
   id: string;
@@ -141,6 +177,7 @@ export default function WatchersPage() {
         emptySub: "Aktiválj egyet egy scan-eredménynél, és itt megtalálod a futó figyeléseidet.",
         newScan: "Új scan",
         targetUnder: (p: string) => `Célár: ${p} alatt`,
+        sizeLabel: (s: string) => `Méret: ${s}`,
         sinceLabel: (d: string) => `Aktív ${d} óta`,
         findingsCount: (n: number) => (n === 0 ? "Még nincs új találat" : `${n} új találat`),
         unsubscribe: "Leiratkozás",
@@ -153,6 +190,7 @@ export default function WatchersPage() {
         emptySub: "Activate one on a scan result — your running watchers will show up here.",
         newScan: "New scan",
         targetUnder: (p: string) => `Target: under ${p}`,
+        sizeLabel: (s: string) => `Size: ${s}`,
         sinceLabel: (d: string) => `Active since ${d}`,
         findingsCount: (n: number) => (n === 0 ? "No new findings yet" : `${n} new finding${n === 1 ? "" : "s"}`),
         unsubscribe: "Unsubscribe",
@@ -202,7 +240,7 @@ export default function WatchersPage() {
               const isOpen = expanded.has(w.id);
               const title = (w.search_brand || w.search_model)
                 ? `${w.search_brand ?? ""}${w.search_model ? " — " + w.search_model : ""}`.trim()
-                : t.unknown;
+                : fallbackName(w.search_item_type, w.search_color, lang);
               return (
                 <li
                   key={w.id}
@@ -218,7 +256,10 @@ export default function WatchersPage() {
                         {title}
                       </p>
                       <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">
-                        {t.targetUnder(formatHuf(w.target_price_huf))} · {t.findingsCount(findings.length)}
+                        {t.targetUnder(formatHuf(w.target_price_huf))}
+                        {w.size_filter ? ` · ${t.sizeLabel(w.size_filter)}` : ""}
+                        {" · "}
+                        {t.findingsCount(findings.length)}
                       </p>
                       <p className="text-[11px] text-ink-400 dark:text-ink-500 mt-1">
                         {t.sinceLabel(formatDate(w.created_at, lang))}

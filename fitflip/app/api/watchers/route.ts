@@ -15,7 +15,7 @@ export async function GET() {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("price_watchers")
-    .select("id, scan_id, target_price_huf, search_brand, search_model, search_color, active, created_at, last_checked_at")
+    .select("id, scan_id, target_price_huf, search_brand, search_model, search_color, search_item_type, size_filter, active, created_at, last_checked_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
     const sanitizeArr = (x: unknown): string[] =>
       Array.isArray(x) ? x.filter((s): s is string => typeof s === "string" && s.length > 0) : [];
 
+    const sizeFilterRaw = typeof body?.size_filter === "string" ? body.size_filter.trim() : "";
     const payload = {
       user_id: user.id,
       scan_id: scanId,
@@ -76,6 +77,7 @@ export async function POST(req: NextRequest) {
       search_brand_tokens: sanitizeArr(body?.search_brand_tokens),
       search_model_tokens: sanitizeArr(body?.search_model_tokens),
       search_color_tokens: sanitizeArr(body?.search_color_tokens),
+      size_filter: sizeFilterRaw.length > 0 ? sizeFilterRaw.slice(0, 60) : null,
       active: true,
     };
 
