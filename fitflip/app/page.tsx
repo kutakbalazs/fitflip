@@ -6,7 +6,6 @@ import { translations, type Lang } from "@/lib/translations";
 import type { Listing } from "@/lib/listings/types";
 import { extractSizeTokens, listingMatchesSize } from "@/lib/listings/sizeMatch";
 import LegalFooter from "@/components/LegalFooter";
-import OnboardingModal from "@/components/OnboardingModal";
 import BackToTop from "@/components/BackToTop";
 import StoryModal from "@/components/StoryModal";
 import { haptic } from "@/lib/haptics";
@@ -114,7 +113,6 @@ export default function HomePage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showUpgradeConsent, setShowUpgradeConsent] = useState(false);
   const [upgradeConsentChecked, setUpgradeConsentChecked] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const [showStory, setShowStory] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [listings, setListings] = useState<Listing[] | null>(null);
@@ -148,14 +146,6 @@ export default function HomePage() {
         const userLang = (data.user.user_metadata as { lang?: string } | null)?.lang;
         if (userLang !== currentLang) {
           supabase.auth.updateUser({ data: { lang: currentLang } }).catch(() => {});
-        }
-        // First-launch onboarding: show once per browser, only for signed-in users.
-        try {
-          if (!localStorage.getItem("ff-onboarded")) {
-            setShowOnboarding(true);
-          }
-        } catch {
-          /* ignore */
         }
       }
     });
@@ -1785,11 +1775,6 @@ export default function HomePage() {
         </div>
       )}
 
-      <OnboardingModal
-        open={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
-        lang={lang}
-      />
       {result?.story && (
         <StoryModal
           open={showStory}
