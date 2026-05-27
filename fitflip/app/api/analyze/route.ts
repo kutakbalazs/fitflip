@@ -508,6 +508,18 @@ export async function POST(req: NextRequest) {
     // Save scan to history (admin bypasses RLS but enforces user_id).
     // Skip the insert when this exact image was already scanned by this user
     // — we don't want history duplicates of the same upload.
+    let scanId: string | null = null;
+    if (existingScan) {
+      // Look up the existing scan's id so the watcher widget can target it.
+      const { data: existingRow } = await admin
+        .from("scans")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("image_hash", firstImageHash)
+        .limit(1)
+        .maybeSingle();
+      scanId = existingRow?.id ?? null;
+    }
     if (!existingScan) {
       const insertPayload: Record<string, unknown> = {
         user_id: user.id,
@@ -547,7 +559,11 @@ export async function POST(req: NextRequest) {
             ? parsed.hype_label
             : null,
       };
-      const { error: insertError } = await admin.from("scans").insert(insertPayload);
+      const { data: insertedRow, error: insertError } = await admin
+        .from("scans")
+        .insert(insertPayload)
+        .select("id")
+        .single();
       if (insertError) {
         // Some columns may be missing in older DB schemas — retry without
         // the optional ones so the scan still saves.
@@ -561,7 +577,14 @@ export async function POST(req: NextRequest) {
         delete fallback.hype_score;
         delete fallback.hype_label;
         delete fallback.item_type;
-        await admin.from("scans").insert(fallback);
+        const { data: fallbackRow } = await admin
+          .from("scans")
+          .insert(fallback)
+          .select("id")
+          .single();
+        scanId = fallbackRow?.id ?? null;
+      } else {
+        scanId = insertedRow?.id ?? null;
       }
     }
 
@@ -579,6 +602,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ...parsed,
+      scan_id: scanId,
       scansLeft: scansLeftFor(newProfile),
     });
   } catch (err) {

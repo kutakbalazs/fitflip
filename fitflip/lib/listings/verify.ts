@@ -21,6 +21,12 @@ export type VerifyOptions = {
    * is disabled (empty beats junk), and we cap the result count.
    */
   strict?: boolean;
+  /**
+   * Override the Anthropic model used for verification. Defaults to the
+   * project-standard Sonnet model; the watcher cron passes Haiku to keep
+   * the per-watcher daily cost low.
+   */
+  model?: string;
 };
 
 type FetchedImage = {
@@ -175,7 +181,7 @@ export async function verifyListingsAgainstImage(
   let parsed: VerifyResponse | null = null;
   try {
     const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: options?.model ?? "claude-sonnet-4-6",
       max_tokens: 800,
       messages: [{ role: "user", content }],
     });

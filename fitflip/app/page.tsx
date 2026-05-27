@@ -8,6 +8,8 @@ import { extractSizeTokens, listingMatchesSize } from "@/lib/listings/sizeMatch"
 import LegalFooter from "@/components/LegalFooter";
 import BackToTop from "@/components/BackToTop";
 import StoryModal from "@/components/StoryModal";
+import NotificationsBell from "@/components/NotificationsBell";
+import WatcherWidget from "@/components/WatcherWidget";
 import { haptic } from "@/lib/haptics";
 import { createClient } from "@/lib/supabase/client";
 
@@ -34,7 +36,19 @@ type AnalysisResult = {
   story: string | null;
   hype_score: number | null;
   hype_label: string | null;
+  scan_id: string | null;
   scansLeft: number;
+};
+
+type SearchParams = {
+  brand: string;
+  model: string;
+  color: string;
+  itemType: string;
+  queries: string[];
+  brandTokens: string[];
+  modelTokens: string[];
+  colorTokens: string[];
 };
 
 const MAX_IMAGES = 6;
@@ -118,6 +132,7 @@ export default function HomePage() {
   const [listings, setListings] = useState<Listing[] | null>(null);
   const [listingsExact, setListingsExact] = useState(true);
   const [listingsLoading, setListingsLoading] = useState(false);
+  const [lastSearchParams, setLastSearchParams] = useState<SearchParams | null>(null);
   // Refinement flow: when the AI is uncertain (brand=null or confidence=low),
   // we pause the listings fetch and offer a tiny "Pontosítás" widget.
   const [refinementText, setRefinementText] = useState("");
@@ -331,10 +346,6 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    if (!isPremium) {
-      setListings(null);
-      return;
-    }
     if (!result) {
       setListings(null);
       return;
@@ -455,6 +466,19 @@ export default function HomePage() {
     const originalImage = firstImage
       ? { data: firstImage.data, mediaType: firstImage.mediaType }
       : null;
+
+    // Snapshot the computed search params so the WatcherWidget can later
+    // POST them to /api/watchers without re-deriving anything.
+    setLastSearchParams({
+      brand,
+      model,
+      color,
+      itemType: result.item_type ?? "",
+      queries,
+      brandTokens,
+      modelTokens,
+      colorTokens,
+    });
 
     let cancelled = false;
     setListingsLoading(true);
@@ -590,6 +614,7 @@ export default function HomePage() {
     setRefinementDismissed(false);
     setRefinementLoading(false);
     setSizeInput("");
+    setLastSearchParams(null);
   };
 
   const submitRefinement = async () => {
@@ -917,6 +942,7 @@ export default function HomePage() {
               )}
 
               <nav className="hidden sm:flex items-center gap-3">
+                <NotificationsBell lang={lang} />
                 <Link
                   href="/history"
                   className="text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white transition"
@@ -984,6 +1010,7 @@ export default function HomePage() {
                         {userEmail}
                       </div>
                     )}
+                    <NotificationsBell lang={lang} onMobile />
                     <Link
                       href="/history"
                       onClick={() => setMobileMenuOpen(false)}
@@ -1483,13 +1510,32 @@ export default function HomePage() {
                       </svg>
                     </button>
                   )}
+
+                  {result.scan_id && lastSearchParams && (
+                    <WatcherWidget
+                      scanId={result.scan_id}
+                      isPremium={isPremium}
+                      lang={lang}
+                      suggestedPriceHuf={
+                        displayedPrice?.min ??
+                        result.estimated_value_min_huf ??
+                        50000
+                      }
+                      maxPriceHuf={Math.round(
+                        (displayedPrice?.max ??
+                          result.estimated_value_max_huf ??
+                          100000) * 1.5
+                      )}
+                      baselineUrls={(listings ?? []).map((l) => l.url)}
+                      search={lastSearchParams}
+                    />
+                  )}
                 </div>
 
-                {isPremium ? (
-                  <div className="mt-6">
-                    <p className="text-xs uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-3">
-                      {t.listingsTitle}
-                    </p>
+                <div className="mt-6">
+                  <p className="text-xs uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-3">
+                    {t.listingsTitle}
+                  </p>
                     {(!result.brand?.trim() || result.confidence === "low") && !refinementDismissed && (
                       <div className="border-2 border-amber-300 dark:border-amber-800 rounded-2xl p-5 bg-amber-50 dark:bg-amber-950/40 mb-4">
                         <div className="flex items-start gap-2.5 mb-3">
@@ -1647,25 +1693,7 @@ export default function HomePage() {
                         <p className="text-sm text-ink-700 dark:text-ink-200 font-medium">{t.listingsEmpty}</p>
                       </div>
                     )}
-                  </div>
-                ) : (
-                  <div className="mt-6 border border-ink-100 dark:border-ink-700 rounded-2xl p-6 bg-ink-50 dark:bg-ink-800 relative overflow-hidden">
-                    <div className="opacity-60">
-                      <p className="text-xs uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-2">
-                        {t.listingsTitle}
-                      </p>
-                      <p className="font-medium">{t.listingsLocked}</p>
-                      <p className="text-sm text-ink-500 dark:text-ink-400 mt-1">{t.listingsLockedSub}</p>
-                    </div>
-                    <button
-                      onClick={openUpgradeConsent}
-                      disabled={checkoutLoading}
-                      className="mt-4 px-5 py-2 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition disabled:opacity-50"
-                    >
-                      {checkoutLoading ? "…" : t.upgradeButton}
-                    </button>
-                  </div>
-                )}
+                </div>
 
                 {result.selling_tip && (
                   <div className="mt-4 border border-ink-100 dark:border-ink-700 rounded-2xl p-6 bg-ink-50 dark:bg-ink-800">

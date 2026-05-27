@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { searchAllMarketplaces } from "@/lib/listings/aggregate";
 import { verifyListingsAgainstImage } from "@/lib/listings/verify";
 import { filterListingsByItemType } from "@/lib/listings/itemType";
@@ -16,16 +15,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
 
-    const admin = createAdminClient();
-    const { data: profile } = await admin
-      .from("profiles")
-      .select("is_premium")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.is_premium) {
-      return NextResponse.json({ error: "premium_required" }, { status: 403 });
-    }
+    // Listings panel is now open to free users too — limited naturally by
+    // the daily scan cap. Watchers stay premium-only (see /api/watchers).
 
     const body = await req.json().catch(() => ({}));
     const sanitizeArray = (raw: unknown): string[] =>
