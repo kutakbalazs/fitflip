@@ -109,7 +109,7 @@ export default function StoryModal({ open, onClose, title, story, lang }: Props)
     >
       <div
         ref={cardRef}
-        className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-2xl shadow-xl max-h-[85dvh] overflow-y-auto overscroll-contain"
+        className="w-full max-w-md bg-white dark:bg-ink-950 rounded-t-3xl sm:rounded-2xl shadow-xl max-h-[85dvh] overflow-y-auto overscroll-contain"
         style={{
           transform: `translateY(${translateY}px)`,
           transition: closing || released ? `transform ${CLOSE_ANIM_MS}ms cubic-bezier(0.32, 0.72, 0, 1)` : "none",
@@ -123,13 +123,13 @@ export default function StoryModal({ open, onClose, title, story, lang }: Props)
         }}
         onTouchEnd={onTouchEnd}
       >
-        <div className="sticky top-0 bg-white flex items-center justify-center pt-3 pb-1 sm:pt-4 sm:pb-2 rounded-t-3xl">
+        <div className="sticky top-0 bg-white dark:bg-ink-950 flex items-center justify-center pt-3 pb-1 sm:pt-4 sm:pb-2 rounded-t-3xl">
           <div className="sm:hidden w-10 h-1 rounded-full bg-ink-200" aria-hidden="true" />
           <button
             type="button"
             onClick={animateClose}
             aria-label={lang === "hu" ? "Bezárás" : "Close"}
-            className="absolute right-3 top-3 w-8 h-8 rounded-full hover:bg-ink-50 text-ink-500 hover:text-ink-900 flex items-center justify-center transition"
+            className="absolute right-3 top-3 w-8 h-8 rounded-full hover:bg-ink-50 dark:hover:bg-ink-900 text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white flex items-center justify-center transition"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -138,11 +138,11 @@ export default function StoryModal({ open, onClose, title, story, lang }: Props)
           </button>
         </div>
         <div className="px-6 pb-8 pt-2 sm:pt-4">
-          <p className="text-[11px] uppercase tracking-wider text-ink-500 mb-1">
+          <p className="text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-1">
             {lang === "hu" ? "A darab története" : "The story"}
           </p>
           <h2 className="text-2xl font-display tracking-tight mb-4">{title}</h2>
-          <div className="space-y-3 text-sm text-ink-700 leading-relaxed text-justify hyphens-auto">
+          <div className="space-y-3 text-sm text-ink-700 dark:text-ink-200 leading-relaxed text-justify hyphens-auto">
             {paragraphs.length > 0 ? (
               paragraphs.map((p, i) => <p key={i}>{p}</p>)
             ) : (

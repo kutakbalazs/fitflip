@@ -3,6 +3,8 @@ import "./globals.css";
 import CookieBanner from "@/components/CookieBanner";
 import FeedbackBalloon from "@/components/FeedbackBalloon";
 import OnboardingGate from "@/components/OnboardingGate";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { themeInitScript } from "@/lib/theme";
 
 export const metadata: Metadata = {
   title: "FitFlip – Snap. Identify. Sell.",
@@ -47,12 +49,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="hu">
-      <body className="min-h-dvh bg-white text-ink-900">
-        {children}
-        <OnboardingGate />
-        <FeedbackBalloon />
-        <CookieBanner />
+    <html lang="hu" suppressHydrationWarning>
+      <head>
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body className="min-h-dvh bg-white dark:bg-ink-950 text-ink-900 dark:text-ink-50 transition-colors">
+        <ThemeProvider>
+          {children}
+          <OnboardingGate />
+          <FeedbackBalloon />
+          <CookieBanner />
+        </ThemeProvider>
       </body>
     </html>
   );

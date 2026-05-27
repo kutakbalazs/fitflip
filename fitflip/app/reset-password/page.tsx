@@ -51,17 +51,17 @@ export default function ResetPasswordPage() {
   if (!authChecked) {
     return (
       <main className="min-h-dvh flex items-center justify-center">
-        <p className="text-ink-500 text-sm">…</p>
+        <p className="text-ink-500 dark:text-ink-400 text-sm">…</p>
       </main>
     );
   }
 
   return (
     <main className="min-h-dvh flex flex-col">
-      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100">
+      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-800">
         <Link href="/" className="flex items-baseline gap-2">
           <span className="text-xl font-display tracking-tight">FitFlip</span>
-          <span className="text-xs text-ink-500 hidden sm:inline">.app</span>
+          <span className="text-xs text-ink-500 dark:text-ink-400 hidden sm:inline">.app</span>
         </Link>
       </header>
 
@@ -70,7 +70,7 @@ export default function ResetPasswordPage() {
           <h1 className="text-3xl font-display tracking-tight mb-2 text-center">
             {t.resetPasswordTitle}
           </h1>
-          <p className="text-ink-500 text-sm text-center mb-8">
+          <p className="text-ink-500 dark:text-ink-400 text-sm text-center mb-8">
             {t.resetPasswordSub}
           </p>
 
@@ -88,9 +88,9 @@ export default function ResetPasswordPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t.loginPasswordPlaceholder}
-                className="w-full px-4 py-2.5 rounded-xl border border-ink-100 focus:border-ink-900 focus:outline-none text-sm"
+                className="w-full px-4 py-2.5 rounded-xl border border-ink-100 dark:border-ink-800 focus:border-ink-900 focus:outline-none text-sm"
               />
-              <p className="text-xs text-ink-500 mt-1.5">{t.signupPasswordHint}</p>
+              <p className="text-xs text-ink-500 dark:text-ink-400 mt-1.5">{t.signupPasswordHint}</p>
             </div>
             <button
               type="submit"
@@ -106,7 +106,7 @@ export default function ResetPasswordPage() {
           )}
         </div>
       </section>
-      <footer className="px-6 py-6 border-t border-ink-100">
+      <footer className="px-6 py-6 border-t border-ink-100 dark:border-ink-800">
         <LegalFooter />
       </footer>
     </main>

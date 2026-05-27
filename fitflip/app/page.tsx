@@ -42,9 +42,9 @@ const MAX_IMAGES = 6;
 function hypeBadgeStyle(score: number): string {
   // Score-tiered palette, FitFlip-stílus: monokróm ink alapok meleg accentekkel.
   if (score >= 9) return "bg-ink-900 text-white";
-  if (score >= 7) return "bg-amber-100 text-amber-900";
-  if (score >= 5) return "bg-emerald-100 text-emerald-900";
-  return "bg-white text-ink-700 border border-ink-200";
+  if (score >= 7) return "bg-amber-100 text-amber-900 dark:text-amber-200";
+  if (score >= 5) return "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-900 dark:text-emerald-200";
+  return "bg-white dark:bg-ink-950 text-ink-700 dark:text-ink-200 border border-ink-200 dark:border-ink-700";
 }
 
 const isHeicFile = (file: File): boolean => {
@@ -863,7 +863,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-dvh flex flex-col">
-      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100">
+      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-800">
         <button
           type="button"
           onClick={reset}
@@ -871,14 +871,14 @@ export default function HomePage() {
           className="flex items-baseline gap-2 hover:opacity-70 transition cursor-pointer"
         >
           <span className="text-xl font-display tracking-tight">FitFlip</span>
-          <span className="text-xs text-ink-500 hidden sm:inline">.app</span>
+          <span className="text-xs text-ink-500 dark:text-ink-400 hidden sm:inline">.app</span>
         </button>
         <div className="flex items-center gap-3 text-sm">
           <div className="flex items-center gap-1">
             <button
               onClick={() => switchLang("hu")}
               className={`px-2 py-1 rounded transition ${
-                lang === "hu" ? "bg-ink-900 text-white" : "text-ink-500 hover:text-ink-900"
+                lang === "hu" ? "bg-ink-900 text-white" : "text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white"
               }`}
               aria-label="Magyar"
             >
@@ -887,7 +887,7 @@ export default function HomePage() {
             <button
               onClick={() => switchLang("en")}
               className={`px-2 py-1 rounded transition ${
-                lang === "en" ? "bg-ink-900 text-white" : "text-ink-500 hover:text-ink-900"
+                lang === "en" ? "bg-ink-900 text-white" : "text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white"
               }`}
               aria-label="English"
             >
@@ -919,13 +919,13 @@ export default function HomePage() {
               <nav className="hidden sm:flex items-center gap-3">
                 <Link
                   href="/history"
-                  className="text-ink-500 hover:text-ink-900 transition"
+                  className="text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white transition"
                 >
                   {t.history}
                 </Link>
                 <Link
                   href="/account"
-                  className="text-ink-500 hover:text-ink-900 transition"
+                  className="text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white transition"
                 >
                   {lang === "hu" ? "Fiók" : "Account"}
                 </Link>
@@ -933,13 +933,13 @@ export default function HomePage() {
                   <button
                     onClick={openPortal}
                     disabled={portalLoading}
-                    className="text-ink-500 hover:text-ink-900 transition disabled:opacity-50 disabled:cursor-wait"
+                    className="text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white transition disabled:opacity-50 disabled:cursor-wait"
                   >
                     {portalLoading ? "…" : t.manageSubscription}
                   </button>
                 )}
                 <span
-                  className="hidden md:inline text-ink-500 text-xs truncate max-w-[200px]"
+                  className="hidden md:inline text-ink-500 dark:text-ink-400 text-xs truncate max-w-[200px]"
                   title={userEmail ?? undefined}
                 >
                   {userEmail}
@@ -947,7 +947,7 @@ export default function HomePage() {
                 <form action="/auth/signout" method="post">
                   <button
                     type="submit"
-                    className="text-ink-500 hover:text-ink-900 transition"
+                    className="text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white transition"
                   >
                     {t.logout}
                   </button>
@@ -960,7 +960,7 @@ export default function HomePage() {
                   onClick={() => setMobileMenuOpen((v) => !v)}
                   aria-label="Menu"
                   aria-expanded={mobileMenuOpen}
-                  className="p-1.5 -mr-1.5 rounded-md text-ink-700 hover:bg-ink-50 transition"
+                  className="p-1.5 -mr-1.5 rounded-md text-ink-700 dark:text-ink-200 hover:bg-ink-50 dark:hover:bg-ink-900 transition"
                 >
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     {mobileMenuOpen ? (
@@ -978,23 +978,23 @@ export default function HomePage() {
                   </svg>
                 </button>
                 {mobileMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-ink-100 bg-white shadow-lg overflow-hidden z-50 fade-in">
+                  <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-ink-100 dark:border-ink-800 bg-white dark:bg-ink-950 shadow-lg overflow-hidden z-50 fade-in">
                     {userEmail && (
-                      <div className="px-4 py-3 text-xs text-ink-500 break-all border-b border-ink-100">
+                      <div className="px-4 py-3 text-xs text-ink-500 dark:text-ink-400 break-all border-b border-ink-100 dark:border-ink-800">
                         {userEmail}
                       </div>
                     )}
                     <Link
                       href="/history"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block px-4 py-3 text-sm text-ink-900 hover:bg-ink-50 transition"
+                      className="block px-4 py-3 text-sm text-ink-900 dark:text-ink-50 hover:bg-ink-50 dark:hover:bg-ink-900 transition"
                     >
                       {t.history}
                     </Link>
                     <Link
                       href="/account"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block px-4 py-3 text-sm text-ink-900 hover:bg-ink-50 transition"
+                      className="block px-4 py-3 text-sm text-ink-900 dark:text-ink-50 hover:bg-ink-50 dark:hover:bg-ink-900 transition"
                     >
                       {lang === "hu" ? "Fiók" : "Account"}
                     </Link>
@@ -1005,15 +1005,15 @@ export default function HomePage() {
                           setMobileMenuOpen(false);
                           openPortal();
                         }}
-                        className="block w-full text-left px-4 py-3 text-sm text-ink-900 hover:bg-ink-50 transition"
+                        className="block w-full text-left px-4 py-3 text-sm text-ink-900 dark:text-ink-50 hover:bg-ink-50 dark:hover:bg-ink-900 transition"
                       >
                         {t.manageSubscription}
                       </button>
                     )}
-                    <form action="/auth/signout" method="post" className="border-t border-ink-100">
+                    <form action="/auth/signout" method="post" className="border-t border-ink-100 dark:border-ink-800">
                       <button
                         type="submit"
-                        className="block w-full text-left px-4 py-3 text-sm text-ink-700 hover:bg-ink-50 transition"
+                        className="block w-full text-left px-4 py-3 text-sm text-ink-700 dark:text-ink-200 hover:bg-ink-50 dark:hover:bg-ink-900 transition"
                       >
                         {t.logout}
                       </button>
@@ -1035,7 +1035,7 @@ export default function HomePage() {
       </header>
 
       {banner && (
-        <div className={`relative px-12 py-3 text-sm text-center ${banner.kind === "success" ? "bg-green-50 text-green-800" : "bg-ink-50 text-ink-700"}`}>
+        <div className={`relative px-12 py-3 text-sm text-center ${banner.kind === "success" ? "bg-green-50 text-green-800" : "bg-ink-50 dark:bg-ink-900 text-ink-700 dark:text-ink-200"}`}>
           {banner.text}
           <button
             type="button"
@@ -1059,9 +1059,9 @@ export default function HomePage() {
             </h1>
 
             {authenticated === false ? (
-              <div className="border border-ink-100 rounded-2xl p-8 bg-ink-50">
+              <div className="border border-ink-100 dark:border-ink-800 rounded-2xl p-8 bg-ink-50 dark:bg-ink-900">
                 <h2 className="text-xl font-medium mb-2">{t.loginRequired}</h2>
-                <p className="text-ink-500 text-sm mb-5">{t.loginRequiredSub}</p>
+                <p className="text-ink-500 dark:text-ink-400 text-sm mb-5">{t.loginRequiredSub}</p>
                 <Link
                   href="/login"
                   className="inline-block px-6 py-2.5 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition"
@@ -1070,9 +1070,9 @@ export default function HomePage() {
                 </Link>
               </div>
             ) : limitReached ? (
-              <div className="border border-ink-100 rounded-2xl p-8 bg-ink-50">
+              <div className="border border-ink-100 dark:border-ink-800 rounded-2xl p-8 bg-ink-50 dark:bg-ink-900">
                 <h2 className="text-xl font-medium mb-2">{t.limitReached}</h2>
-                <p className="text-ink-500 text-sm mb-5">{t.limitReachedSub}</p>
+                <p className="text-ink-500 dark:text-ink-400 text-sm mb-5">{t.limitReachedSub}</p>
                 <button
                   onClick={openUpgradeConsent}
                   disabled={checkoutLoading}
@@ -1101,7 +1101,7 @@ export default function HomePage() {
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     {converting ? (
                       <div className="flex flex-col items-center gap-3 text-white">
-                        <div className="w-2 h-2 bg-white rounded-full pulse-slow" />
+                        <div className="w-2 h-2 bg-white dark:bg-ink-950 rounded-full pulse-slow" />
                         <p className="font-medium">
                           {lang === "hu" ? "HEIC konverzió folyamatban…" : "Converting HEIC…"}
                         </p>
@@ -1118,7 +1118,7 @@ export default function HomePage() {
                 <div
                   onDrop={onDrop}
                   onDragOver={(e) => e.preventDefault()}
-                  className="hidden sm:block border-2 border-dashed border-ink-100 rounded-2xl p-12 hover:border-ink-300 transition-colors cursor-pointer"
+                  className="hidden sm:block border-2 border-dashed border-ink-100 dark:border-ink-800 rounded-2xl p-12 hover:border-ink-300 transition-colors cursor-pointer"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   {converting ? (
@@ -1130,14 +1130,14 @@ export default function HomePage() {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-ink-50 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-ink-50 dark:bg-ink-900 flex items-center justify-center">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                           <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                         </svg>
                       </div>
                       <div>
                         <p className="font-medium">{t.uploadCta}</p>
-                        <p className="text-ink-500 text-sm mt-1">{t.uploadHint}</p>
+                        <p className="text-ink-500 dark:text-ink-400 text-sm mt-1">{t.uploadHint}</p>
                       </div>
                     </div>
                   )}
@@ -1145,13 +1145,13 @@ export default function HomePage() {
 
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full mt-3 px-4 py-3 rounded-xl border border-ink-100 hover:border-ink-300 hover:bg-ink-50 transition text-sm font-medium"
+                  className="w-full mt-3 px-4 py-3 rounded-xl border border-ink-100 dark:border-ink-800 hover:border-ink-300 hover:bg-ink-50 dark:hover:bg-ink-900 transition text-sm font-medium"
                 >
                   {t.chooseFile}
                 </button>
 
                 {!isPremium && (
-                  <p className="text-xs text-ink-500 mt-4">
+                  <p className="text-xs text-ink-500 dark:text-ink-400 mt-4">
                     {t.scansLeftFull.replace("{n}", scansLeft.toString())}
                   </p>
                 )}
@@ -1195,7 +1195,7 @@ export default function HomePage() {
                 />
               )}
               <div
-                className={`absolute rounded-[14px] overflow-hidden bg-ink-50 ${loading ? "inset-[3px]" : "inset-0 rounded-2xl"}`}
+                className={`absolute rounded-[14px] overflow-hidden bg-ink-50 dark:bg-ink-900 ${loading ? "inset-[3px]" : "inset-0 rounded-2xl"}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -1210,7 +1210,7 @@ export default function HomePage() {
               {images.map((img, idx) => (
                 <div
                   key={img.id}
-                  className={`relative w-16 h-16 rounded-lg overflow-hidden bg-ink-50 border ${idx === 0 ? "border-ink-900" : "border-ink-100"}`}
+                  className={`relative w-16 h-16 rounded-lg overflow-hidden bg-ink-50 dark:bg-ink-900 border ${idx === 0 ? "border-ink-900" : "border-ink-100 dark:border-ink-800"}`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={img.preview} alt={`photo ${idx + 1}`} className="w-full h-full object-cover" />
@@ -1233,7 +1233,7 @@ export default function HomePage() {
                     type="button"
                     onClick={() => cameraInputRef.current?.click()}
                     aria-label={lang === "hu" ? "Még egy fotó kamerával" : "Take another photo"}
-                    className="sm:hidden w-16 h-16 rounded-lg border-2 border-dashed border-ink-200 flex items-center justify-center text-ink-500 hover:border-ink-400 hover:text-ink-900 transition"
+                    className="sm:hidden w-16 h-16 rounded-lg border-2 border-dashed border-ink-200 dark:border-ink-700 flex items-center justify-center text-ink-500 dark:text-ink-400 hover:border-ink-400 hover:text-ink-900 dark:hover:text-white transition"
                   >
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
@@ -1244,7 +1244,7 @@ export default function HomePage() {
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     aria-label={lang === "hu" ? "Még egy fotó hozzáadása" : "Add another photo"}
-                    className="w-16 h-16 rounded-lg border-2 border-dashed border-ink-200 flex items-center justify-center text-ink-500 hover:border-ink-400 hover:text-ink-900 transition"
+                    className="w-16 h-16 rounded-lg border-2 border-dashed border-ink-200 dark:border-ink-700 flex items-center justify-center text-ink-500 dark:text-ink-400 hover:border-ink-400 hover:text-ink-900 dark:hover:text-white transition"
                   >
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
                       <path d="M12 5v14M5 12h14" />
@@ -1260,14 +1260,14 @@ export default function HomePage() {
                   <div className="w-2 h-2 bg-ink-900 rounded-full pulse-slow" />
                   <p className="font-medium">{t.analyzing}</p>
                 </div>
-                <p className="text-sm text-ink-500 mt-2">{t.analyzingSub}</p>
+                <p className="text-sm text-ink-500 dark:text-ink-400 mt-2">{t.analyzingSub}</p>
               </div>
             ) : (
               <>
                 <div className="mb-4">
                   <label
                     htmlFor="ff-size-input"
-                    className="block text-xs font-medium text-ink-700 mb-1"
+                    className="block text-xs font-medium text-ink-700 dark:text-ink-200 mb-1"
                   >
                     {t.sizeInputLabel}
                   </label>
@@ -1278,9 +1278,9 @@ export default function HomePage() {
                     onChange={(e) => setSizeInput(e.target.value)}
                     placeholder={t.sizeInputPlaceholder}
                     maxLength={60}
-                    className="w-full px-3 py-2 rounded-lg border border-ink-100 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-ink-900/10"
+                    className="w-full px-3 py-2 rounded-lg border border-ink-100 dark:border-ink-800 bg-white dark:bg-ink-950 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900/10"
                   />
-                  <p className="text-[11px] text-ink-500 mt-1">{t.sizeInputHelp}</p>
+                  <p className="text-[11px] text-ink-500 dark:text-ink-400 mt-1">{t.sizeInputHelp}</p>
                 </div>
                 <div className="flex gap-3">
                   <button
@@ -1295,7 +1295,7 @@ export default function HomePage() {
                   </button>
                   <button
                     onClick={reset}
-                    className="px-6 py-3 rounded-full border border-ink-100 hover:bg-ink-50 transition text-sm"
+                    className="px-6 py-3 rounded-full border border-ink-100 dark:border-ink-800 hover:bg-ink-50 dark:hover:bg-ink-900 transition text-sm"
                     aria-label={lang === "hu" ? "Mégse" : "Cancel"}
                   >
                     ✕
@@ -1313,7 +1313,7 @@ export default function HomePage() {
         {result && (
           <div className="w-full fade-in">
             {images[0] && (
-              <div className="relative aspect-square w-full max-w-xs mx-auto rounded-2xl overflow-hidden bg-ink-50 mb-3">
+              <div className="relative aspect-square w-full max-w-xs mx-auto rounded-2xl overflow-hidden bg-ink-50 dark:bg-ink-900 mb-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={images[0].preview}
@@ -1336,14 +1336,14 @@ export default function HomePage() {
                     key={img.id}
                     src={img.preview}
                     alt={`scanned ${idx + 2}`}
-                    className="w-12 h-12 rounded-md object-cover bg-ink-50 border border-ink-100"
+                    className="w-12 h-12 rounded-md object-cover bg-ink-50 dark:bg-ink-900 border border-ink-100 dark:border-ink-800"
                   />
                 ))}
               </div>
             )}
 
             {!result.recognized ? (
-              <div className="text-center border border-ink-100 rounded-2xl p-8">
+              <div className="text-center border border-ink-100 dark:border-ink-800 rounded-2xl p-8">
                 <p className="font-medium mb-2">{t.notRecognized}</p>
                 <button
                   onClick={reset}
@@ -1354,15 +1354,15 @@ export default function HomePage() {
               </div>
             ) : (
               <>
-                <div className="border border-ink-100 rounded-2xl overflow-hidden">
-                  <div className="px-6 py-5 border-b border-ink-100">
+                <div className="border border-ink-100 dark:border-ink-800 rounded-2xl overflow-hidden">
+                  <div className="px-6 py-5 border-b border-ink-100 dark:border-ink-800">
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <h2 className="text-xl font-medium">
-                          {result.brand} {result.model && <span className="text-ink-500">— {result.model}</span>}
+                          {result.brand} {result.model && <span className="text-ink-500 dark:text-ink-400">— {result.model}</span>}
                         </h2>
                         {result.era && (
-                          <p className="text-sm text-ink-500 mt-1">{result.era}</p>
+                          <p className="text-sm text-ink-500 dark:text-ink-400 mt-1">{result.era}</p>
                         )}
                       </div>
                       {result.confidence && (
@@ -1370,8 +1370,8 @@ export default function HomePage() {
                           result.confidence === "high"
                             ? "bg-green-50 text-green-800"
                             : result.confidence === "medium"
-                            ? "bg-amber-50 text-amber-800"
-                            : "bg-ink-50 text-ink-500"
+                            ? "bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300"
+                            : "bg-ink-50 dark:bg-ink-900 text-ink-500 dark:text-ink-400"
                         }`}>
                           {result.confidence === "high" ? t.confidenceHigh : result.confidence === "medium" ? t.confidenceMedium : t.confidenceLow}
                         </span>
@@ -1382,13 +1382,13 @@ export default function HomePage() {
                   <dl className="divide-y divide-ink-100">
                     {result.condition && (
                       <div className="flex justify-between px-6 py-3 text-sm">
-                        <dt className="text-ink-500">{t.condition}</dt>
+                        <dt className="text-ink-500 dark:text-ink-400">{t.condition}</dt>
                         <dd className="font-medium">{result.condition}</dd>
                       </div>
                     )}
                     {displayedPrice && (
                       <div className="flex justify-between px-6 py-3 text-sm">
-                        <dt className="text-ink-500">
+                        <dt className="text-ink-500 dark:text-ink-400">
                           {displayedPrice.label === "market" ? t.marketRangeLabel : t.estimatedMarketLabel}
                         </dt>
                         <dd className="font-medium text-right">
@@ -1400,12 +1400,12 @@ export default function HomePage() {
                           {typeof result.condition_discount_pct === "number" &&
                             result.condition_discount_pct > 0 &&
                             result.is_definitely_new !== true && (
-                              <div className="text-[11px] font-normal text-ink-500 mt-0.5">
+                              <div className="text-[11px] font-normal text-ink-500 dark:text-ink-400 mt-0.5">
                                 {t.estimatedValueDiscountNote.replace("{n}", String(result.condition_discount_pct))}
                               </div>
                             )}
                           {displayedPrice.count !== undefined && displayedPrice.conditionTag && (
-                            <div className="text-[11px] font-normal text-ink-500 mt-0.5">
+                            <div className="text-[11px] font-normal text-ink-500 dark:text-ink-400 mt-0.5">
                               {(displayedPrice.conditionTag === "new"
                                 ? t.marketRangeSubNew
                                 : displayedPrice.conditionTag === "used"
@@ -1420,7 +1420,7 @@ export default function HomePage() {
                   </dl>
 
                   {displayedPrice && displayedPrice.max >= 100000 && (
-                    <div className="px-6 py-3 bg-amber-50 border-t border-amber-100 text-xs text-amber-900 flex items-start gap-2">
+                    <div className="px-6 py-3 bg-amber-50 dark:bg-amber-950/40 border-t border-amber-100 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0 mt-0.5">
                         <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                         <line x1="12" y1="9" x2="12" y2="13" />
@@ -1433,7 +1433,7 @@ export default function HomePage() {
                   )}
 
                   {Array.isArray(result.defects) && result.defects.length > 0 && (
-                    <div className="px-6 py-4 bg-amber-50 border-t border-amber-100 text-sm text-amber-900">
+                    <div className="px-6 py-4 bg-amber-50 dark:bg-amber-950/40 border-t border-amber-100 text-sm text-amber-900 dark:text-amber-200">
                       <div className="flex items-center gap-2 mb-2">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                           <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
@@ -1456,7 +1456,7 @@ export default function HomePage() {
                   )}
 
                   {result.description && (
-                    <div className="px-6 py-4 bg-ink-50 text-sm text-ink-700 leading-relaxed">
+                    <div className="px-6 py-4 bg-ink-50 dark:bg-ink-900 text-sm text-ink-700 dark:text-ink-200 leading-relaxed">
                       {result.description}
                     </div>
                   )}
@@ -1468,7 +1468,7 @@ export default function HomePage() {
                         haptic("tap");
                         setShowStory(true);
                       }}
-                      className="w-full flex items-center justify-between gap-3 px-6 py-3.5 border-t border-ink-100 text-left hover:bg-ink-50 transition group"
+                      className="w-full flex items-center justify-between gap-3 px-6 py-3.5 border-t border-ink-100 dark:border-ink-800 text-left hover:bg-ink-50 dark:hover:bg-ink-900 transition group"
                     >
                       <span className="flex items-center gap-2.5">
                         <span className="w-7 h-7 rounded-full bg-ink-900 text-white text-sm flex items-center justify-center" aria-hidden="true">
@@ -1478,7 +1478,7 @@ export default function HomePage() {
                           {lang === "hu" ? "A darab története" : "The story of this piece"}
                         </span>
                       </span>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-500 group-hover:text-ink-900 transition" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-500 dark:text-ink-400 group-hover:text-ink-900 dark:hover:text-white transition" aria-hidden="true">
                         <polyline points="9 18 15 12 9 6" />
                       </svg>
                     </button>
@@ -1487,13 +1487,13 @@ export default function HomePage() {
 
                 {isPremium ? (
                   <div className="mt-6">
-                    <p className="text-xs uppercase tracking-wider text-ink-500 mb-3">
+                    <p className="text-xs uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-3">
                       {t.listingsTitle}
                     </p>
                     {(!result.brand?.trim() || result.confidence === "low") && !refinementDismissed && (
-                      <div className="border-2 border-amber-300 rounded-2xl p-5 bg-amber-50 mb-4">
+                      <div className="border-2 border-amber-300 dark:border-amber-800 rounded-2xl p-5 bg-amber-50 dark:bg-amber-950/40 mb-4">
                         <div className="flex items-start gap-2.5 mb-3">
-                          <div className="w-6 h-6 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center shrink-0 mt-0.5">
+                          <div className="w-6 h-6 rounded-full bg-amber-200 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 flex items-center justify-center shrink-0 mt-0.5">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                               <circle cx="12" cy="12" r="10" />
                               <line x1="12" y1="8" x2="12" y2="12" />
@@ -1501,8 +1501,8 @@ export default function HomePage() {
                             </svg>
                           </div>
                           <div>
-                            <p className="font-semibold text-sm text-amber-900">{t.refineTitle}</p>
-                            <p className="text-xs text-amber-800 mt-0.5 leading-relaxed">{t.refineSub}</p>
+                            <p className="font-semibold text-sm text-amber-900 dark:text-amber-200">{t.refineTitle}</p>
+                            <p className="text-xs text-amber-800 dark:text-amber-300 mt-0.5 leading-relaxed">{t.refineSub}</p>
                           </div>
                         </div>
                         <input
@@ -1516,7 +1516,7 @@ export default function HomePage() {
                               submitRefinement();
                             }
                           }}
-                          className="w-full px-3 py-2 rounded-lg border border-ink-100 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-ink-900/10 disabled:opacity-60"
+                          className="w-full px-3 py-2 rounded-lg border border-ink-100 dark:border-ink-800 bg-white dark:bg-ink-950 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900/10 disabled:opacity-60"
                         />
                         <div className="flex flex-wrap items-center gap-3 mt-3">
                           <button
@@ -1531,7 +1531,7 @@ export default function HomePage() {
                             type="button"
                             onClick={() => setRefinementDismissed(true)}
                             disabled={refinementLoading}
-                            className="text-xs text-ink-500 hover:text-ink-900 transition disabled:opacity-50"
+                            className="text-xs text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white transition disabled:opacity-50"
                           >
                             {t.refineSkip}
                           </button>
@@ -1541,7 +1541,7 @@ export default function HomePage() {
                     {listingsLoading ? (
                       <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3" aria-busy="true" aria-label={t.listingsLoading}>
                         {Array.from({ length: 6 }).map((_, i) => (
-                          <li key={i} className="border border-ink-100 rounded-2xl overflow-hidden bg-white">
+                          <li key={i} className="border border-ink-100 dark:border-ink-800 rounded-2xl overflow-hidden bg-white dark:bg-ink-950">
                             <div className="flex gap-3 p-3">
                               <div className="w-20 h-20 rounded-lg bg-ink-100 shrink-0 pulse-slow" />
                               <div className="flex-1 min-w-0 space-y-2 py-1">
@@ -1556,7 +1556,7 @@ export default function HomePage() {
                     ) : displayedListings && displayedListings.length > 0 ? (
                       <>
                         {(!result.brand?.trim() || !listingsExact) && (
-                          <div className="mb-3 flex items-start gap-2 p-3 rounded-xl bg-sky-50 border border-sky-200 text-sky-900">
+                          <div className="mb-3 flex items-start gap-2 p-3 rounded-xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-900/60 text-sky-900 dark:text-sky-200">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5" aria-hidden="true">
                               <circle cx="12" cy="12" r="10" />
                               <line x1="12" y1="16" x2="12" y2="12" />
@@ -1582,7 +1582,7 @@ export default function HomePage() {
                           if (matchCount >= 2) return null;
                           const msg = matchCount === 0 ? t.sizeRareWarningZero : t.sizeRareWarningOne;
                           return (
-                            <div className="mb-3 flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900">
+                            <div className="mb-3 flex items-start gap-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200">
                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5" aria-hidden="true">
                                 <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                                 <line x1="12" y1="9" x2="12" y2="13" />
@@ -1594,7 +1594,7 @@ export default function HomePage() {
                         })()}
                         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {displayedListings.map(({ listing: l, match: matched }, idx) => (
-                          <li key={`${l.source}-${idx}`} className={`border rounded-2xl overflow-hidden bg-white hover:border-ink-300 transition ${matched ? "border-emerald-300 ring-1 ring-emerald-200" : "border-ink-100"}`}>
+                          <li key={`${l.source}-${idx}`} className={`border rounded-2xl overflow-hidden bg-white dark:bg-ink-950 hover:border-ink-300 transition ${matched ? "border-emerald-300 dark:border-emerald-800 ring-1 ring-emerald-200" : "border-ink-100 dark:border-ink-800"}`}>
                             <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex gap-3 p-3">
                               {l.imageUrl ? (
                                 /* eslint-disable-next-line @next/next/no-img-element */
@@ -1602,16 +1602,16 @@ export default function HomePage() {
                                   src={l.imageUrl}
                                   alt={l.title}
                                   loading="lazy"
-                                  className="w-20 h-20 rounded-lg object-cover bg-ink-50 shrink-0"
+                                  className="w-20 h-20 rounded-lg object-cover bg-ink-50 dark:bg-ink-900 shrink-0"
                                 />
                               ) : (
-                                <div className="w-20 h-20 rounded-lg bg-ink-50 shrink-0" />
+                                <div className="w-20 h-20 rounded-lg bg-ink-50 dark:bg-ink-900 shrink-0" />
                               )}
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium line-clamp-2">{l.title}</p>
-                                <p className="text-sm text-ink-900 mt-1">{l.priceLabel}</p>
+                                <p className="text-sm text-ink-900 dark:text-ink-50 mt-1">{l.priceLabel}</p>
                                 <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                  <p className="text-[11px] uppercase tracking-wider text-ink-500">
+                                  <p className="text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400">
                                     {l.source === "vinted"
                                       ? "Vinted"
                                       : l.source === "jofogas"
@@ -1622,7 +1622,7 @@ export default function HomePage() {
                                     {l.location ? ` · ${l.location}` : ""}
                                   </p>
                                   {matched && (
-                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium">
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-medium">
                                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                         <polyline points="20 6 9 17 4 12" />
                                       </svg>
@@ -1637,25 +1637,25 @@ export default function HomePage() {
                         </ul>
                       </>
                     ) : (
-                      <div className="border border-ink-100 rounded-2xl p-8 bg-ink-50 text-center">
-                        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-white border border-ink-100 flex items-center justify-center text-ink-400">
+                      <div className="border border-ink-100 dark:border-ink-800 rounded-2xl p-8 bg-ink-50 dark:bg-ink-900 text-center">
+                        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-white dark:bg-ink-950 border border-ink-100 dark:border-ink-800 flex items-center justify-center text-ink-400 dark:text-ink-500">
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <circle cx="11" cy="11" r="8" />
                             <path d="m21 21-4.3-4.3" />
                           </svg>
                         </div>
-                        <p className="text-sm text-ink-700 font-medium">{t.listingsEmpty}</p>
+                        <p className="text-sm text-ink-700 dark:text-ink-200 font-medium">{t.listingsEmpty}</p>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <div className="mt-6 border border-ink-100 rounded-2xl p-6 bg-ink-50 relative overflow-hidden">
+                  <div className="mt-6 border border-ink-100 dark:border-ink-800 rounded-2xl p-6 bg-ink-50 dark:bg-ink-900 relative overflow-hidden">
                     <div className="opacity-60">
-                      <p className="text-xs uppercase tracking-wider text-ink-500 mb-2">
+                      <p className="text-xs uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-2">
                         {t.listingsTitle}
                       </p>
                       <p className="font-medium">{t.listingsLocked}</p>
-                      <p className="text-sm text-ink-500 mt-1">{t.listingsLockedSub}</p>
+                      <p className="text-sm text-ink-500 dark:text-ink-400 mt-1">{t.listingsLockedSub}</p>
                     </div>
                     <button
                       onClick={openUpgradeConsent}
@@ -1668,11 +1668,11 @@ export default function HomePage() {
                 )}
 
                 {result.selling_tip && (
-                  <div className="mt-4 border border-ink-100 rounded-2xl p-6 bg-ink-50">
-                    <p className="text-xs uppercase tracking-wider text-ink-500 mb-2">
+                  <div className="mt-4 border border-ink-100 dark:border-ink-800 rounded-2xl p-6 bg-ink-50 dark:bg-ink-900">
+                    <p className="text-xs uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-2">
                       {t.sellingTipTitle}
                     </p>
-                    <p className="text-sm text-ink-700 leading-relaxed">
+                    <p className="text-sm text-ink-700 dark:text-ink-200 leading-relaxed">
                       {result.selling_tip}
                     </p>
                   </div>
@@ -1686,7 +1686,7 @@ export default function HomePage() {
                     {t.newScan}
                   </button>
                   {!isPremium && (
-                    <p className="text-xs text-ink-500 mt-3">
+                    <p className="text-xs text-ink-500 dark:text-ink-400 mt-3">
                       {t.scansLeftFull.replace("{n}", result.scansLeft.toString())}
                     </p>
                   )}
@@ -1699,11 +1699,11 @@ export default function HomePage() {
 
       {showUpgradeConsent && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-xl fade-in">
+          <div className="w-full max-w-md bg-white dark:bg-ink-950 rounded-2xl p-6 shadow-xl fade-in">
             <h3 className="text-lg font-medium mb-3">
               {lang === "hu" ? "Megerősítés a prémium előfizetés előtt" : "Confirm before upgrading"}
             </h3>
-            <p className="text-sm text-ink-700 mb-4 leading-relaxed">
+            <p className="text-sm text-ink-700 dark:text-ink-200 mb-4 leading-relaxed">
               {lang === "hu"
                 ? "A prémium szolgáltatás azonnal aktiválódik a fizetés után. Ehhez a 14 napos elállási jogról szóló jogszabály alapján a hozzájárulásodat kérjük."
                 : "Premium is activated immediately after payment. Under the 14-day right of withdrawal we need your explicit consent."}
@@ -1715,18 +1715,18 @@ export default function HomePage() {
                 onChange={(e) => setUpgradeConsentChecked(e.target.checked)}
                 className="mt-1 w-4 h-4 accent-ink-900 shrink-0"
               />
-              <span className="text-xs text-ink-700 leading-relaxed">
+              <span className="text-xs text-ink-700 dark:text-ink-200 leading-relaxed">
                 {lang === "hu" ? (
                   <>
                     Hozzájárulok, hogy a teljesítés a 14 napos elállási határidő lejárta előtt
                     megkezdődjön, és tudomásul veszem, hogy ezzel a 45/2014. (II. 26.) Korm.
                     rendelet 29. § (1) bek. m) pontja alapján az elállási jogomat elveszítem,
                     amint a teljesítés megkezdődött. Elolvastam és elfogadom az{" "}
-                    <Link href="/terms" target="_blank" className="underline hover:text-ink-900">
+                    <Link href="/terms" target="_blank" className="underline hover:text-ink-900 dark:hover:text-white">
                       ÁSZF-et
                     </Link>{" "}
                     és az{" "}
-                    <Link href="/privacy" target="_blank" className="underline hover:text-ink-900">
+                    <Link href="/privacy" target="_blank" className="underline hover:text-ink-900 dark:hover:text-white">
                       Adatvédelmi nyilatkozatot
                     </Link>
                     .
@@ -1737,11 +1737,11 @@ export default function HomePage() {
                     14-day withdrawal period expires, and I acknowledge that I thereby lose
                     my right of withdrawal once performance has begun, pursuant to § 29(1)(m)
                     of Hungarian Decree 45/2014 (II. 26.). I have read and accept the{" "}
-                    <Link href="/terms" target="_blank" className="underline hover:text-ink-900">
+                    <Link href="/terms" target="_blank" className="underline hover:text-ink-900 dark:hover:text-white">
                       Terms
                     </Link>{" "}
                     and{" "}
-                    <Link href="/privacy" target="_blank" className="underline hover:text-ink-900">
+                    <Link href="/privacy" target="_blank" className="underline hover:text-ink-900 dark:hover:text-white">
                       Privacy Policy
                     </Link>
                     .
@@ -1754,7 +1754,7 @@ export default function HomePage() {
                 type="button"
                 onClick={() => setShowUpgradeConsent(false)}
                 disabled={checkoutLoading}
-                className="px-4 py-2 rounded-full border border-ink-200 text-sm hover:bg-ink-50 transition disabled:opacity-50"
+                className="px-4 py-2 rounded-full border border-ink-200 dark:border-ink-700 text-sm hover:bg-ink-50 dark:hover:bg-ink-900 transition disabled:opacity-50"
               >
                 {lang === "hu" ? "Mégse" : "Cancel"}
               </button>
@@ -1788,7 +1788,7 @@ export default function HomePage() {
         <BackToTop lang={lang} />
       )}
 
-      <footer className="px-6 py-3 sm:py-6 border-t border-ink-100 text-center text-[11px] sm:text-xs text-ink-500 space-y-1 sm:space-y-2">
+      <footer className="px-6 py-3 sm:py-6 border-t border-ink-100 dark:border-ink-800 text-center text-[11px] sm:text-xs text-ink-500 dark:text-ink-400 space-y-1 sm:space-y-2">
         <p>{t.footer}</p>
         <LegalFooter />
       </footer>

@@ -36,30 +36,30 @@ export default function LegalShell({ titleHu, titleEn, effectiveDate, children }
   };
 
   return (
-    <main className="min-h-dvh flex flex-col bg-white">
-      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100">
+    <main className="min-h-dvh flex flex-col bg-white dark:bg-ink-950">
+      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-800">
         <Link href="/" className="flex items-baseline gap-2">
           <span className="text-xl font-display tracking-tight">FitFlip</span>
-          <span className="text-xs text-ink-500 hidden sm:inline">.app</span>
+          <span className="text-xs text-ink-500 dark:text-ink-400 hidden sm:inline">.app</span>
         </Link>
         <div className="flex items-center gap-3">
           <div className="flex items-center text-xs">
             <button
               type="button"
               onClick={() => setAndPersist("hu")}
-              className={`px-2 py-1 rounded ${lang === "hu" ? "bg-ink-900 text-white" : "text-ink-500 hover:text-ink-900"}`}
+              className={`px-2 py-1 rounded ${lang === "hu" ? "bg-ink-900 text-white" : "text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white"}`}
             >
               HU
             </button>
             <button
               type="button"
               onClick={() => setAndPersist("en")}
-              className={`px-2 py-1 rounded ${lang === "en" ? "bg-ink-900 text-white" : "text-ink-500 hover:text-ink-900"}`}
+              className={`px-2 py-1 rounded ${lang === "en" ? "bg-ink-900 text-white" : "text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white"}`}
             >
               EN
             </button>
           </div>
-          <Link href="/" className="text-sm text-ink-500 hover:text-ink-900 transition">
+          <Link href="/" className="text-sm text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white transition">
             {lang === "hu" ? "← Vissza" : "← Back"}
           </Link>
         </div>
@@ -69,22 +69,22 @@ export default function LegalShell({ titleHu, titleEn, effectiveDate, children }
         <h1 className="text-3xl font-display tracking-tight mb-2">
           {lang === "hu" ? titleHu : titleEn}
         </h1>
-        <p className="text-xs text-ink-500 mb-8">
+        <p className="text-xs text-ink-500 dark:text-ink-400 mb-8">
           {lang === "hu" ? "Hatálybalépés" : "Effective date"}: {effectiveDate}
         </p>
 
-        <div className="prose prose-sm max-w-none text-ink-900 leading-relaxed">
+        <div className="prose prose-sm max-w-none text-ink-900 dark:text-ink-50 leading-relaxed">
           {ready && children(lang)}
         </div>
 
-        <nav className="mt-12 pt-6 border-t border-ink-100 flex flex-wrap gap-4 text-xs text-ink-500">
-          <Link href="/terms" className="hover:text-ink-900">
+        <nav className="mt-12 pt-6 border-t border-ink-100 dark:border-ink-800 flex flex-wrap gap-4 text-xs text-ink-500 dark:text-ink-400">
+          <Link href="/terms" className="hover:text-ink-900 dark:hover:text-white">
             {lang === "hu" ? "ÁSZF" : "Terms"}
           </Link>
-          <Link href="/privacy" className="hover:text-ink-900">
+          <Link href="/privacy" className="hover:text-ink-900 dark:hover:text-white">
             {lang === "hu" ? "Adatvédelem" : "Privacy"}
           </Link>
-          <Link href="/cookies" className="hover:text-ink-900">
+          <Link href="/cookies" className="hover:text-ink-900 dark:hover:text-white">
             {lang === "hu" ? "Sütik" : "Cookies"}
           </Link>
         </nav>

@@ -83,12 +83,12 @@ export default async function HistoryPage() {
   return (
     <main className="min-h-dvh flex flex-col">
       <PullToRefresh>
-      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100">
+      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-800">
         <Link href="/" className="flex items-baseline gap-2">
           <span className="text-xl font-display tracking-tight">FitFlip</span>
-          <span className="text-xs text-ink-500 hidden sm:inline">.app</span>
+          <span className="text-xs text-ink-500 dark:text-ink-400 hidden sm:inline">.app</span>
         </Link>
-        <Link href="/" className="text-sm text-ink-500 hover:text-ink-900 transition">
+        <Link href="/" className="text-sm text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white transition">
           ← Vissza
         </Link>
       </header>
@@ -97,8 +97,8 @@ export default async function HistoryPage() {
         <h1 className="text-3xl font-display tracking-tight mb-8">Scan előzmények</h1>
 
         {itemsWithUrls.length === 0 ? (
-          <div className="border border-ink-100 rounded-2xl p-10 bg-ink-50 text-center">
-            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-white border border-ink-100 flex items-center justify-center text-ink-400">
+          <div className="border border-ink-100 dark:border-ink-800 rounded-2xl p-10 bg-ink-50 dark:bg-ink-900 text-center">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-white dark:bg-ink-950 border border-ink-100 dark:border-ink-800 flex items-center justify-center text-ink-400 dark:text-ink-500">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <rect x="3" y="3" width="18" height="18" rx="3" />
                 <circle cx="9" cy="9" r="2" />
@@ -106,7 +106,7 @@ export default async function HistoryPage() {
               </svg>
             </div>
             <p className="font-medium mb-1">Még nincs scan-ed</p>
-            <p className="text-sm text-ink-500 mb-5">Töltsd fel az első darabodat — sneakert, ruhát, bármit.</p>
+            <p className="text-sm text-ink-500 dark:text-ink-400 mb-5">Töltsd fel az első darabodat — sneakert, ruhát, bármit.</p>
             <Link
               href="/"
               className="inline-block px-6 py-2.5 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition"
@@ -119,7 +119,7 @@ export default async function HistoryPage() {
             {itemsWithUrls.map((scan) => (
               <li
                 key={scan.id}
-                className="border border-ink-100 rounded-2xl p-5"
+                className="border border-ink-100 dark:border-ink-800 rounded-2xl p-5"
               >
                 <div className="flex gap-4">
                   {scan.imageUrl ? (
@@ -128,53 +128,53 @@ export default async function HistoryPage() {
                       src={scan.imageUrl}
                       alt={scan.brand ?? "scan"}
                       loading="lazy"
-                      className="w-20 h-20 rounded-lg object-cover bg-ink-50 shrink-0"
+                      className="w-20 h-20 rounded-lg object-cover bg-ink-50 dark:bg-ink-900 shrink-0"
                     />
                   ) : (
-                    <div className="w-20 h-20 rounded-lg bg-ink-50 shrink-0" />
+                    <div className="w-20 h-20 rounded-lg bg-ink-50 dark:bg-ink-900 shrink-0" />
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div className="min-w-0">
                         <h2 className="font-medium truncate">
                           {scan.recognized
-                            ? <>{scan.brand ?? "—"}{scan.model ? <span className="text-ink-500"> — {scan.model}</span> : null}</>
-                            : <span className="text-ink-500">Nem azonosított</span>
+                            ? <>{scan.brand ?? "—"}{scan.model ? <span className="text-ink-500 dark:text-ink-400"> — {scan.model}</span> : null}</>
+                            : <span className="text-ink-500 dark:text-ink-400">Nem azonosított</span>
                           }
                         </h2>
                         {scan.era && (
-                          <p className="text-xs text-ink-500 mt-0.5">{scan.era}</p>
+                          <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">{scan.era}</p>
                         )}
                       </div>
-                      <time className="text-xs text-ink-500 shrink-0">
+                      <time className="text-xs text-ink-500 dark:text-ink-400 shrink-0">
                         {formatDate(scan.created_at)}
                       </time>
                     </div>
                     {scan.recognized && (
-                      <div className="text-sm text-ink-700 space-y-1 mt-1">
+                      <div className="text-sm text-ink-700 dark:text-ink-200 space-y-1 mt-1">
                         {scan.condition && (
                           <p>
-                            <span className="text-ink-500">Állapot: </span>
+                            <span className="text-ink-500 dark:text-ink-400">Állapot: </span>
                             {scan.condition}
                           </p>
                         )}
                         {(scan.estimated_value_min_huf !== null || scan.estimated_value_max_huf !== null) && (
                           <p>
-                            <span className="text-ink-500">Becsült érték: </span>
+                            <span className="text-ink-500 dark:text-ink-400">Becsült érték: </span>
                             {formatHuf(scan.estimated_value_min_huf)} – {formatHuf(scan.estimated_value_max_huf)}
                             {scan.condition_discount_pct && scan.condition_discount_pct > 0 ? (
-                              <span className="text-ink-500"> ({scan.condition_discount_pct}% levonva sérülés miatt)</span>
+                              <span className="text-ink-500 dark:text-ink-400"> ({scan.condition_discount_pct}% levonva sérülés miatt)</span>
                             ) : null}
                           </p>
                         )}
                       </div>
                     )}
                     {scan.defects && scan.defects.length > 0 && (
-                      <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200">
-                        <p className="text-[11px] uppercase tracking-wider text-amber-800 mb-1">
+                      <div className="mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60">
+                        <p className="text-[11px] uppercase tracking-wider text-amber-800 dark:text-amber-300 mb-1">
                           Látható hibák
                         </p>
-                        <ul className="text-xs text-amber-900 space-y-0.5">
+                        <ul className="text-xs text-amber-900 dark:text-amber-200 space-y-0.5">
                           {scan.defects.map((d, i) => (
                             <li key={i}>• {d}</li>
                           ))}
@@ -182,7 +182,7 @@ export default async function HistoryPage() {
                       </div>
                     )}
                     {scan.description && (
-                      <p className="text-xs text-ink-500 mt-3 leading-relaxed">
+                      <p className="text-xs text-ink-500 dark:text-ink-400 mt-3 leading-relaxed">
                         {scan.description}
                       </p>
                     )}
@@ -194,7 +194,7 @@ export default async function HistoryPage() {
         )}
       </section>
 
-      <footer className="px-6 py-6 border-t border-ink-100">
+      <footer className="px-6 py-6 border-t border-ink-100 dark:border-ink-800">
         <LegalFooter />
       </footer>
       </PullToRefresh>

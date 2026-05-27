@@ -35,7 +35,7 @@ function ContentHu() {
       <h2 className="text-lg font-semibold mt-8 mb-2">2. Az adatkezelés célja, jogalapja és tárolási ideje</h2>
       <table className="w-full text-xs my-4 border-collapse">
         <thead>
-          <tr className="border-b border-ink-200">
+          <tr className="border-b border-ink-200 dark:border-ink-700">
             <th className="text-left py-2 pr-2">Cél</th>
             <th className="text-left py-2 pr-2">Adatkör</th>
             <th className="text-left py-2 pr-2">Jogalap (GDPR)</th>
@@ -43,43 +43,43 @@ function ContentHu() {
           </tr>
         </thead>
         <tbody className="align-top">
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">Fiók létrehozása és karbantartása</td>
             <td className="py-2 pr-2">Email cím, jelszó hash, nyelvi beállítás, regisztráció ideje, Google OAuth azonosító (ha alkalmazható)</td>
             <td className="py-2 pr-2">Art. 6(1)(b) – szerződés teljesítése</td>
             <td className="py-2">A fiók törléséig + 30 nap</td>
           </tr>
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">Scan szolgáltatás nyújtása (kép-elemzés, árbecslés)</td>
             <td className="py-2 pr-2">Feltöltött képek, AI elemzés eredménye, scan időpontja</td>
             <td className="py-2 pr-2">Art. 6(1)(b) – szerződés teljesítése</td>
             <td className="py-2">A fiók törléséig, vagy amíg a Felhasználó a scant nem törli</td>
           </tr>
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">Napi scan limit kezelése (visszaélés-megelőzés)</td>
             <td className="py-2 pr-2">Felhasználói azonosító, napi scan-szám</td>
             <td className="py-2 pr-2">Art. 6(1)(f) – jogos érdek (szolgáltatás védelme)</td>
             <td className="py-2">24 órás aggregált számláló, naponta nullázódik</td>
           </tr>
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">Prémium előfizetés és fizetés</td>
             <td className="py-2 pr-2">Stripe ügyfél-azonosító, előfizetés státusza, számlázási cím (a Stripe-on keresztül)</td>
             <td className="py-2 pr-2">Art. 6(1)(b) – szerződés teljesítése</td>
             <td className="py-2">A számviteli kötelezettség lejártáig (8 év)</td>
           </tr>
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">Számlázás</td>
             <td className="py-2 pr-2">Név, számlázási cím, vásárolt tételek, összeg</td>
             <td className="py-2 pr-2">Art. 6(1)(c) – jogi kötelezettség (Sztv. 169. §)</td>
             <td className="py-2">8 év</td>
           </tr>
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">Tranzakciós emailek (megerősítés, jelszó-reset)</td>
             <td className="py-2 pr-2">Email cím, küldés ideje, küldés státusza</td>
             <td className="py-2 pr-2">Art. 6(1)(b) – szerződés teljesítése</td>
             <td className="py-2">A fiók törléséig</td>
           </tr>
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">Rendszer-logok, hibakeresés, biztonság</td>
             <td className="py-2 pr-2">IP cím, user agent, hibák, kérési időpontok</td>
             <td className="py-2 pr-2">Art. 6(1)(f) – jogos érdek (biztonság, hibakeresés)</td>
@@ -165,7 +165,7 @@ function ContentHu() {
 
       <h2 className="text-lg font-semibold mt-8 mb-2">9. Sütik</h2>
       <p>
-        A weboldal sütik (cookies) használatáról részletes információt a <a href="/cookies" className="underline hover:text-ink-700">Cookie tájékoztató</a> tartalmaz.
+        A weboldal sütik (cookies) használatáról részletes információt a <a href="/cookies" className="underline hover:text-ink-700 dark:hover:text-ink-200">Cookie tájékoztató</a> tartalmaz.
       </p>
 
       <h2 className="text-lg font-semibold mt-8 mb-2">10. Korhatár</h2>
@@ -202,7 +202,7 @@ function ContentEn() {
       <h2 className="text-lg font-semibold mt-8 mb-2">2. Purposes, legal bases and retention</h2>
       <table className="w-full text-xs my-4 border-collapse">
         <thead>
-          <tr className="border-b border-ink-200">
+          <tr className="border-b border-ink-200 dark:border-ink-700">
             <th className="text-left py-2 pr-2">Purpose</th>
             <th className="text-left py-2 pr-2">Data</th>
             <th className="text-left py-2 pr-2">Legal basis (GDPR)</th>
@@ -210,43 +210,43 @@ function ContentEn() {
           </tr>
         </thead>
         <tbody className="align-top">
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">Account creation and maintenance</td>
             <td className="py-2 pr-2">Email, password hash, language pref, registration date, Google OAuth id (if used)</td>
             <td className="py-2 pr-2">Art. 6(1)(b) – performance of contract</td>
             <td className="py-2">Until account deletion + 30 days</td>
           </tr>
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">Scan service (image analysis, price estimate)</td>
             <td className="py-2 pr-2">Uploaded images, AI analysis result, scan timestamp</td>
             <td className="py-2 pr-2">Art. 6(1)(b) – performance of contract</td>
             <td className="py-2">Until account deletion or scan deletion</td>
           </tr>
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">Daily scan limit (abuse prevention)</td>
             <td className="py-2 pr-2">User id, daily scan count</td>
             <td className="py-2 pr-2">Art. 6(1)(f) – legitimate interest (service protection)</td>
             <td className="py-2">24-hour aggregate, reset daily</td>
           </tr>
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">Premium subscription and payment</td>
             <td className="py-2 pr-2">Stripe customer id, subscription status, billing address (via Stripe)</td>
             <td className="py-2 pr-2">Art. 6(1)(b) – performance of contract</td>
             <td className="py-2">8 years (accounting obligation)</td>
           </tr>
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">Invoicing</td>
             <td className="py-2 pr-2">Name, billing address, purchased items, amount</td>
             <td className="py-2 pr-2">Art. 6(1)(c) – legal obligation (Act C of 2000 § 169)</td>
             <td className="py-2">8 years</td>
           </tr>
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">Transactional emails (confirmation, password reset)</td>
             <td className="py-2 pr-2">Email address, send time, delivery status</td>
             <td className="py-2 pr-2">Art. 6(1)(b) – performance of contract</td>
             <td className="py-2">Until account deletion</td>
           </tr>
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">System logs, debugging, security</td>
             <td className="py-2 pr-2">IP address, user agent, errors, request timestamps</td>
             <td className="py-2 pr-2">Art. 6(1)(f) – legitimate interest (security, debugging)</td>
@@ -322,7 +322,7 @@ function ContentEn() {
 
       <h2 className="text-lg font-semibold mt-8 mb-2">9. Cookies</h2>
       <p>
-        Detailed information on cookies used by this website is provided in the <a href="/cookies" className="underline hover:text-ink-700">Cookie Notice</a>.
+        Detailed information on cookies used by this website is provided in the <a href="/cookies" className="underline hover:text-ink-700 dark:hover:text-ink-200">Cookie Notice</a>.
       </p>
 
       <h2 className="text-lg font-semibold mt-8 mb-2">10. Age requirement</h2>

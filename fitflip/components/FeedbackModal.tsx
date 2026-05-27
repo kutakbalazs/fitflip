@@ -94,20 +94,20 @@ export default function FeedbackModal({ open, onClose, lang }: Props) {
       onClick={handleClose}
     >
       <div
-        className="w-full max-w-md bg-white rounded-2xl p-6 shadow-xl fade-in"
+        className="w-full max-w-md bg-white dark:bg-ink-950 rounded-2xl p-6 shadow-xl fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         {sent ? (
           <>
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 flex items-center justify-center">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </div>
               <h3 className="text-lg font-medium">{t.sentTitle}</h3>
             </div>
-            <p className="text-sm text-ink-700 mb-5">{t.sentSub}</p>
+            <p className="text-sm text-ink-700 dark:text-ink-200 mb-5">{t.sentSub}</p>
             <div className="flex justify-end">
               <button
                 type="button"
@@ -121,7 +121,7 @@ export default function FeedbackModal({ open, onClose, lang }: Props) {
         ) : (
           <>
             <h3 className="text-lg font-medium mb-1">{t.title}</h3>
-            <p className="text-sm text-ink-500 mb-4 leading-relaxed">{t.sub}</p>
+            <p className="text-sm text-ink-500 dark:text-ink-400 mb-4 leading-relaxed">{t.sub}</p>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -129,7 +129,7 @@ export default function FeedbackModal({ open, onClose, lang }: Props) {
               maxLength={5000}
               rows={5}
               disabled={sending}
-              className="w-full px-3 py-2 mb-3 rounded-lg border border-ink-100 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-ink-900/10 resize-none disabled:opacity-50"
+              className="w-full px-3 py-2 mb-3 rounded-lg border border-ink-100 dark:border-ink-800 bg-white dark:bg-ink-950 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900/10 resize-none disabled:opacity-50"
               autoFocus
             />
             {error && <p className="text-xs text-red-600 mb-3">{error}</p>}
@@ -138,7 +138,7 @@ export default function FeedbackModal({ open, onClose, lang }: Props) {
                 type="button"
                 onClick={handleClose}
                 disabled={sending}
-                className="px-4 py-2 rounded-full border border-ink-200 text-sm hover:bg-ink-50 transition disabled:opacity-50"
+                className="px-4 py-2 rounded-full border border-ink-200 dark:border-ink-700 text-sm hover:bg-ink-50 dark:hover:bg-ink-900 transition disabled:opacity-50"
               >
                 {t.cancel}
               </button>

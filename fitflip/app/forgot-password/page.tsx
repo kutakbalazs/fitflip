@@ -39,10 +39,10 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="min-h-dvh flex flex-col">
-      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100">
+      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-800">
         <Link href="/" className="flex items-baseline gap-2">
           <span className="text-xl font-display tracking-tight">FitFlip</span>
-          <span className="text-xs text-ink-500 hidden sm:inline">.app</span>
+          <span className="text-xs text-ink-500 dark:text-ink-400 hidden sm:inline">.app</span>
         </Link>
       </header>
 
@@ -51,14 +51,14 @@ export default function ForgotPasswordPage() {
           <h1 className="text-3xl font-display tracking-tight mb-2 text-center">
             {t.forgotPasswordTitle}
           </h1>
-          <p className="text-ink-500 text-sm text-center mb-8">
+          <p className="text-ink-500 dark:text-ink-400 text-sm text-center mb-8">
             {t.forgotPasswordSub}
           </p>
 
           {sent ? (
-            <div className="border border-ink-100 rounded-2xl p-6 bg-ink-50 text-center">
+            <div className="border border-ink-100 dark:border-ink-800 rounded-2xl p-6 bg-ink-50 dark:bg-ink-900 text-center">
               <p className="font-medium mb-1">✓</p>
-              <p className="text-sm text-ink-700">{t.forgotPasswordSent}</p>
+              <p className="text-sm text-ink-700 dark:text-ink-200">{t.forgotPasswordSent}</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-3">
@@ -74,7 +74,7 @@ export default function ForgotPasswordPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={t.loginEmailPlaceholder}
-                  className="w-full px-4 py-2.5 rounded-xl border border-ink-100 focus:border-ink-900 focus:outline-none text-sm"
+                  className="w-full px-4 py-2.5 rounded-xl border border-ink-100 dark:border-ink-800 focus:border-ink-900 focus:outline-none text-sm"
                 />
               </div>
               <button
@@ -91,14 +91,14 @@ export default function ForgotPasswordPage() {
             <p className="text-center text-red-600 text-sm mt-4">{error}</p>
           )}
 
-          <p className="text-center text-sm text-ink-500 mt-8">
-            <Link href="/login" className="text-ink-900 font-medium underline underline-offset-2">
+          <p className="text-center text-sm text-ink-500 dark:text-ink-400 mt-8">
+            <Link href="/login" className="text-ink-900 dark:text-ink-50 font-medium underline underline-offset-2">
               {t.forgotPasswordBackToLogin}
             </Link>
           </p>
         </div>
       </section>
-      <footer className="px-6 py-6 border-t border-ink-100">
+      <footer className="px-6 py-6 border-t border-ink-100 dark:border-ink-800">
         <LegalFooter />
       </footer>
     </main>

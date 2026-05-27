@@ -89,21 +89,21 @@ export default function OnboardingModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/55 p-0 sm:p-4">
-      <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[95dvh] overflow-y-auto fade-in">
+      <div className="w-full max-w-md bg-white dark:bg-ink-950 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[95dvh] overflow-y-auto fade-in">
         {/* Header: lang toggle + close */}
         <div className="flex items-center justify-between px-5 pt-4 pb-2 sticky top-0 bg-white/95 backdrop-blur-sm z-10">
           <div className="flex items-center text-xs">
             <button
               type="button"
               onClick={() => switchLang("hu")}
-              className={`px-2 py-1 rounded ${lang === "hu" ? "bg-ink-900 text-white" : "text-ink-500 hover:text-ink-900"}`}
+              className={`px-2 py-1 rounded ${lang === "hu" ? "bg-ink-900 text-white" : "text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white"}`}
             >
               HU
             </button>
             <button
               type="button"
               onClick={() => switchLang("en")}
-              className={`px-2 py-1 rounded ${lang === "en" ? "bg-ink-900 text-white" : "text-ink-500 hover:text-ink-900"}`}
+              className={`px-2 py-1 rounded ${lang === "en" ? "bg-ink-900 text-white" : "text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white"}`}
             >
               EN
             </button>
@@ -112,7 +112,7 @@ export default function OnboardingModal({
             type="button"
             onClick={handleClose}
             aria-label={t.close}
-            className="w-8 h-8 rounded-full hover:bg-ink-50 text-ink-500 hover:text-ink-900 flex items-center justify-center transition"
+            className="w-8 h-8 rounded-full hover:bg-ink-50 dark:hover:bg-ink-900 text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white flex items-center justify-center transition"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -128,12 +128,12 @@ export default function OnboardingModal({
           <h1 className="text-2xl sm:text-3xl font-display tracking-tight mt-5 mb-1">
             {t.title}
           </h1>
-          <p className="text-sm text-ink-500 mb-5">{t.subtitle}</p>
+          <p className="text-sm text-ink-500 dark:text-ink-400 mb-5">{t.subtitle}</p>
 
           {/* Callout: what works */}
-          <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-4 mb-6">
+          <div className="rounded-2xl border-2 border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 p-4 mb-6">
             <div className="flex items-start gap-2.5">
-              <div className="w-6 h-6 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center shrink-0 mt-0.5">
+              <div className="w-6 h-6 rounded-full bg-amber-200 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 flex items-center justify-center shrink-0 mt-0.5">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <circle cx="12" cy="12" r="10" />
                   <line x1="12" y1="8" x2="12" y2="12" />
@@ -141,10 +141,10 @@ export default function OnboardingModal({
                 </svg>
               </div>
               <div>
-                <p className="font-semibold text-sm text-amber-900 mb-0.5">
+                <p className="font-semibold text-sm text-amber-900 dark:text-amber-200 mb-0.5">
                   {t.calloutTitle}
                 </p>
-                <p className="text-xs text-amber-800 leading-relaxed">
+                <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
                   {t.calloutBody}
                 </p>
               </div>
@@ -173,12 +173,12 @@ export default function OnboardingModal({
 
           {/* Footer link (only when logged out) */}
           {!authenticated && (
-            <p className="text-center text-xs text-ink-500 mt-4">
+            <p className="text-center text-xs text-ink-500 dark:text-ink-400 mt-4">
               {t.haveAccount}{" "}
               <Link
                 href="/login"
                 onClick={handleClose}
-                className="text-ink-900 font-medium underline underline-offset-2"
+                className="text-ink-900 dark:text-ink-50 font-medium underline underline-offset-2"
               >
                 {t.signin}
               </Link>
@@ -206,7 +206,7 @@ function Tip({
       </div>
       <div className="flex-1 pt-1">
         <p className="text-sm font-medium leading-tight mb-1">{title}</p>
-        <p className="text-xs text-ink-500 leading-relaxed">{body}</p>
+        <p className="text-xs text-ink-500 dark:text-ink-400 leading-relaxed">{body}</p>
       </div>
     </div>
   );
@@ -214,7 +214,7 @@ function Tip({
 
 function HeroIllustration() {
   return (
-    <div className="relative w-full rounded-2xl overflow-hidden bg-ink-50">
+    <div className="relative w-full rounded-2xl overflow-hidden bg-ink-50 dark:bg-ink-900">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/onboarding-hero.jpg"

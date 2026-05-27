@@ -20,14 +20,14 @@ export default function LegalFooter({ className = "" }: Props) {
   }, []);
 
   return (
-    <div className={`flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-ink-400 ${className}`}>
-      <Link href="/terms" className="hover:text-ink-700">
+    <div className={`flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-ink-400 dark:text-ink-500 ${className}`}>
+      <Link href="/terms" className="hover:text-ink-700 dark:hover:text-ink-200">
         {lang === "hu" ? "ÁSZF" : "Terms"}
       </Link>
-      <Link href="/privacy" className="hover:text-ink-700">
+      <Link href="/privacy" className="hover:text-ink-700 dark:hover:text-ink-200">
         {lang === "hu" ? "Adatvédelem" : "Privacy"}
       </Link>
-      <Link href="/cookies" className="hover:text-ink-700">
+      <Link href="/cookies" className="hover:text-ink-700 dark:hover:text-ink-200">
         {lang === "hu" ? "Sütik" : "Cookies"}
       </Link>
     </div>

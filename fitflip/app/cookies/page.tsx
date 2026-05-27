@@ -32,7 +32,7 @@ function ContentHu() {
       <p>Ezek nélkül a Szolgáltatás nem működne. Külön hozzájárulást nem igényelnek (ePrivacy 5. cikk (3) kivétel).</p>
       <table className="w-full text-xs my-4 border-collapse">
         <thead>
-          <tr className="border-b border-ink-200">
+          <tr className="border-b border-ink-200 dark:border-ink-700">
             <th className="text-left py-2 pr-2">Név</th>
             <th className="text-left py-2 pr-2">Cél</th>
             <th className="text-left py-2 pr-2">Forrás</th>
@@ -40,19 +40,19 @@ function ContentHu() {
           </tr>
         </thead>
         <tbody className="align-top">
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">sb-access-token, sb-refresh-token</td>
             <td className="py-2 pr-2">Bejelentkezett munkamenet fenntartása</td>
             <td className="py-2 pr-2">Supabase Auth</td>
             <td className="py-2">Munkamenet / 1 hét</td>
           </tr>
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">ff-lang (localStorage)</td>
             <td className="py-2 pr-2">Nyelvi beállítás megjegyzése (HU/EN)</td>
             <td className="py-2 pr-2">FitFlip</td>
             <td className="py-2">Tartós, a böngésző-adatok törléséig</td>
           </tr>
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">ff-cookie-consent (localStorage)</td>
             <td className="py-2 pr-2">A sütibanner-választás megjegyzése</td>
             <td className="py-2 pr-2">FitFlip</td>
@@ -90,7 +90,7 @@ function ContentHu() {
 
       <h2 className="text-lg font-semibold mt-8 mb-2">4. Kapcsolat</h2>
       <p>
-        Sütikkel kapcsolatos kérdésekkel a support.fitflip@gmail.com email címen léphet kapcsolatba az Adatkezelővel. Az adatkezelés részleteit az <a href="/privacy" className="underline hover:text-ink-700">Adatvédelmi nyilatkozat</a> tartalmazza.
+        Sütikkel kapcsolatos kérdésekkel a support.fitflip@gmail.com email címen léphet kapcsolatba az Adatkezelővel. Az adatkezelés részleteit az <a href="/privacy" className="underline hover:text-ink-700 dark:hover:text-ink-200">Adatvédelmi nyilatkozat</a> tartalmazza.
       </p>
     </>
   );
@@ -114,7 +114,7 @@ function ContentEn() {
       <p>The Service cannot operate without these. No consent is required (ePrivacy Art. 5(3) exemption).</p>
       <table className="w-full text-xs my-4 border-collapse">
         <thead>
-          <tr className="border-b border-ink-200">
+          <tr className="border-b border-ink-200 dark:border-ink-700">
             <th className="text-left py-2 pr-2">Name</th>
             <th className="text-left py-2 pr-2">Purpose</th>
             <th className="text-left py-2 pr-2">Source</th>
@@ -122,19 +122,19 @@ function ContentEn() {
           </tr>
         </thead>
         <tbody className="align-top">
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">sb-access-token, sb-refresh-token</td>
             <td className="py-2 pr-2">Maintain logged-in session</td>
             <td className="py-2 pr-2">Supabase Auth</td>
             <td className="py-2">Session / 1 week</td>
           </tr>
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">ff-lang (localStorage)</td>
             <td className="py-2 pr-2">Remember language preference (HU/EN)</td>
             <td className="py-2 pr-2">FitFlip</td>
             <td className="py-2">Persistent, until browser data cleared</td>
           </tr>
-          <tr className="border-b border-ink-100">
+          <tr className="border-b border-ink-100 dark:border-ink-800">
             <td className="py-2 pr-2">ff-cookie-consent (localStorage)</td>
             <td className="py-2 pr-2">Remember cookie banner choice</td>
             <td className="py-2 pr-2">FitFlip</td>
@@ -170,7 +170,7 @@ function ContentEn() {
 
       <h2 className="text-lg font-semibold mt-8 mb-2">4. Contact</h2>
       <p>
-        For questions about cookies, contact the Controller at support.fitflip@gmail.com. Data processing details are in the <a href="/privacy" className="underline hover:text-ink-700">Privacy Policy</a>.
+        For questions about cookies, contact the Controller at support.fitflip@gmail.com. Data processing details are in the <a href="/privacy" className="underline hover:text-ink-700 dark:hover:text-ink-200">Privacy Policy</a>.
       </p>
     </>
   );

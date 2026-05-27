@@ -90,7 +90,7 @@ function ContentHu() {
       <h2 className="text-lg font-semibold mt-8 mb-2">11. Adatkezelés</h2>
       <p>
         A Felhasználó személyes adatainak kezelésével kapcsolatos részletes információkat az{" "}
-        <a href="/privacy" className="underline hover:text-ink-700">Adatvédelmi nyilatkozat</a> tartalmazza.
+        <a href="/privacy" className="underline hover:text-ink-700 dark:hover:text-ink-200">Adatvédelmi nyilatkozat</a> tartalmazza.
       </p>
 
       <h2 className="text-lg font-semibold mt-8 mb-2">12. Panaszkezelés és vitarendezés</h2>
@@ -194,7 +194,7 @@ function ContentEn() {
       <h2 className="text-lg font-semibold mt-8 mb-2">11. Data processing</h2>
       <p>
         Detailed information on the processing of your personal data is set out in the{" "}
-        <a href="/privacy" className="underline hover:text-ink-700">Privacy Policy</a>.
+        <a href="/privacy" className="underline hover:text-ink-700 dark:hover:text-ink-200">Privacy Policy</a>.
       </p>
 
       <h2 className="text-lg font-semibold mt-8 mb-2">12. Complaints and dispute resolution</h2>

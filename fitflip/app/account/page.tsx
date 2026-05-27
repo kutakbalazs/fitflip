@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import LegalFooter from "@/components/LegalFooter";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function AccountPage() {
   const router = useRouter();
@@ -98,13 +99,13 @@ export default function AccountPage() {
   };
 
   return (
-    <main className="min-h-dvh flex flex-col bg-white">
-      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100">
+    <main className="min-h-dvh flex flex-col bg-white dark:bg-ink-950">
+      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-800">
         <Link href="/" className="flex items-baseline gap-2">
           <span className="text-xl font-display tracking-tight">FitFlip</span>
-          <span className="text-xs text-ink-500 hidden sm:inline">.app</span>
+          <span className="text-xs text-ink-500 dark:text-ink-400 hidden sm:inline">.app</span>
         </Link>
-        <Link href="/" className="text-sm text-ink-500 hover:text-ink-900 transition">
+        <Link href="/" className="text-sm text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white transition">
           {t.back}
         </Link>
       </header>
@@ -113,36 +114,40 @@ export default function AccountPage() {
         <h1 className="text-3xl font-display tracking-tight mb-8">{t.title}</h1>
 
         {email && (
-          <div className="mb-8 p-4 rounded-2xl bg-ink-50 border border-ink-100">
-            <p className="text-xs text-ink-500 uppercase tracking-wider mb-1">{t.emailLabel}</p>
+          <div className="mb-8 p-4 rounded-2xl bg-ink-50 dark:bg-ink-900 border border-ink-100 dark:border-ink-800">
+            <p className="text-xs text-ink-500 dark:text-ink-400 uppercase tracking-wider mb-1">{t.emailLabel}</p>
             <p className="text-sm font-medium">{email}</p>
           </div>
         )}
 
-        <div className="border border-red-200 rounded-2xl p-5 bg-red-50">
-          <h2 className="text-lg font-semibold text-red-900 mb-2">{t.dangerTitle}</h2>
-          <p className="text-sm text-red-800 leading-relaxed mb-4">{t.dangerDesc}</p>
+        <div className="mb-8">
+          <ThemeToggle lang={lang} />
+        </div>
+
+        <div className="border border-red-200 dark:border-red-900/60 rounded-2xl p-5 bg-red-50 dark:bg-red-950/40">
+          <h2 className="text-lg font-semibold text-red-900 dark:text-red-200 mb-2">{t.dangerTitle}</h2>
+          <p className="text-sm text-red-800 dark:text-red-300 leading-relaxed mb-4">{t.dangerDesc}</p>
           {!showConfirm ? (
             <button
               type="button"
               onClick={() => setShowConfirm(true)}
-              className="px-4 py-2 rounded-full border border-red-300 text-red-900 text-sm font-medium hover:bg-red-100 transition"
+              className="px-4 py-2 rounded-full border border-red-300 dark:border-red-800 text-red-900 dark:text-red-200 text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/40 transition"
             >
               {t.deleteCta}
             </button>
           ) : (
-            <div className="border-t border-red-200 pt-4">
-              <p className="text-sm font-medium text-red-900 mb-1">{t.confirmTitle}</p>
-              <p className="text-xs text-red-700 mb-3">{t.confirmSub}</p>
+            <div className="border-t border-red-200 dark:border-red-900/60 pt-4">
+              <p className="text-sm font-medium text-red-900 dark:text-red-200 mb-1">{t.confirmTitle}</p>
+              <p className="text-xs text-red-700 dark:text-red-300 mb-3">{t.confirmSub}</p>
               <input
                 type="email"
                 value={confirmEmail}
                 onChange={(e) => setConfirmEmail(e.target.value)}
                 placeholder={t.confirmPlaceholder}
                 disabled={deleting}
-                className="w-full px-3 py-2 mb-3 rounded-lg border border-red-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 disabled:opacity-50"
+                className="w-full px-3 py-2 mb-3 rounded-lg border border-red-300 dark:border-red-800 bg-white dark:bg-ink-900 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 disabled:opacity-50"
               />
-              {error && <p className="text-xs text-red-700 mb-3">{error}</p>}
+              {error && <p className="text-xs text-red-700 dark:text-red-300 mb-3">{error}</p>}
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -160,7 +165,7 @@ export default function AccountPage() {
                     setError(null);
                   }}
                   disabled={deleting}
-                  className="px-4 py-2 rounded-full border border-ink-200 text-sm hover:bg-ink-50 transition disabled:opacity-50"
+                  className="px-4 py-2 rounded-full border border-ink-200 dark:border-ink-700 text-sm hover:bg-ink-50 dark:hover:bg-ink-900 transition disabled:opacity-50"
                 >
                   {t.cancel}
                 </button>
@@ -170,8 +175,8 @@ export default function AccountPage() {
         </div>
       </section>
 
-      <footer className="px-6 py-6 border-t border-ink-100 space-y-2">
-        <p className="text-center text-[10px] text-ink-400 font-mono">
+      <footer className="px-6 py-6 border-t border-ink-100 dark:border-ink-800 space-y-2">
+        <p className="text-center text-[10px] text-ink-400 dark:text-ink-500 font-mono">
           v{process.env.NEXT_PUBLIC_APP_VERSION}
         </p>
         <LegalFooter />

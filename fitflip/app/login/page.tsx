@@ -60,10 +60,10 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-dvh flex flex-col">
-      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100">
+      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-800">
         <Link href="/" className="flex items-baseline gap-2">
           <span className="text-xl font-display tracking-tight">FitFlip</span>
-          <span className="text-xs text-ink-500 hidden sm:inline">.app</span>
+          <span className="text-xs text-ink-500 dark:text-ink-400 hidden sm:inline">.app</span>
         </Link>
       </header>
 
@@ -72,13 +72,13 @@ export default function LoginPage() {
           <h1 className="text-3xl font-display tracking-tight mb-2 text-center">
             {t.login}
           </h1>
-          <p className="text-ink-500 text-sm text-center mb-8">
+          <p className="text-ink-500 dark:text-ink-400 text-sm text-center mb-8">
             {t.loginRequiredSub}
           </p>
 
           <button
             onClick={handleGoogle}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-full border border-ink-100 hover:bg-ink-50 transition text-sm font-medium"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-full border border-ink-100 dark:border-ink-800 hover:bg-ink-50 dark:hover:bg-ink-900 transition text-sm font-medium"
           >
             <svg width="18" height="18" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -91,7 +91,7 @@ export default function LoginPage() {
 
           <div className="flex items-center gap-3 my-6">
             <div className="flex-1 h-px bg-ink-100" />
-            <span className="text-xs text-ink-500 uppercase tracking-wider">{t.loginOr}</span>
+            <span className="text-xs text-ink-500 dark:text-ink-400 uppercase tracking-wider">{t.loginOr}</span>
             <div className="flex-1 h-px bg-ink-100" />
           </div>
 
@@ -108,7 +108,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t.loginEmailPlaceholder}
-                className="w-full px-4 py-2.5 rounded-xl border border-ink-100 focus:border-ink-900 focus:outline-none text-sm"
+                className="w-full px-4 py-2.5 rounded-xl border border-ink-100 dark:border-ink-800 focus:border-ink-900 focus:outline-none text-sm"
               />
             </div>
             <div>
@@ -116,7 +116,7 @@ export default function LoginPage() {
                 <label htmlFor="password" className="block text-sm font-medium">
                   {t.loginPasswordLabel}
                 </label>
-                <Link href="/forgot-password" className="text-xs text-ink-500 hover:text-ink-900 underline underline-offset-2">
+                <Link href="/forgot-password" className="text-xs text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white underline underline-offset-2">
                   {t.loginForgotPassword}
                 </Link>
               </div>
@@ -128,7 +128,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t.loginPasswordPlaceholder}
-                className="w-full px-4 py-2.5 rounded-xl border border-ink-100 focus:border-ink-900 focus:outline-none text-sm"
+                className="w-full px-4 py-2.5 rounded-xl border border-ink-100 dark:border-ink-800 focus:border-ink-900 focus:outline-none text-sm"
               />
             </div>
             <button
@@ -144,15 +144,15 @@ export default function LoginPage() {
             <p className="text-center text-red-600 text-sm mt-4">{error}</p>
           )}
 
-          <p className="text-center text-sm text-ink-500 mt-8">
+          <p className="text-center text-sm text-ink-500 dark:text-ink-400 mt-8">
             {t.loginNoAccount}{" "}
-            <Link href="/signup" className="text-ink-900 font-medium underline underline-offset-2">
+            <Link href="/signup" className="text-ink-900 dark:text-ink-50 font-medium underline underline-offset-2">
               {t.loginSignupLink}
             </Link>
           </p>
         </div>
       </section>
-      <footer className="px-6 py-6 border-t border-ink-100">
+      <footer className="px-6 py-6 border-t border-ink-100 dark:border-ink-800">
         <LegalFooter />
       </footer>
     </main>
