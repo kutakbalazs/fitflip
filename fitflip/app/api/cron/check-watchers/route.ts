@@ -24,6 +24,7 @@ type WatcherRow = {
   search_model_tokens: string[] | null;
   search_color_tokens: string[] | null;
   size_filter: string | null;
+  last_checked_at: string | null;
 };
 
 export async function GET(req: NextRequest) {
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest) {
   const admin = createAdminClient();
   const { data: watchers, error } = await admin
     .from("price_watchers")
-    .select("id, user_id, scan_id, target_price_huf, baseline_urls, search_brand, search_model, search_color, search_item_type, search_queries, search_brand_tokens, search_model_tokens, search_color_tokens, size_filter")
+    .select("id, user_id, scan_id, target_price_huf, baseline_urls, search_brand, search_model, search_color, search_item_type, search_queries, search_brand_tokens, search_model_tokens, search_color_tokens, size_filter, last_checked_at")
     .eq("active", true);
   if (error) {
     console.error("[cron] fetch watchers error:", error);
@@ -48,12 +49,29 @@ export async function GET(req: NextRequest) {
   const rows = (watchers ?? []) as WatcherRow[];
   let totalChecked = 0;
   let totalNotifications = 0;
+  let totalSkipped = 0;
+
+  // Bypass the 20h rate limit for manual testing: ?force=1.
+  const force = new URL(req.url).searchParams.get("force") === "1";
 
   // Cache fetched scan images so multiple watchers on the same scan don't
   // hit storage twice.
   const imageCache = new Map<string, { data: string; mediaType: "image/jpeg" } | null>();
 
   for (const watcher of rows) {
+    // Per-watcher rate limit: even if the cron is somehow triggered more
+    // than once a day (manual call, accidental re-deploy, etc.), each
+    // watcher only gets processed once per 20 hours. Prevents duplicate
+    // notifications and runaway token costs.
+    if (!force && watcher.last_checked_at) {
+      const ageHours =
+        (Date.now() - new Date(watcher.last_checked_at).getTime()) / 3_600_000;
+      if (ageHours < 20) {
+        totalSkipped++;
+        continue;
+      }
+    }
+
     totalChecked++;
     try {
       const newCount = await processWatcher(admin, watcher, imageCache);
@@ -66,6 +84,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     watchersChecked: totalChecked,
+    watchersSkipped: totalSkipped,
     notificationsCreated: totalNotifications,
   });
 }
@@ -98,6 +117,27 @@ async function processWatcher(
       l.priceHuf <= w.target_price_huf &&
       !baseline.has(l.url)
   );
+
+  // Tightening for watcher cron: require at least one brand or model token
+  // to appear as a whole word in the listing title. Cheap, deterministic
+  // filter that eliminates most off-target results before we spend tokens
+  // on visual verification. (We skip this gate only when we have neither
+  // brand nor model tokens, in which case the AI verifier must carry the
+  // weight on its own.)
+  const idTokens = [
+    ...(w.search_brand_tokens ?? []),
+    ...(w.search_model_tokens ?? []),
+  ].filter((tok) => typeof tok === "string" && tok.trim().length >= 2);
+  if (idTokens.length > 0) {
+    const titleHasAnyToken = (title: string) => {
+      const lower = title.toLowerCase();
+      return idTokens.some((tok) => {
+        const escaped = tok.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        return new RegExp(`\\b${escaped}\\b`, "i").test(lower);
+      });
+    };
+    candidates = candidates.filter((l) => titleHasAnyToken(l.title));
+  }
 
   // Optional size filter: only listings whose title contains the user's
   // size tokens. If the filter strips everything, drop out — better an
@@ -132,7 +172,10 @@ async function processWatcher(
           model: w.search_model ?? undefined,
           color: w.search_color ?? undefined,
         },
-        { strict: !w.search_brand, model: "claude-haiku-4-5" }
+        // Watcher cron always runs strict mode — false positives are much
+        // worse here than in the on-scan flow because the user can't see
+        // the photo side-by-side, they just trust the notification.
+        { strict: true, model: "claude-haiku-4-5" }
       );
     } catch (err) {
       console.warn(`[cron] verify failed for ${w.id}, using unverified:`, err);

@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import LegalFooter from "@/components/LegalFooter";
 import { haptic } from "@/lib/haptics";
+
+const SWIPE_DELETE_THRESHOLD = 90;
 
 type ListingPreview = {
   source: string;
@@ -93,6 +95,7 @@ export default function WatchersPage() {
   const [watchers, setWatchers] = useState<WatcherRow[]>([]);
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [removing, setRemoving] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     try {
@@ -126,16 +129,26 @@ export default function WatchersPage() {
     }
   };
 
-  const unsubscribe = async (id: string) => {
-    const ok = window.confirm(
-      lang === "hu"
-        ? "Biztos kikapcsolod ezt az árfigyelőt?"
-        : "Turn off this watcher?",
-    );
-    if (!ok) return;
+  const unsubscribe = async (id: string, skipConfirm = false) => {
+    if (!skipConfirm) {
+      const ok = window.confirm(
+        lang === "hu"
+          ? "Biztos kikapcsolod ezt az árfigyelőt?"
+          : "Turn off this watcher?",
+      );
+      if (!ok) return;
+    }
     haptic("tap");
+    setRemoving((prev) => new Set(prev).add(id));
+    // wait for slide-out animation before removing from state
+    await new Promise((r) => setTimeout(r, 320));
     setWatchers((prev) => prev.filter((w) => w.id !== id));
     setExpanded((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    setRemoving((prev) => {
       const next = new Set(prev);
       next.delete(id);
       return next;
@@ -242,97 +255,19 @@ export default function WatchersPage() {
                 ? `${w.search_brand ?? ""}${w.search_model ? " — " + w.search_model : ""}`.trim()
                 : fallbackName(w.search_item_type, w.search_color, lang);
               return (
-                <li
+                <WatcherItem
                   key={w.id}
-                  className="border border-ink-100 dark:border-ink-700 rounded-2xl bg-white dark:bg-ink-800"
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggleExpand(w.id)}
-                    className="w-full p-4 text-left flex items-start gap-3"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium leading-snug">
-                        {title}
-                      </p>
-                      <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">
-                        {t.targetUnder(formatHuf(w.target_price_huf))}
-                        {w.size_filter ? ` · ${t.sizeLabel(w.size_filter)}` : ""}
-                        {" · "}
-                        {t.findingsCount(findings.length)}
-                      </p>
-                      <p className="text-[11px] text-ink-400 dark:text-ink-500 mt-1">
-                        {t.sinceLabel(formatDate(w.created_at, lang))}
-                      </p>
-                    </div>
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className={`text-ink-400 dark:text-ink-500 transition shrink-0 mt-1.5 ${isOpen ? "rotate-180" : ""}`}
-                      aria-hidden="true"
-                    >
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </button>
-
-                  {isOpen && (
-                    <div className="border-t border-ink-100 dark:border-ink-700">
-                      {findings.length === 0 ? (
-                        <p className="px-4 py-5 text-xs text-ink-500 dark:text-ink-400 text-center">
-                          {t.findingsCount(0)}
-                        </p>
-                      ) : (
-                        <ul className="divide-y divide-ink-100 dark:divide-ink-700">
-                          {findings.map((l, idx) => (
-                            <li key={`${l.url}-${idx}`}>
-                              <a
-                                href={l.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex gap-3 p-3 hover:bg-ink-50 dark:hover:bg-ink-700/40 transition"
-                              >
-                                {l.imageUrl ? (
-                                  /* eslint-disable-next-line @next/next/no-img-element */
-                                  <img
-                                    src={l.imageUrl}
-                                    alt={l.title}
-                                    loading="lazy"
-                                    className="w-16 h-16 rounded-lg object-cover bg-ink-50 dark:bg-ink-700 shrink-0"
-                                  />
-                                ) : (
-                                  <div className="w-16 h-16 rounded-lg bg-ink-50 dark:bg-ink-700 shrink-0" />
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium line-clamp-2">{l.title}</p>
-                                  <p className="text-sm mt-0.5">{l.priceLabel}</p>
-                                  <p className="text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400 mt-1">
-                                    {l.source}
-                                    {l.location ? ` · ${l.location}` : ""}
-                                  </p>
-                                </div>
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                      <div className="border-t border-ink-100 dark:border-ink-700 p-3 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={() => unsubscribe(w.id)}
-                          className="px-3 py-1.5 rounded-full border border-red-300 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-medium hover:bg-red-50 dark:hover:bg-red-950/40 transition"
-                        >
-                          {t.unsubscribe}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </li>
+                  w={w}
+                  title={title}
+                  isOpen={isOpen}
+                  removing={removing.has(w.id)}
+                  findings={findings}
+                  onToggle={() => toggleExpand(w.id)}
+                  onDelete={() => unsubscribe(w.id, true)}
+                  onUnsubscribeClick={() => unsubscribe(w.id)}
+                  t={t}
+                  lang={lang}
+                />
               );
             })}
           </ul>
@@ -343,5 +278,218 @@ export default function WatchersPage() {
         <LegalFooter />
       </footer>
     </main>
+  );
+}
+
+function WatcherItem({
+  w,
+  title,
+  isOpen,
+  removing,
+  findings,
+  onToggle,
+  onDelete,
+  onUnsubscribeClick,
+  t,
+  lang,
+}: {
+  w: WatcherRow;
+  title: string;
+  isOpen: boolean;
+  removing: boolean;
+  findings: ListingPreview[];
+  onToggle: () => void;
+  onDelete: () => void;
+  onUnsubscribeClick: () => void;
+  t: {
+    targetUnder: (p: string) => string;
+    sizeLabel: (s: string) => string;
+    findingsCount: (n: number) => string;
+    sinceLabel: (d: string) => string;
+    unsubscribe: string;
+  };
+  lang: "hu" | "en";
+}) {
+  const [drag, setDrag] = useState(0);
+  const startX = useRef<number | null>(null);
+  const startY = useRef<number | null>(null);
+  const swipeLocked = useRef<"horizontal" | "vertical" | null>(null);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (removing) return;
+    startX.current = e.touches[0]?.clientX ?? null;
+    startY.current = e.touches[0]?.clientY ?? null;
+    swipeLocked.current = null;
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (startX.current === null || startY.current === null || removing) return;
+    const dx = (e.touches[0]?.clientX ?? 0) - startX.current;
+    const dy = (e.touches[0]?.clientY ?? 0) - startY.current;
+    if (!swipeLocked.current) {
+      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+        swipeLocked.current = Math.abs(dx) > Math.abs(dy) ? "horizontal" : "vertical";
+      }
+    }
+    if (swipeLocked.current === "horizontal") {
+      // only left swipe
+      setDrag(Math.min(0, dx));
+    }
+  };
+
+  const onTouchEnd = () => {
+    if (drag <= -SWIPE_DELETE_THRESHOLD) {
+      onDelete();
+    } else {
+      setDrag(0);
+    }
+    startX.current = null;
+    startY.current = null;
+    swipeLocked.current = null;
+  };
+
+  const removeTranslate = removing ? "-100%" : `${drag}px`;
+  const removeOpacity = removing ? 0 : 1;
+  const redBarOpacity = Math.min(1, Math.abs(drag) / SWIPE_DELETE_THRESHOLD);
+
+  return (
+    <li
+      className="relative overflow-hidden rounded-2xl"
+      style={{
+        transition: removing
+          ? "transform 0.32s ease, opacity 0.32s ease, max-height 0.32s ease"
+          : undefined,
+        maxHeight: removing ? 0 : 1200,
+      }}
+    >
+      {/* Red unsubscribe bar revealed during left swipe */}
+      <div
+        className="absolute inset-y-0 right-0 flex items-center justify-end pr-6 bg-red-500 text-white text-sm font-medium"
+        style={{
+          width: `${Math.min(100, (Math.abs(drag) / SWIPE_DELETE_THRESHOLD) * 100)}%`,
+          opacity: redBarOpacity,
+          minWidth: drag < 0 ? "60px" : "0",
+        }}
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+        </svg>
+      </div>
+
+      <div
+        className="relative border border-ink-100 dark:border-ink-700 rounded-2xl bg-white dark:bg-ink-800"
+        style={{
+          transform: `translateX(${removeTranslate})`,
+          opacity: removeOpacity,
+          transition:
+            startX.current === null ? "transform 0.22s ease, opacity 0.32s ease" : "none",
+        }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        <button
+          type="button"
+          onClick={onToggle}
+          className="w-full p-4 text-left flex items-start gap-3"
+        >
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium leading-snug">{title}</p>
+            <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">
+              {t.targetUnder(new Intl.NumberFormat("hu-HU").format(w.target_price_huf) + " Ft")}
+              {w.size_filter ? ` · ${t.sizeLabel(w.size_filter)}` : ""}
+              {" · "}
+              {t.findingsCount(findings.length)}
+            </p>
+            <p className="text-[11px] text-ink-400 dark:text-ink-500 mt-1">
+              {t.sinceLabel(
+                new Date(w.created_at).toLocaleDateString(lang === "hu" ? "hu-HU" : "en-US", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                }),
+              )}
+            </p>
+          </div>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={`text-ink-400 dark:text-ink-500 transition shrink-0 mt-1.5 ${isOpen ? "rotate-180" : ""}`}
+            aria-hidden="true"
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+
+        {isOpen && (
+          <div className="border-t border-ink-100 dark:border-ink-700">
+            {findings.length === 0 ? (
+              <p className="px-4 py-5 text-xs text-ink-500 dark:text-ink-400 text-center">
+                {t.findingsCount(0)}
+              </p>
+            ) : (
+              <ul className="divide-y divide-ink-100 dark:divide-ink-700">
+                {findings.map((l, idx) => (
+                  <li key={`${l.url}-${idx}`}>
+                    <a
+                      href={l.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex gap-3 p-3 hover:bg-ink-50 dark:hover:bg-ink-700/40 transition"
+                    >
+                      {l.imageUrl ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={l.imageUrl}
+                          alt={l.title}
+                          loading="lazy"
+                          className="w-16 h-16 rounded-lg object-cover bg-ink-50 dark:bg-ink-700 shrink-0"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-lg bg-ink-50 dark:bg-ink-700 shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium line-clamp-2">{l.title}</p>
+                        <p className="text-sm mt-0.5">{l.priceLabel}</p>
+                        <p className="text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400 mt-1">
+                          {l.source}
+                          {l.location ? ` · ${l.location}` : ""}
+                        </p>
+                      </div>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="border-t border-ink-100 dark:border-ink-700 p-3 flex justify-end">
+              <button
+                type="button"
+                onClick={onUnsubscribeClick}
+                className="px-3 py-1.5 rounded-full border border-red-300 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-medium hover:bg-red-50 dark:hover:bg-red-950/40 transition"
+              >
+                {t.unsubscribe}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </li>
   );
 }
