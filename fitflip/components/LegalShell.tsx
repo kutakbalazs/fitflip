@@ -18,7 +18,7 @@ export default function LegalShell({ titleHu, titleEn, effectiveDate, children }
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("ff-lang");
+      const saved = localStorage.getItem("ff-lang") ?? localStorage.getItem("ff_lang");
       if (saved === "hu" || saved === "en") setLang(saved);
     } catch {
       /* ignore */
@@ -30,6 +30,7 @@ export default function LegalShell({ titleHu, titleEn, effectiveDate, children }
     setLang(l);
     try {
       localStorage.setItem("ff-lang", l);
+      localStorage.setItem("ff_lang", l);
     } catch {
       /* ignore */
     }

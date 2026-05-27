@@ -150,14 +150,14 @@ export default function HomePage() {
   const t = translations[lang];
 
   useEffect(() => {
-    const stored = localStorage.getItem("ff_lang");
+    const stored = (localStorage.getItem("ff-lang") ?? localStorage.getItem("ff_lang"));
     if (stored === "hu" || stored === "en") setLang(stored);
 
     supabase.auth.getUser().then(({ data }) => {
       setAuthenticated(!!data.user);
       setUserEmail(data.user?.email ?? null);
       if (data.user) {
-        const currentLang = (localStorage.getItem("ff_lang") as Lang | null) ?? "hu";
+        const currentLang = ((localStorage.getItem("ff-lang") ?? localStorage.getItem("ff_lang")) as Lang | null) ?? "hu";
         const userLang = (data.user.user_metadata as { lang?: string } | null)?.lang;
         if (userLang !== currentLang) {
           supabase.auth.updateUser({ data: { lang: currentLang } }).catch(() => {});
@@ -178,11 +178,11 @@ export default function HomePage() {
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("upgraded") === "1") {
-      const isHu = (localStorage.getItem("ff_lang") ?? "hu") === "hu";
+      const isHu = ((localStorage.getItem("ff-lang") ?? localStorage.getItem("ff_lang")) ?? "hu") === "hu";
       setBanner({ kind: "success", text: isHu ? "Sikeres előfizetés! Mostantól korlátlan a használat." : "Subscription successful! You now have unlimited use." });
       window.history.replaceState({}, "", "/");
     } else if (params.get("upgrade") === "cancel") {
-      const isHu = (localStorage.getItem("ff_lang") ?? "hu") === "hu";
+      const isHu = ((localStorage.getItem("ff-lang") ?? localStorage.getItem("ff_lang")) ?? "hu") === "hu";
       setBanner({ kind: "info", text: isHu ? "Az előfizetést megszakítottad." : "You cancelled the upgrade." });
       window.history.replaceState({}, "", "/");
     }
@@ -251,7 +251,12 @@ export default function HomePage() {
 
   const switchLang = (newLang: Lang) => {
     setLang(newLang);
-    localStorage.setItem("ff_lang", newLang);
+    try {
+      localStorage.setItem("ff-lang", newLang);
+      localStorage.setItem("ff_lang", newLang);
+    } catch {
+      /* ignore */
+    }
   };
 
   const processFile = useCallback(
@@ -899,7 +904,10 @@ export default function HomePage() {
           <span className="text-xs text-ink-500 dark:text-ink-400 hidden sm:inline">.app</span>
         </button>
         <div className="flex items-center gap-3 text-sm">
-          <div className="flex items-center gap-1">
+          {/* Lang switcher: always visible on desktop; on mobile only when
+              NOT authenticated (logged-in mobile users get it inside the
+              hamburger menu instead). */}
+          <div className={`items-center gap-1 sm:flex ${authenticated === true ? "hidden" : "flex"}`}>
             <button
               onClick={() => switchLang("hu")}
               className={`px-2 py-1 rounded transition ${
@@ -919,6 +927,13 @@ export default function HomePage() {
               EN
             </button>
           </div>
+
+          {/* Mobile-only bell, takes the lang switcher's old spot when authed. */}
+          {authenticated === true && (
+            <div className="sm:hidden">
+              <NotificationsBell lang={lang} />
+            </div>
+          )}
 
           {authenticated === true && (
             <>
@@ -1050,6 +1065,37 @@ export default function HomePage() {
                         {t.manageSubscription}
                       </button>
                     )}
+                    <div className="flex items-center justify-between px-4 py-3 text-sm border-t border-ink-100 dark:border-ink-700">
+                      <span className="text-ink-700 dark:text-ink-200">
+                        {lang === "hu" ? "Nyelv" : "Language"}
+                      </span>
+                      <div className="flex items-center gap-1 text-xs">
+                        <button
+                          type="button"
+                          onClick={() => switchLang("hu")}
+                          className={`px-2 py-1 rounded transition ${
+                            lang === "hu"
+                              ? "bg-ink-900 text-white dark:bg-white dark:text-ink-900"
+                              : "text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white"
+                          }`}
+                          aria-label="Magyar"
+                        >
+                          HU
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => switchLang("en")}
+                          className={`px-2 py-1 rounded transition ${
+                            lang === "en"
+                              ? "bg-ink-900 text-white dark:bg-white dark:text-ink-900"
+                              : "text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white"
+                          }`}
+                          aria-label="English"
+                        >
+                          EN
+                        </button>
+                      </div>
+                    </div>
                     <form action="/auth/signout" method="post" className="border-t border-ink-100 dark:border-ink-700">
                       <button
                         type="submit"

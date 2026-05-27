@@ -19,7 +19,7 @@ export default function ResetPasswordPage() {
   const t = translations[lang];
 
   useEffect(() => {
-    const stored = localStorage.getItem("ff_lang");
+    const stored = (localStorage.getItem("ff-lang") ?? localStorage.getItem("ff_lang"));
     if (stored === "hu" || stored === "en") setLang(stored);
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) {
