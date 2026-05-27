@@ -7,16 +7,17 @@ import OnboardingModal from "./OnboardingModal";
 const STORAGE_KEY = "ff-onboarded";
 
 /**
- * Global gate: shows the onboarding modal once per browser to any
- * authenticated user, regardless of which page they land on. Replaces the
- * previous home-page-only trigger so users who deep-link into /history or
- * /account also see it.
+ * Global onboarding gate. Triggers on first visit per browser, regardless
+ * of whether the user is signed in — the modal doubles as a teaser to
+ * encourage signup. Once dismissed, never shows again (until localStorage
+ * is cleared).
  *
- * Force re-trigger by appending `?onboarding=1` to any URL.
+ * Force re-trigger via `?onboarding=1`.
  */
 export default function OnboardingGate() {
   const [open, setOpen] = useState(false);
   const [lang, setLang] = useState<"hu" | "en">("hu");
+  const [authenticated, setAuthenticated] = useState(false);
 
   useEffect(() => {
     try {
@@ -31,11 +32,10 @@ export default function OnboardingGate() {
     try {
       alreadySeen = !!localStorage.getItem(STORAGE_KEY);
     } catch {
-      /* If localStorage is blocked we err on the side of showing the modal
-         (better than never showing it). */
+      /* localStorage blocked — fall through and show the modal. Better
+         than never showing it. */
     }
 
-    // Manual force via URL param — useful for re-testing.
     let force = false;
     try {
       const params = new URLSearchParams(window.location.search);
@@ -44,26 +44,22 @@ export default function OnboardingGate() {
       /* ignore */
     }
 
-    const supabase = createClient();
-    let unsub: { unsubscribe: () => void } | null = null;
-
-    const maybeShow = (signedIn: boolean) => {
-      if (!signedIn) return;
-      if (alreadySeen && !force) return;
+    if (!alreadySeen || force) {
       setOpen(true);
-    };
+    }
 
+    // Track auth state purely to render the right CTA inside the modal
+    // (signup vs "let's go") — does NOT gate visibility.
+    const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
-      maybeShow(!!data.user);
+      setAuthenticated(!!data.user);
     });
-
-    const sub = supabase.auth.onAuthStateChange((_event, session) => {
-      maybeShow(!!session?.user);
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthenticated(!!session?.user);
     });
-    unsub = sub.data.subscription;
 
     return () => {
-      unsub?.unsubscribe();
+      sub.subscription.unsubscribe();
     };
   }, []);
 
@@ -72,6 +68,7 @@ export default function OnboardingGate() {
       open={open}
       onClose={() => setOpen(false)}
       lang={lang}
+      authenticated={authenticated}
     />
   );
 }
