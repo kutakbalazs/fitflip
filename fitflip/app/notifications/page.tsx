@@ -134,7 +134,7 @@ export default function NotificationsPage() {
         empty: "Még nincs értesítésed",
         emptySub: "Aktiválj árfigyelőt egy scan-eredménynél, és értesítést kapsz ha új hirdetést talál az AI a célárad alatt.",
         markAllRead: "Mind olvasott",
-        deleteAll: "Mind törlése",
+        deleteAll: "Összes törlése",
         priceUnder: (p: string) => `${p} Ft alatti új találat`,
         listingsCount: (n: number) => `${n} új hirdetés`,
         viewListing: "Megtekintés →",

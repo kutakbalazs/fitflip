@@ -944,6 +944,12 @@ export default function HomePage() {
               <nav className="hidden sm:flex items-center gap-3">
                 <NotificationsBell lang={lang} />
                 <Link
+                  href="/watchers"
+                  className="text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white transition"
+                >
+                  {lang === "hu" ? "Követett termékeim" : "Followed items"}
+                </Link>
+                <Link
                   href="/history"
                   className="text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white transition"
                 >
@@ -1011,6 +1017,13 @@ export default function HomePage() {
                       </div>
                     )}
                     <NotificationsBell lang={lang} onMobile />
+                    <Link
+                      href="/watchers"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block px-4 py-3 text-sm text-ink-900 dark:text-ink-50 hover:bg-ink-50 dark:hover:bg-ink-800 transition"
+                    >
+                      {lang === "hu" ? "Követett termékeim" : "Followed items"}
+                    </Link>
                     <Link
                       href="/history"
                       onClick={() => setMobileMenuOpen(false)}

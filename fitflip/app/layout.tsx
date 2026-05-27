@@ -3,6 +3,7 @@ import "./globals.css";
 import CookieBanner from "@/components/CookieBanner";
 import FeedbackBalloon from "@/components/FeedbackBalloon";
 import OnboardingGate from "@/components/OnboardingGate";
+import PullToRefresh from "@/components/PullToRefresh";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { themeInitScript } from "@/lib/theme";
 
@@ -56,7 +57,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-dvh bg-white dark:bg-ink-950 text-ink-900 dark:text-ink-50 transition-colors">
         <ThemeProvider>
-          {children}
+          <PullToRefresh>
+            {children}
+          </PullToRefresh>
           <OnboardingGate />
           <FeedbackBalloon />
           <CookieBanner />

@@ -58,10 +58,7 @@ export default function NotificationsBell({ lang, onMobile = false }: Props) {
         href="/notifications"
         className="flex items-center justify-between px-4 py-3 text-sm text-ink-900 dark:text-ink-50 hover:bg-ink-50 dark:hover:bg-ink-800 transition"
       >
-        <span className="flex items-center gap-2">
-          <BellIcon />
-          {label}
-        </span>
+        <span>{label}</span>
         {unread > 0 && (
           <span className="w-2 h-2 rounded-full bg-red-500" aria-label={`${unread} new`} />
         )}
@@ -73,6 +70,7 @@ export default function NotificationsBell({ lang, onMobile = false }: Props) {
     <Link
       href="/notifications"
       aria-label={label}
+      title={label}
       className="relative text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white transition"
     >
       <BellIcon />

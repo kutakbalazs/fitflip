@@ -95,9 +95,9 @@ export default function WatcherWidget(props: Props) {
         infoBtn: "Mit csinál ez?",
         sheetEyebrow: "Árfigyelő",
         sheetTitle: "Hogy működik?",
-        sheetP1: "Beállítasz egy célárat. Az AI naponta egyszer ránéz a Vinted, Jófogás és eBay új hirdetéseire ehhez a darabhoz.",
-        sheetP2: "Ha valaki a célárad alá tesz fel egy új hirdetést, kapsz egy értesítést a 🔔 menüben. Csak a NEM-látott hirdetéseket dobjuk fel — amik a scankor még nem voltak fent.",
-        sheetP3: "Push üzenet a Phase B-ben jön. Most az appot megnyitva látod a piros pötty mellé érkező új találatokat.",
+        sheetP1: "Beállítasz egy célárat. Naponta egyszer átnézzük a Vinted, Jófogás és eBay új hirdetéseit ehhez a darabhoz.",
+        sheetP2: "Ha valaki a célárad alá tesz fel egy új hirdetést, kapsz egy értesítést az Értesítések menüben. Csak a NEM-látott hirdetéseket dobjuk fel — amik a scankor még nem voltak fent.",
+        sheetP3: "",
         sheetLimit: "Egyszerre legfeljebb 5 árfigyelőd lehet (prémium).",
         premiumOnly: "Az árfigyelő prémium funkció",
         upgradeCta: "Ugrás a fiókodra",
@@ -114,9 +114,9 @@ export default function WatcherWidget(props: Props) {
         infoBtn: "What does this do?",
         sheetEyebrow: "Price watcher",
         sheetTitle: "How it works",
-        sheetP1: "Set a target price. Once a day our AI rescans Vinted, Jófogás and eBay for new listings of this item.",
-        sheetP2: "If someone posts a NEW listing under your target, you get an in-app notification on the 🔔 menu. Only listings that weren't in the original scan are surfaced.",
-        sheetP3: "Push notifications arrive in Phase B. For now you'll see new results next to a red dot when you open the app.",
+        sheetP1: "Set a target price. Once a day we rescan Vinted, Jófogás and eBay for new listings of this item.",
+        sheetP2: "If someone posts a NEW listing under your target, you get an in-app notification in the Notifications menu. Only listings that weren't in the original scan are surfaced.",
+        sheetP3: "",
         sheetLimit: "You can have up to 5 active watchers at once (premium).",
         premiumOnly: "Price watcher is a premium feature",
         upgradeCta: "Go to your account",
@@ -208,12 +208,12 @@ export default function WatcherWidget(props: Props) {
           >
             <span
               className={`mt-0.5 shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition ${
-                isActive
+                isActive || expanded
                   ? "bg-ink-900 dark:bg-white border-ink-900 dark:border-white"
                   : "border-ink-300 dark:border-ink-500 group-hover:border-ink-700 dark:group-hover:border-ink-300"
               }`}
             >
-              {isActive && (
+              {(isActive || expanded) && (
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-white dark:text-ink-900">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
@@ -304,7 +304,6 @@ export default function WatcherWidget(props: Props) {
         <p>{t.sheetP1}</p>
         <p>{t.sheetP2}</p>
         <p className="text-ink-500 dark:text-ink-400 text-xs">{t.sheetLimit}</p>
-        <p className="text-ink-500 dark:text-ink-400 text-xs">{t.sheetP3}</p>
       </InfoSheet>
     </div>
   );
