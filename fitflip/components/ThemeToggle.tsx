@@ -38,7 +38,7 @@ export default function ThemeToggle({ lang }: Props) {
       <p className="text-xs text-ink-500 dark:text-ink-400 uppercase tracking-wider mb-2">
         {t.title}
       </p>
-      <div className="inline-flex rounded-full border border-ink-100 dark:border-ink-800 p-1 bg-white dark:bg-ink-900">
+      <div className="inline-flex rounded-full border border-ink-100 dark:border-ink-700 p-1 bg-white dark:bg-ink-800">
         {options.map((opt) => {
           const active = pref === opt.value;
           return (

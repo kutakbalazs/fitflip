@@ -112,7 +112,7 @@ export default function OnboardingModal({
             type="button"
             onClick={handleClose}
             aria-label={t.close}
-            className="w-8 h-8 rounded-full hover:bg-ink-50 dark:hover:bg-ink-900 text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white flex items-center justify-center transition"
+            className="w-8 h-8 rounded-full hover:bg-ink-50 dark:hover:bg-ink-800 text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white flex items-center justify-center transition"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -214,7 +214,7 @@ function Tip({
 
 function HeroIllustration() {
   return (
-    <div className="relative w-full rounded-2xl overflow-hidden bg-ink-50 dark:bg-ink-900">
+    <div className="relative w-full rounded-2xl overflow-hidden bg-ink-50 dark:bg-ink-800">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/onboarding-hero.jpg"

@@ -76,7 +76,7 @@ export default function SignupPage() {
 
   return (
     <main className="min-h-dvh flex flex-col">
-      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-800">
+      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-700">
         <Link href="/" className="flex items-baseline gap-2">
           <span className="text-xl font-display tracking-tight">FitFlip</span>
           <span className="text-xs text-ink-500 dark:text-ink-400 hidden sm:inline">.app</span>
@@ -93,7 +93,7 @@ export default function SignupPage() {
           </p>
 
           {confirmSent ? (
-            <div className="border border-ink-100 dark:border-ink-800 rounded-2xl p-6 bg-ink-50 dark:bg-ink-900 text-center">
+            <div className="border border-ink-100 dark:border-ink-700 rounded-2xl p-6 bg-ink-50 dark:bg-ink-800 text-center">
               <p className="font-medium mb-1">✓</p>
               <p className="text-sm text-ink-700 dark:text-ink-200">{t.signupConfirmSent}</p>
             </div>
@@ -101,7 +101,7 @@ export default function SignupPage() {
             <>
               <button
                 onClick={handleGoogle}
-                className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-full border border-ink-100 dark:border-ink-800 hover:bg-ink-50 dark:hover:bg-ink-900 transition text-sm font-medium"
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-full border border-ink-100 dark:border-ink-700 hover:bg-ink-50 dark:hover:bg-ink-800 transition text-sm font-medium"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -131,7 +131,7 @@ export default function SignupPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder={t.loginEmailPlaceholder}
-                    className="w-full px-4 py-2.5 rounded-xl border border-ink-100 dark:border-ink-800 focus:border-ink-900 focus:outline-none text-sm"
+                    className="w-full px-4 py-2.5 rounded-xl border border-ink-100 dark:border-ink-700 focus:border-ink-900 focus:outline-none text-sm"
                   />
                 </div>
                 <div>
@@ -147,7 +147,7 @@ export default function SignupPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={t.loginPasswordPlaceholder}
-                    className="w-full px-4 py-2.5 rounded-xl border border-ink-100 dark:border-ink-800 focus:border-ink-900 focus:outline-none text-sm"
+                    className="w-full px-4 py-2.5 rounded-xl border border-ink-100 dark:border-ink-700 focus:border-ink-900 focus:outline-none text-sm"
                   />
                   <p className="text-xs text-ink-500 dark:text-ink-400 mt-1.5">{t.signupPasswordHint}</p>
                 </div>
@@ -191,7 +191,7 @@ export default function SignupPage() {
           )}
         </div>
       </section>
-      <footer className="px-6 py-6 border-t border-ink-100 dark:border-ink-800">
+      <footer className="px-6 py-6 border-t border-ink-100 dark:border-ink-700">
         <LegalFooter />
       </footer>
     </main>

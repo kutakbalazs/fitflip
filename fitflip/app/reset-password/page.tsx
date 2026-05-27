@@ -58,7 +58,7 @@ export default function ResetPasswordPage() {
 
   return (
     <main className="min-h-dvh flex flex-col">
-      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-800">
+      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-700">
         <Link href="/" className="flex items-baseline gap-2">
           <span className="text-xl font-display tracking-tight">FitFlip</span>
           <span className="text-xs text-ink-500 dark:text-ink-400 hidden sm:inline">.app</span>
@@ -88,7 +88,7 @@ export default function ResetPasswordPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t.loginPasswordPlaceholder}
-                className="w-full px-4 py-2.5 rounded-xl border border-ink-100 dark:border-ink-800 focus:border-ink-900 focus:outline-none text-sm"
+                className="w-full px-4 py-2.5 rounded-xl border border-ink-100 dark:border-ink-700 focus:border-ink-900 focus:outline-none text-sm"
               />
               <p className="text-xs text-ink-500 dark:text-ink-400 mt-1.5">{t.signupPasswordHint}</p>
             </div>
@@ -106,7 +106,7 @@ export default function ResetPasswordPage() {
           )}
         </div>
       </section>
-      <footer className="px-6 py-6 border-t border-ink-100 dark:border-ink-800">
+      <footer className="px-6 py-6 border-t border-ink-100 dark:border-ink-700">
         <LegalFooter />
       </footer>
     </main>

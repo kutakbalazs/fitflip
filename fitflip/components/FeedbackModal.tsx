@@ -129,7 +129,7 @@ export default function FeedbackModal({ open, onClose, lang }: Props) {
               maxLength={5000}
               rows={5}
               disabled={sending}
-              className="w-full px-3 py-2 mb-3 rounded-lg border border-ink-100 dark:border-ink-800 bg-white dark:bg-ink-950 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900/10 resize-none disabled:opacity-50"
+              className="w-full px-3 py-2 mb-3 rounded-lg border border-ink-100 dark:border-ink-700 bg-white dark:bg-ink-950 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900/10 resize-none disabled:opacity-50"
               autoFocus
             />
             {error && <p className="text-xs text-red-600 mb-3">{error}</p>}
@@ -138,7 +138,7 @@ export default function FeedbackModal({ open, onClose, lang }: Props) {
                 type="button"
                 onClick={handleClose}
                 disabled={sending}
-                className="px-4 py-2 rounded-full border border-ink-200 dark:border-ink-700 text-sm hover:bg-ink-50 dark:hover:bg-ink-900 transition disabled:opacity-50"
+                className="px-4 py-2 rounded-full border border-ink-200 dark:border-ink-700 text-sm hover:bg-ink-50 dark:hover:bg-ink-800 transition disabled:opacity-50"
               >
                 {t.cancel}
               </button>

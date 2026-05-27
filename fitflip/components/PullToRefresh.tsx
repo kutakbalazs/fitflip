@@ -80,7 +80,7 @@ export default function PullToRefresh({ children }: { children: React.ReactNode 
           transition: refreshing || pull === 0 ? "transform 0.25s ease, opacity 0.25s ease" : "none",
         }}
       >
-        <div className="mt-2 w-9 h-9 rounded-full bg-white dark:bg-ink-950 border border-ink-100 dark:border-ink-800 shadow-sm flex items-center justify-center">
+        <div className="mt-2 w-9 h-9 rounded-full bg-white dark:bg-ink-950 border border-ink-100 dark:border-ink-700 shadow-sm flex items-center justify-center">
           <svg
             width="16"
             height="16"

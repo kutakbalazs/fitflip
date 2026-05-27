@@ -863,7 +863,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-dvh flex flex-col">
-      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-800">
+      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-700">
         <button
           type="button"
           onClick={reset}
@@ -960,7 +960,7 @@ export default function HomePage() {
                   onClick={() => setMobileMenuOpen((v) => !v)}
                   aria-label="Menu"
                   aria-expanded={mobileMenuOpen}
-                  className="p-1.5 -mr-1.5 rounded-md text-ink-700 dark:text-ink-200 hover:bg-ink-50 dark:hover:bg-ink-900 transition"
+                  className="p-1.5 -mr-1.5 rounded-md text-ink-700 dark:text-ink-200 hover:bg-ink-50 dark:hover:bg-ink-800 transition"
                 >
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     {mobileMenuOpen ? (
@@ -978,23 +978,23 @@ export default function HomePage() {
                   </svg>
                 </button>
                 {mobileMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-ink-100 dark:border-ink-800 bg-white dark:bg-ink-950 shadow-lg overflow-hidden z-50 fade-in">
+                  <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-ink-100 dark:border-ink-700 bg-white dark:bg-ink-950 shadow-lg overflow-hidden z-50 fade-in">
                     {userEmail && (
-                      <div className="px-4 py-3 text-xs text-ink-500 dark:text-ink-400 break-all border-b border-ink-100 dark:border-ink-800">
+                      <div className="px-4 py-3 text-xs text-ink-500 dark:text-ink-400 break-all border-b border-ink-100 dark:border-ink-700">
                         {userEmail}
                       </div>
                     )}
                     <Link
                       href="/history"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block px-4 py-3 text-sm text-ink-900 dark:text-ink-50 hover:bg-ink-50 dark:hover:bg-ink-900 transition"
+                      className="block px-4 py-3 text-sm text-ink-900 dark:text-ink-50 hover:bg-ink-50 dark:hover:bg-ink-800 transition"
                     >
                       {t.history}
                     </Link>
                     <Link
                       href="/account"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block px-4 py-3 text-sm text-ink-900 dark:text-ink-50 hover:bg-ink-50 dark:hover:bg-ink-900 transition"
+                      className="block px-4 py-3 text-sm text-ink-900 dark:text-ink-50 hover:bg-ink-50 dark:hover:bg-ink-800 transition"
                     >
                       {lang === "hu" ? "Fiók" : "Account"}
                     </Link>
@@ -1005,15 +1005,15 @@ export default function HomePage() {
                           setMobileMenuOpen(false);
                           openPortal();
                         }}
-                        className="block w-full text-left px-4 py-3 text-sm text-ink-900 dark:text-ink-50 hover:bg-ink-50 dark:hover:bg-ink-900 transition"
+                        className="block w-full text-left px-4 py-3 text-sm text-ink-900 dark:text-ink-50 hover:bg-ink-50 dark:hover:bg-ink-800 transition"
                       >
                         {t.manageSubscription}
                       </button>
                     )}
-                    <form action="/auth/signout" method="post" className="border-t border-ink-100 dark:border-ink-800">
+                    <form action="/auth/signout" method="post" className="border-t border-ink-100 dark:border-ink-700">
                       <button
                         type="submit"
-                        className="block w-full text-left px-4 py-3 text-sm text-ink-700 dark:text-ink-200 hover:bg-ink-50 dark:hover:bg-ink-900 transition"
+                        className="block w-full text-left px-4 py-3 text-sm text-ink-700 dark:text-ink-200 hover:bg-ink-50 dark:hover:bg-ink-800 transition"
                       >
                         {t.logout}
                       </button>
@@ -1035,7 +1035,7 @@ export default function HomePage() {
       </header>
 
       {banner && (
-        <div className={`relative px-12 py-3 text-sm text-center ${banner.kind === "success" ? "bg-green-50 text-green-800" : "bg-ink-50 dark:bg-ink-900 text-ink-700 dark:text-ink-200"}`}>
+        <div className={`relative px-12 py-3 text-sm text-center ${banner.kind === "success" ? "bg-green-50 text-green-800" : "bg-ink-50 dark:bg-ink-800 text-ink-700 dark:text-ink-200"}`}>
           {banner.text}
           <button
             type="button"
@@ -1059,7 +1059,7 @@ export default function HomePage() {
             </h1>
 
             {authenticated === false ? (
-              <div className="border border-ink-100 dark:border-ink-800 rounded-2xl p-8 bg-ink-50 dark:bg-ink-900">
+              <div className="border border-ink-100 dark:border-ink-700 rounded-2xl p-8 bg-ink-50 dark:bg-ink-800">
                 <h2 className="text-xl font-medium mb-2">{t.loginRequired}</h2>
                 <p className="text-ink-500 dark:text-ink-400 text-sm mb-5">{t.loginRequiredSub}</p>
                 <Link
@@ -1070,7 +1070,7 @@ export default function HomePage() {
                 </Link>
               </div>
             ) : limitReached ? (
-              <div className="border border-ink-100 dark:border-ink-800 rounded-2xl p-8 bg-ink-50 dark:bg-ink-900">
+              <div className="border border-ink-100 dark:border-ink-700 rounded-2xl p-8 bg-ink-50 dark:bg-ink-800">
                 <h2 className="text-xl font-medium mb-2">{t.limitReached}</h2>
                 <p className="text-ink-500 dark:text-ink-400 text-sm mb-5">{t.limitReachedSub}</p>
                 <button
@@ -1118,7 +1118,7 @@ export default function HomePage() {
                 <div
                   onDrop={onDrop}
                   onDragOver={(e) => e.preventDefault()}
-                  className="hidden sm:block border-2 border-dashed border-ink-100 dark:border-ink-800 rounded-2xl p-12 hover:border-ink-300 transition-colors cursor-pointer"
+                  className="hidden sm:block border-2 border-dashed border-ink-100 dark:border-ink-700 dark:bg-ink-900 rounded-2xl p-12 hover:border-ink-300 transition-colors cursor-pointer"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   {converting ? (
@@ -1130,7 +1130,7 @@ export default function HomePage() {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-ink-50 dark:bg-ink-900 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-ink-50 dark:bg-ink-800 flex items-center justify-center">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                           <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                         </svg>
@@ -1145,7 +1145,7 @@ export default function HomePage() {
 
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full mt-3 px-4 py-3 rounded-xl border border-ink-100 dark:border-ink-800 hover:border-ink-300 hover:bg-ink-50 dark:hover:bg-ink-900 transition text-sm font-medium"
+                  className="w-full mt-3 px-4 py-3 rounded-xl border border-ink-100 dark:border-ink-700 dark:bg-ink-900 hover:border-ink-300 hover:bg-ink-50 dark:hover:bg-ink-800 transition text-sm font-medium"
                 >
                   {t.chooseFile}
                 </button>
@@ -1195,7 +1195,7 @@ export default function HomePage() {
                 />
               )}
               <div
-                className={`absolute rounded-[14px] overflow-hidden bg-ink-50 dark:bg-ink-900 ${loading ? "inset-[3px]" : "inset-0 rounded-2xl"}`}
+                className={`absolute rounded-[14px] overflow-hidden bg-ink-50 dark:bg-ink-800 ${loading ? "inset-[3px]" : "inset-0 rounded-2xl"}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -1210,7 +1210,7 @@ export default function HomePage() {
               {images.map((img, idx) => (
                 <div
                   key={img.id}
-                  className={`relative w-16 h-16 rounded-lg overflow-hidden bg-ink-50 dark:bg-ink-900 border ${idx === 0 ? "border-ink-900" : "border-ink-100 dark:border-ink-800"}`}
+                  className={`relative w-16 h-16 rounded-lg overflow-hidden bg-ink-50 dark:bg-ink-800 border ${idx === 0 ? "border-ink-900" : "border-ink-100 dark:border-ink-700"}`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={img.preview} alt={`photo ${idx + 1}`} className="w-full h-full object-cover" />
@@ -1233,7 +1233,7 @@ export default function HomePage() {
                     type="button"
                     onClick={() => cameraInputRef.current?.click()}
                     aria-label={lang === "hu" ? "Még egy fotó kamerával" : "Take another photo"}
-                    className="sm:hidden w-16 h-16 rounded-lg border-2 border-dashed border-ink-200 dark:border-ink-700 flex items-center justify-center text-ink-500 dark:text-ink-400 hover:border-ink-400 hover:text-ink-900 dark:hover:text-white transition"
+                    className="sm:hidden w-16 h-16 rounded-lg border-2 border-dashed border-ink-200 dark:border-ink-700 dark:bg-ink-900 flex items-center justify-center text-ink-500 dark:text-ink-400 hover:border-ink-400 hover:text-ink-900 dark:hover:text-white transition"
                   >
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
@@ -1244,7 +1244,7 @@ export default function HomePage() {
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     aria-label={lang === "hu" ? "Még egy fotó hozzáadása" : "Add another photo"}
-                    className="w-16 h-16 rounded-lg border-2 border-dashed border-ink-200 dark:border-ink-700 flex items-center justify-center text-ink-500 dark:text-ink-400 hover:border-ink-400 hover:text-ink-900 dark:hover:text-white transition"
+                    className="w-16 h-16 rounded-lg border-2 border-dashed border-ink-200 dark:border-ink-700 dark:bg-ink-900 flex items-center justify-center text-ink-500 dark:text-ink-400 hover:border-ink-400 hover:text-ink-900 dark:hover:text-white transition"
                   >
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
                       <path d="M12 5v14M5 12h14" />
@@ -1278,7 +1278,7 @@ export default function HomePage() {
                     onChange={(e) => setSizeInput(e.target.value)}
                     placeholder={t.sizeInputPlaceholder}
                     maxLength={60}
-                    className="w-full px-3 py-2 rounded-lg border border-ink-100 dark:border-ink-800 bg-white dark:bg-ink-950 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900/10"
+                    className="w-full px-3 py-2 rounded-lg border border-ink-100 dark:border-ink-700 bg-white dark:bg-ink-950 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900/10"
                   />
                   <p className="text-[11px] text-ink-500 dark:text-ink-400 mt-1">{t.sizeInputHelp}</p>
                 </div>
@@ -1295,7 +1295,7 @@ export default function HomePage() {
                   </button>
                   <button
                     onClick={reset}
-                    className="px-6 py-3 rounded-full border border-ink-100 dark:border-ink-800 hover:bg-ink-50 dark:hover:bg-ink-900 transition text-sm"
+                    className="px-6 py-3 rounded-full border border-ink-100 dark:border-ink-700 hover:bg-ink-50 dark:hover:bg-ink-800 transition text-sm"
                     aria-label={lang === "hu" ? "Mégse" : "Cancel"}
                   >
                     ✕
@@ -1313,7 +1313,7 @@ export default function HomePage() {
         {result && (
           <div className="w-full fade-in">
             {images[0] && (
-              <div className="relative aspect-square w-full max-w-xs mx-auto rounded-2xl overflow-hidden bg-ink-50 dark:bg-ink-900 mb-3">
+              <div className="relative aspect-square w-full max-w-xs mx-auto rounded-2xl overflow-hidden bg-ink-50 dark:bg-ink-800 mb-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={images[0].preview}
@@ -1336,14 +1336,14 @@ export default function HomePage() {
                     key={img.id}
                     src={img.preview}
                     alt={`scanned ${idx + 2}`}
-                    className="w-12 h-12 rounded-md object-cover bg-ink-50 dark:bg-ink-900 border border-ink-100 dark:border-ink-800"
+                    className="w-12 h-12 rounded-md object-cover bg-ink-50 dark:bg-ink-800 border border-ink-100 dark:border-ink-700"
                   />
                 ))}
               </div>
             )}
 
             {!result.recognized ? (
-              <div className="text-center border border-ink-100 dark:border-ink-800 rounded-2xl p-8">
+              <div className="text-center border border-ink-100 dark:border-ink-700 rounded-2xl p-8">
                 <p className="font-medium mb-2">{t.notRecognized}</p>
                 <button
                   onClick={reset}
@@ -1354,8 +1354,8 @@ export default function HomePage() {
               </div>
             ) : (
               <>
-                <div className="border border-ink-100 dark:border-ink-800 rounded-2xl overflow-hidden">
-                  <div className="px-6 py-5 border-b border-ink-100 dark:border-ink-800">
+                <div className="border border-ink-100 dark:border-ink-700 rounded-2xl overflow-hidden">
+                  <div className="px-6 py-5 border-b border-ink-100 dark:border-ink-700">
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <h2 className="text-xl font-medium">
@@ -1371,7 +1371,7 @@ export default function HomePage() {
                             ? "bg-green-50 text-green-800"
                             : result.confidence === "medium"
                             ? "bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300"
-                            : "bg-ink-50 dark:bg-ink-900 text-ink-500 dark:text-ink-400"
+                            : "bg-ink-50 dark:bg-ink-800 text-ink-500 dark:text-ink-400"
                         }`}>
                           {result.confidence === "high" ? t.confidenceHigh : result.confidence === "medium" ? t.confidenceMedium : t.confidenceLow}
                         </span>
@@ -1456,7 +1456,7 @@ export default function HomePage() {
                   )}
 
                   {result.description && (
-                    <div className="px-6 py-4 bg-ink-50 dark:bg-ink-900 text-sm text-ink-700 dark:text-ink-200 leading-relaxed">
+                    <div className="px-6 py-4 bg-ink-50 dark:bg-ink-800 text-sm text-ink-700 dark:text-ink-200 leading-relaxed">
                       {result.description}
                     </div>
                   )}
@@ -1468,7 +1468,7 @@ export default function HomePage() {
                         haptic("tap");
                         setShowStory(true);
                       }}
-                      className="w-full flex items-center justify-between gap-3 px-6 py-3.5 border-t border-ink-100 dark:border-ink-800 text-left hover:bg-ink-50 dark:hover:bg-ink-900 transition group"
+                      className="w-full flex items-center justify-between gap-3 px-6 py-3.5 border-t border-ink-100 dark:border-ink-700 text-left hover:bg-ink-50 dark:hover:bg-ink-800 transition group"
                     >
                       <span className="flex items-center gap-2.5">
                         <span className="w-7 h-7 rounded-full bg-ink-900 text-white text-sm flex items-center justify-center" aria-hidden="true">
@@ -1516,7 +1516,7 @@ export default function HomePage() {
                               submitRefinement();
                             }
                           }}
-                          className="w-full px-3 py-2 rounded-lg border border-ink-100 dark:border-ink-800 bg-white dark:bg-ink-950 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900/10 disabled:opacity-60"
+                          className="w-full px-3 py-2 rounded-lg border border-ink-100 dark:border-ink-700 bg-white dark:bg-ink-950 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900/10 disabled:opacity-60"
                         />
                         <div className="flex flex-wrap items-center gap-3 mt-3">
                           <button
@@ -1541,7 +1541,7 @@ export default function HomePage() {
                     {listingsLoading ? (
                       <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3" aria-busy="true" aria-label={t.listingsLoading}>
                         {Array.from({ length: 6 }).map((_, i) => (
-                          <li key={i} className="border border-ink-100 dark:border-ink-800 rounded-2xl overflow-hidden bg-white dark:bg-ink-950">
+                          <li key={i} className="border border-ink-100 dark:border-ink-700 rounded-2xl overflow-hidden bg-white dark:bg-ink-950">
                             <div className="flex gap-3 p-3">
                               <div className="w-20 h-20 rounded-lg bg-ink-100 shrink-0 pulse-slow" />
                               <div className="flex-1 min-w-0 space-y-2 py-1">
@@ -1594,7 +1594,7 @@ export default function HomePage() {
                         })()}
                         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {displayedListings.map(({ listing: l, match: matched }, idx) => (
-                          <li key={`${l.source}-${idx}`} className={`border rounded-2xl overflow-hidden bg-white dark:bg-ink-950 hover:border-ink-300 transition ${matched ? "border-emerald-300 dark:border-emerald-800 ring-1 ring-emerald-200" : "border-ink-100 dark:border-ink-800"}`}>
+                          <li key={`${l.source}-${idx}`} className={`border rounded-2xl overflow-hidden bg-white dark:bg-ink-950 hover:border-ink-300 transition ${matched ? "border-emerald-300 dark:border-emerald-800 ring-1 ring-emerald-200" : "border-ink-100 dark:border-ink-700"}`}>
                             <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex gap-3 p-3">
                               {l.imageUrl ? (
                                 /* eslint-disable-next-line @next/next/no-img-element */
@@ -1602,10 +1602,10 @@ export default function HomePage() {
                                   src={l.imageUrl}
                                   alt={l.title}
                                   loading="lazy"
-                                  className="w-20 h-20 rounded-lg object-cover bg-ink-50 dark:bg-ink-900 shrink-0"
+                                  className="w-20 h-20 rounded-lg object-cover bg-ink-50 dark:bg-ink-800 shrink-0"
                                 />
                               ) : (
-                                <div className="w-20 h-20 rounded-lg bg-ink-50 dark:bg-ink-900 shrink-0" />
+                                <div className="w-20 h-20 rounded-lg bg-ink-50 dark:bg-ink-800 shrink-0" />
                               )}
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium line-clamp-2">{l.title}</p>
@@ -1637,8 +1637,8 @@ export default function HomePage() {
                         </ul>
                       </>
                     ) : (
-                      <div className="border border-ink-100 dark:border-ink-800 rounded-2xl p-8 bg-ink-50 dark:bg-ink-900 text-center">
-                        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-white dark:bg-ink-950 border border-ink-100 dark:border-ink-800 flex items-center justify-center text-ink-400 dark:text-ink-500">
+                      <div className="border border-ink-100 dark:border-ink-700 rounded-2xl p-8 bg-ink-50 dark:bg-ink-800 text-center">
+                        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-white dark:bg-ink-950 border border-ink-100 dark:border-ink-700 flex items-center justify-center text-ink-400 dark:text-ink-500">
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <circle cx="11" cy="11" r="8" />
                             <path d="m21 21-4.3-4.3" />
@@ -1649,7 +1649,7 @@ export default function HomePage() {
                     )}
                   </div>
                 ) : (
-                  <div className="mt-6 border border-ink-100 dark:border-ink-800 rounded-2xl p-6 bg-ink-50 dark:bg-ink-900 relative overflow-hidden">
+                  <div className="mt-6 border border-ink-100 dark:border-ink-700 rounded-2xl p-6 bg-ink-50 dark:bg-ink-800 relative overflow-hidden">
                     <div className="opacity-60">
                       <p className="text-xs uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-2">
                         {t.listingsTitle}
@@ -1668,7 +1668,7 @@ export default function HomePage() {
                 )}
 
                 {result.selling_tip && (
-                  <div className="mt-4 border border-ink-100 dark:border-ink-800 rounded-2xl p-6 bg-ink-50 dark:bg-ink-900">
+                  <div className="mt-4 border border-ink-100 dark:border-ink-700 rounded-2xl p-6 bg-ink-50 dark:bg-ink-800">
                     <p className="text-xs uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-2">
                       {t.sellingTipTitle}
                     </p>
@@ -1754,7 +1754,7 @@ export default function HomePage() {
                 type="button"
                 onClick={() => setShowUpgradeConsent(false)}
                 disabled={checkoutLoading}
-                className="px-4 py-2 rounded-full border border-ink-200 dark:border-ink-700 text-sm hover:bg-ink-50 dark:hover:bg-ink-900 transition disabled:opacity-50"
+                className="px-4 py-2 rounded-full border border-ink-200 dark:border-ink-700 text-sm hover:bg-ink-50 dark:hover:bg-ink-800 transition disabled:opacity-50"
               >
                 {lang === "hu" ? "Mégse" : "Cancel"}
               </button>
@@ -1788,7 +1788,7 @@ export default function HomePage() {
         <BackToTop lang={lang} />
       )}
 
-      <footer className="px-6 py-3 sm:py-6 border-t border-ink-100 dark:border-ink-800 text-center text-[11px] sm:text-xs text-ink-500 dark:text-ink-400 space-y-1 sm:space-y-2">
+      <footer className="px-6 py-3 sm:py-6 border-t border-ink-100 dark:border-ink-700 text-center text-[11px] sm:text-xs text-ink-500 dark:text-ink-400 space-y-1 sm:space-y-2">
         <p>{t.footer}</p>
         <LegalFooter />
       </footer>

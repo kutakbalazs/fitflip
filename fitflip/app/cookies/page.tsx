@@ -40,19 +40,19 @@ function ContentHu() {
           </tr>
         </thead>
         <tbody className="align-top">
-          <tr className="border-b border-ink-100 dark:border-ink-800">
+          <tr className="border-b border-ink-100 dark:border-ink-700">
             <td className="py-2 pr-2">sb-access-token, sb-refresh-token</td>
             <td className="py-2 pr-2">Bejelentkezett munkamenet fenntartása</td>
             <td className="py-2 pr-2">Supabase Auth</td>
             <td className="py-2">Munkamenet / 1 hét</td>
           </tr>
-          <tr className="border-b border-ink-100 dark:border-ink-800">
+          <tr className="border-b border-ink-100 dark:border-ink-700">
             <td className="py-2 pr-2">ff-lang (localStorage)</td>
             <td className="py-2 pr-2">Nyelvi beállítás megjegyzése (HU/EN)</td>
             <td className="py-2 pr-2">FitFlip</td>
             <td className="py-2">Tartós, a böngésző-adatok törléséig</td>
           </tr>
-          <tr className="border-b border-ink-100 dark:border-ink-800">
+          <tr className="border-b border-ink-100 dark:border-ink-700">
             <td className="py-2 pr-2">ff-cookie-consent (localStorage)</td>
             <td className="py-2 pr-2">A sütibanner-választás megjegyzése</td>
             <td className="py-2 pr-2">FitFlip</td>
@@ -122,19 +122,19 @@ function ContentEn() {
           </tr>
         </thead>
         <tbody className="align-top">
-          <tr className="border-b border-ink-100 dark:border-ink-800">
+          <tr className="border-b border-ink-100 dark:border-ink-700">
             <td className="py-2 pr-2">sb-access-token, sb-refresh-token</td>
             <td className="py-2 pr-2">Maintain logged-in session</td>
             <td className="py-2 pr-2">Supabase Auth</td>
             <td className="py-2">Session / 1 week</td>
           </tr>
-          <tr className="border-b border-ink-100 dark:border-ink-800">
+          <tr className="border-b border-ink-100 dark:border-ink-700">
             <td className="py-2 pr-2">ff-lang (localStorage)</td>
             <td className="py-2 pr-2">Remember language preference (HU/EN)</td>
             <td className="py-2 pr-2">FitFlip</td>
             <td className="py-2">Persistent, until browser data cleared</td>
           </tr>
-          <tr className="border-b border-ink-100 dark:border-ink-800">
+          <tr className="border-b border-ink-100 dark:border-ink-700">
             <td className="py-2 pr-2">ff-cookie-consent (localStorage)</td>
             <td className="py-2 pr-2">Remember cookie banner choice</td>
             <td className="py-2 pr-2">FitFlip</td>

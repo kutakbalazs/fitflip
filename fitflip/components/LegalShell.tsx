@@ -37,7 +37,7 @@ export default function LegalShell({ titleHu, titleEn, effectiveDate, children }
 
   return (
     <main className="min-h-dvh flex flex-col bg-white dark:bg-ink-950">
-      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-800">
+      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-700">
         <Link href="/" className="flex items-baseline gap-2">
           <span className="text-xl font-display tracking-tight">FitFlip</span>
           <span className="text-xs text-ink-500 dark:text-ink-400 hidden sm:inline">.app</span>
@@ -77,7 +77,7 @@ export default function LegalShell({ titleHu, titleEn, effectiveDate, children }
           {ready && children(lang)}
         </div>
 
-        <nav className="mt-12 pt-6 border-t border-ink-100 dark:border-ink-800 flex flex-wrap gap-4 text-xs text-ink-500 dark:text-ink-400">
+        <nav className="mt-12 pt-6 border-t border-ink-100 dark:border-ink-700 flex flex-wrap gap-4 text-xs text-ink-500 dark:text-ink-400">
           <Link href="/terms" className="hover:text-ink-900 dark:hover:text-white">
             {lang === "hu" ? "ÁSZF" : "Terms"}
           </Link>

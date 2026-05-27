@@ -100,7 +100,7 @@ export default function AccountPage() {
 
   return (
     <main className="min-h-dvh flex flex-col bg-white dark:bg-ink-950">
-      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-800">
+      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-700">
         <Link href="/" className="flex items-baseline gap-2">
           <span className="text-xl font-display tracking-tight">FitFlip</span>
           <span className="text-xs text-ink-500 dark:text-ink-400 hidden sm:inline">.app</span>
@@ -114,7 +114,7 @@ export default function AccountPage() {
         <h1 className="text-3xl font-display tracking-tight mb-8">{t.title}</h1>
 
         {email && (
-          <div className="mb-8 p-4 rounded-2xl bg-ink-50 dark:bg-ink-900 border border-ink-100 dark:border-ink-800">
+          <div className="mb-8 p-4 rounded-2xl bg-ink-50 dark:bg-ink-800 border border-ink-100 dark:border-ink-700">
             <p className="text-xs text-ink-500 dark:text-ink-400 uppercase tracking-wider mb-1">{t.emailLabel}</p>
             <p className="text-sm font-medium">{email}</p>
           </div>
@@ -145,7 +145,7 @@ export default function AccountPage() {
                 onChange={(e) => setConfirmEmail(e.target.value)}
                 placeholder={t.confirmPlaceholder}
                 disabled={deleting}
-                className="w-full px-3 py-2 mb-3 rounded-lg border border-red-300 dark:border-red-800 bg-white dark:bg-ink-900 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 disabled:opacity-50"
+                className="w-full px-3 py-2 mb-3 rounded-lg border border-red-300 dark:border-red-800 bg-white dark:bg-ink-800 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 disabled:opacity-50"
               />
               {error && <p className="text-xs text-red-700 dark:text-red-300 mb-3">{error}</p>}
               <div className="flex gap-2">
@@ -165,7 +165,7 @@ export default function AccountPage() {
                     setError(null);
                   }}
                   disabled={deleting}
-                  className="px-4 py-2 rounded-full border border-ink-200 dark:border-ink-700 text-sm hover:bg-ink-50 dark:hover:bg-ink-900 transition disabled:opacity-50"
+                  className="px-4 py-2 rounded-full border border-ink-200 dark:border-ink-700 text-sm hover:bg-ink-50 dark:hover:bg-ink-800 transition disabled:opacity-50"
                 >
                   {t.cancel}
                 </button>
@@ -175,7 +175,7 @@ export default function AccountPage() {
         </div>
       </section>
 
-      <footer className="px-6 py-6 border-t border-ink-100 dark:border-ink-800 space-y-2">
+      <footer className="px-6 py-6 border-t border-ink-100 dark:border-ink-700 space-y-2">
         <p className="text-center text-[10px] text-ink-400 dark:text-ink-500 font-mono">
           v{process.env.NEXT_PUBLIC_APP_VERSION}
         </p>

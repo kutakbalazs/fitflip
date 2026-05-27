@@ -61,7 +61,7 @@ export default function CookieBanner() {
           <button
             type="button"
             onClick={() => dismiss("necessary")}
-            className="px-3 py-1.5 rounded-full border border-ink-200 dark:border-ink-700 text-xs text-ink-700 dark:text-ink-200 hover:bg-ink-50 dark:hover:bg-ink-900 transition"
+            className="px-3 py-1.5 rounded-full border border-ink-200 dark:border-ink-700 text-xs text-ink-700 dark:text-ink-200 hover:bg-ink-50 dark:hover:bg-ink-800 transition"
           >
             {t.necessary}
           </button>
