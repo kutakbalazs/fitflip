@@ -1,39 +1,46 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import OnboardingModal from "./OnboardingModal";
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
 const STORAGE_KEY = "ff-onboarded";
 
 /**
- * Global onboarding gate. Triggers on first visit per browser, regardless
- * of whether the user is signed in — the modal doubles as a teaser to
- * encourage signup. Once dismissed, never shows again (until localStorage
- * is cleared).
+ * Global onboarding gate. On first visit (no `ff-onboarded` flag in
+ * localStorage), redirects the user to the full-page `/welcome` flow.
+ * Once the user finishes or skips, the flag is set and they never see
+ * the redirect again — until localStorage is cleared.
  *
- * Force re-trigger via `?onboarding=1`.
+ * Force re-trigger via `?onboarding=1` on any route.
+ *
+ * Routes that should NEVER redirect (auth flows, the onboarding itself,
+ * legal pages reached from external links): see `SKIP_PATHS` below.
  */
+const SKIP_PATHS = [
+  "/welcome",
+  "/pro",
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/reset-password",
+  "/auth",
+];
+
 export default function OnboardingGate() {
-  const [open, setOpen] = useState(false);
-  const [lang, setLang] = useState<"hu" | "en">("hu");
-  const [authenticated, setAuthenticated] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    try {
-      const savedLang =
-        localStorage.getItem("ff_lang") ?? localStorage.getItem("ff-lang");
-      if (savedLang === "en") setLang("en");
-    } catch {
-      /* ignore */
-    }
+    if (!pathname) return;
+    // Don't redirect from auth / onboarding routes themselves.
+    if (SKIP_PATHS.some((p) => pathname.startsWith(p))) return;
 
     let alreadySeen = false;
     try {
       alreadySeen = !!localStorage.getItem(STORAGE_KEY);
     } catch {
-      /* localStorage blocked — fall through and show the modal. Better
-         than never showing it. */
+      /* localStorage blocked — skip (avoid redirect loop) */
+      return;
     }
 
     let force = false;
@@ -45,30 +52,9 @@ export default function OnboardingGate() {
     }
 
     if (!alreadySeen || force) {
-      setOpen(true);
+      router.replace("/welcome");
     }
+  }, [pathname, router]);
 
-    // Track auth state purely to render the right CTA inside the modal
-    // (signup vs "let's go") — does NOT gate visibility.
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setAuthenticated(!!data.user);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAuthenticated(!!session?.user);
-    });
-
-    return () => {
-      sub.subscription.unsubscribe();
-    };
-  }, []);
-
-  return (
-    <OnboardingModal
-      open={open}
-      onClose={() => setOpen(false)}
-      lang={lang}
-      authenticated={authenticated}
-    />
-  );
+  return null;
 }

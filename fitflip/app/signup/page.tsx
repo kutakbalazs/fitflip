@@ -1,15 +1,24 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { translations, type Lang } from "@/lib/translations";
 import LegalFooter from "@/components/LegalFooter";
 
+// Only allow same-origin relative paths to avoid open-redirect.
+function safeNext(raw: string | null): string {
+  if (!raw) return "/";
+  if (!raw.startsWith("/") || raw.startsWith("//")) return "/";
+  return raw;
+}
+
 export default function SignupPage() {
   const router = useRouter();
   const supabase = createClient();
+  const searchParams = useSearchParams();
+  const next = safeNext(searchParams?.get("next") ?? null);
   const [lang, setLang] = useState<Lang>("hu");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,9 +32,9 @@ export default function SignupPage() {
     const stored = (localStorage.getItem("ff-lang") ?? localStorage.getItem("ff_lang"));
     if (stored === "hu" || stored === "en") setLang(stored);
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) router.replace("/");
+      if (data.user) router.replace(next);
     });
-  }, [router, supabase]);
+  }, [router, supabase, next]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +48,7 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
         data: { lang },
       },
     });
@@ -57,7 +66,7 @@ export default function SignupPage() {
       return;
     }
     if (data.session) {
-      router.replace("/");
+      router.replace(next);
     } else {
       setConfirmSent(true);
     }
@@ -68,7 +77,7 @@ export default function SignupPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     });
     if (error) setError(t.signupError);
@@ -166,7 +175,7 @@ export default function SignupPage() {
 
               <p className="text-center text-sm text-ink-500 dark:text-ink-400 mt-8">
                 {t.signupHaveAccount}{" "}
-                <Link href="/login" className="text-ink-900 dark:text-ink-50 font-medium underline underline-offset-2">
+                <Link href={`/login${next !== "/" ? `?next=${encodeURIComponent(next)}` : ""}`} className="text-ink-900 dark:text-ink-50 font-medium underline underline-offset-2">
                   {t.signupLoginLink}
                 </Link>
               </p>

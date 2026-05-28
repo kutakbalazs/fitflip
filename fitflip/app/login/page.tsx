@@ -1,15 +1,24 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { translations, type Lang } from "@/lib/translations";
 import LegalFooter from "@/components/LegalFooter";
 
+// Only allow same-origin relative paths to avoid open-redirect.
+function safeNext(raw: string | null): string {
+  if (!raw) return "/";
+  if (!raw.startsWith("/") || raw.startsWith("//")) return "/";
+  return raw;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
+  const searchParams = useSearchParams();
+  const next = safeNext(searchParams?.get("next") ?? null);
   const [lang, setLang] = useState<Lang>("hu");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,9 +31,9 @@ export default function LoginPage() {
     const stored = (localStorage.getItem("ff-lang") ?? localStorage.getItem("ff_lang"));
     if (stored === "hu" || stored === "en") setLang(stored);
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) router.replace("/");
+      if (data.user) router.replace(next);
     });
-  }, [router, supabase]);
+  }, [router, supabase, next]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +53,7 @@ export default function LoginPage() {
       }
       return;
     }
-    router.replace("/");
+    router.replace(next);
   };
 
   const handleGoogle = async () => {
@@ -52,7 +61,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     });
     if (error) setError(t.loginError);
@@ -146,7 +155,7 @@ export default function LoginPage() {
 
           <p className="text-center text-sm text-ink-500 dark:text-ink-400 mt-8">
             {t.loginNoAccount}{" "}
-            <Link href="/signup" className="text-ink-900 dark:text-ink-50 font-medium underline underline-offset-2">
+            <Link href={`/signup${next !== "/" ? `?next=${encodeURIComponent(next)}` : ""}`} className="text-ink-900 dark:text-ink-50 font-medium underline underline-offset-2">
               {t.loginSignupLink}
             </Link>
           </p>
