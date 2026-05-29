@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -14,7 +14,17 @@ function safeNext(raw: string | null): string {
   return raw;
 }
 
+// Suspense wrapper required because useSearchParams forces client-side
+// rendering — without it Next.js fails the prerender at build time.
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageInner />
+    </Suspense>
+  );
+}
+
+function LoginPageInner() {
   const router = useRouter();
   const supabase = createClient();
   const searchParams = useSearchParams();
