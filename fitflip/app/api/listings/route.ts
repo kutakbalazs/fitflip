@@ -86,6 +86,7 @@ export async function POST(req: NextRequest) {
             brand: brandHint || undefined,
             model: modelHint || undefined,
             color: colorHint || undefined,
+            itemType: itemType || undefined,
           },
           { strict }
         );

@@ -189,10 +189,18 @@ export async function searchAllMarketplaces(
 
   // exact = the result set contains at least one listing that matched
   // every criterion the user cares about.
+  //
+  // Model tokens use a MAJORITY threshold rather than requiring every single
+  // token: a model like "Box Logo Hooded Sweatshirt" (4 tokens) is correctly
+  // an exact match for a listing titled "Supreme Box Logo Hoodie" (matches
+  // Box + Logo) — sellers rarely spell out the full official model name.
+  // Requiring all tokens produced false "similar only" banners on genuine
+  // exact matches.
+  const modelThreshold = Math.max(1, Math.ceil(modelTokens.length / 2));
   const anyFullMatch = candidates.some(
     (m) =>
       (brandTokens.length === 0 || m.brandMatched) &&
-      (modelTokens.length === 0 || m.modelMatchCount === modelTokens.length) &&
+      (modelTokens.length === 0 || m.modelMatchCount >= modelThreshold) &&
       (colorTokens.length === 0 || m.colorMatched)
   );
 

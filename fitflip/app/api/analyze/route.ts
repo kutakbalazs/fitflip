@@ -123,6 +123,15 @@ PÉLDÁK A JÓ VÁLASZRA:
 - Egyszerű fehér póló logó nélkül → brand:null, model:null, category:"streetwear", confidence:"low"
 - Retró pulóver "Levi's" címkével de elmosódott modellnévvel → brand:"Levi's", model:null, era:"valószínűleg 80-90-es évek", confidence:"medium"
 
+SPORTMEZEK / FOCIMEZEK (KÜLÖN FONTOS — az évjárat kötelező és pontos legyen):
+- OSZTÁLYOZÁS: minden olyan felső, amin focicsapat / sportklub / válogatott CÍMERE látszik (gyakran mezgyártó logóval + mellkasi szponzorral), KÖTELEZŐEN item_type:"jersey" — SOHA NE "t-shirt". Ez a besorolás indítja az évjárat pontos meghatározását.
+- Ha a darab sport- vagy focimez (item_type:"jersey"), a CSAPAT a legfontosabb azonosító: a "brand" mezőbe a FOCICSAPAT / VÁLOGATOTT nevét írd (pl. "Real Madrid", "Magyarország"), NE a gyártót (Nike/adidas) — ez kerül a termék címébe, ezért mindig legyen benne.
+- A SZEZON/ÉVJÁRAT szintén kulcsfontosságú azonosító. Az "era" mezőbe írd a szezont (pl. "2016/17") ÉS említsd a "description"-ben is. A "model" mezőbe a mez típusa kerüljön évszám NÉLKÜL (pl. "hazai mez") — ne ismételd az évet a model-ben.
+- A szezont a következő jelek EGYÜTTESÉBŐL határozd meg: a mezgyártó (Nike / adidas / Puma / Kappa / Macron logó), a FŐSZPONZOR a mellkason (a szponzorok évről évre változnak — ez a legerősebb támpont), a kit dizájn/minta, a címer/logó korabeli stílusa, esetleg a hátoldali játékosnév és szám. Egy adott szponzor + gyártó + dizájn kombináció általában EGYETLEN szezonra jellemző.
+- Ha biztosan tudod a szezont, add meg pontosan (pl. "2016/17").
+- Ha NEM vagy 100%-ig biztos, adj SZŰK SÁVOT vagy közelítést és JELEZD a description-ben a bizonytalanságot (pl. "valószínűleg 2015 és 2017 közötti szezon, a szponzor alapján"). SOHA NE adj meg magabiztosan egyetlen rossz évszámot — a pontatlan év rosszabb, mint egy óvatos sáv.
+- A confidence NE legyen "high", ha a szezonban bizonytalan vagy, még ha a csapatot biztosan is tudod.
+
 SZÍN MEZŐ (FONTOS, hirdetéskereséshez használjuk):
 - A "color" mező a darab DOMINÁNS színe vagy hivatalos colorway neve, ahogyan ténylegesen megjelenik egy hirdetés címében.
 - Sneakerre: hivatalos colorway nevet használj ha biztos vagy benne (pl. "Bred", "Chicago", "Hamilton Brown"). Ha nem, akkor egyszerű színt (pl. "black", "white", "red").
@@ -156,7 +165,7 @@ VÁLASZ FORMÁTUM (CSAK ezt a JSON-t add vissza, semmi mást, semmi markdown):
 {
   "recognized": true | false,
   "category": "sneaker" | "vintage_clothing" | "streetwear" | "designer" | "other",
-  "item_type": "konkrét típus, KÖTELEZŐ kitölteni — válassz ebből a listából: sneaker | boot | sandal | t-shirt | longsleeve | hoodie | sweatshirt | jacket | coat | vest | pants | jeans | shorts | skirt | dress | cap | hat | beanie | bag | belt | scarf | gloves | accessory | other. Akkor is add meg ha brand:null. Pl. egy logó-nélküli fekete pólóra: 't-shirt'. Hirdetés-szűréshez használjuk, hogy ne dobjon fel pl. telefont egy pólóra.",
+  "item_type": "konkrét típus, KÖTELEZŐ kitölteni — válassz ebből a listából: sneaker | boot | sandal | t-shirt | jersey | longsleeve | hoodie | sweatshirt | jacket | coat | vest | pants | jeans | shorts | skirt | dress | cap | hat | beanie | bag | belt | scarf | gloves | accessory | other. Akkor is add meg ha brand:null. Pl. egy logó-nélküli fekete pólóra: 't-shirt'. SPORTMEZRE/FOCIMEZRE: 'jersey' (NE 't-shirt'). Hirdetés-szűréshez használjuk, hogy ne dobjon fel pl. telefont egy pólóra.",
   "brand": "string vagy null",
   "model": "string vagy null",
   "color": "domináns szín vagy hivatalos colorway angolul, vagy null",
@@ -242,6 +251,15 @@ GOOD ANSWER EXAMPLES:
 - Plain white t-shirt no logo → brand:null, model:null, category:"streetwear", confidence:"low"
 - Retro sweater with "Levi's" tag but blurred model name → brand:"Levi's", model:null, era:"likely 80s-90s", confidence:"medium"
 
+SPORTS / FOOTBALL JERSEYS (CRITICAL — the year is mandatory and must be accurate):
+- CLASSIFICATION: any top that shows a football club / sports club / national team CREST (often with a kit manufacturer logo + a chest sponsor) MUST be item_type:"jersey" — NEVER "t-shirt". This classification is what triggers the accurate season lookup.
+- If the item is a sports/football jersey (item_type:"jersey"), the TEAM is the most important identifier: put the FOOTBALL CLUB / NATIONAL TEAM name in the "brand" field (e.g. "Real Madrid", "Hungary"), NOT the manufacturer (Nike/adidas) — this goes into the product title, so it must always be present.
+- The SEASON/YEAR is also a key identifier. Put the season in the "era" field (e.g. "2016/17") AND mention it in the "description". The "model" field should hold the kit type WITHOUT the year (e.g. "home shirt") — do not repeat the year in model.
+- Determine the season from the COMBINATION of: the kit manufacturer (Nike / adidas / Puma / Kappa / Macron logo), the main CHEST SPONSOR (sponsors change year to year — this is the strongest clue), the kit design/pattern, the period style of the crest/logo, and any player name + number on the back. A given sponsor + manufacturer + design combination is usually unique to ONE season.
+- If you're confident of the season, state it precisely (e.g. "2016/17").
+- If you are NOT 100% sure, give a NARROW RANGE or approximation and FLAG the uncertainty in the description (e.g. "likely a 2015–2017 season based on the sponsor"). NEVER confidently state a single wrong year — an inaccurate year is worse than a cautious range.
+- confidence must NOT be "high" if you're unsure of the season, even when you're sure of the team.
+
 COLOR FIELD (IMPORTANT, used for marketplace search):
 - The "color" field is the dominant color or official colorway as it would actually appear in a listing title.
 - Sneakers: use the official colorway name if confident (e.g. "Bred", "Chicago", "Hamilton Brown"). Otherwise a plain color (e.g. "black", "white", "red").
@@ -275,7 +293,7 @@ RESPONSE FORMAT (return ONLY this JSON, nothing else, no markdown):
 {
   "recognized": true | false,
   "category": "sneaker" | "vintage_clothing" | "streetwear" | "designer" | "other",
-  "item_type": "specific type, REQUIRED, pick from: sneaker | boot | sandal | t-shirt | longsleeve | hoodie | sweatshirt | jacket | coat | vest | pants | jeans | shorts | skirt | dress | cap | hat | beanie | bag | belt | scarf | gloves | accessory | other. Always fill, even when brand:null. E.g. a logo-less black tee: 't-shirt'. Used to filter listings so phones don't appear under a T-shirt query.",
+  "item_type": "specific type, REQUIRED, pick from: sneaker | boot | sandal | t-shirt | jersey | longsleeve | hoodie | sweatshirt | jacket | coat | vest | pants | jeans | shorts | skirt | dress | cap | hat | beanie | bag | belt | scarf | gloves | accessory | other. Always fill, even when brand:null. E.g. a logo-less black tee: 't-shirt'. For a SPORTS/FOOTBALL JERSEY use 'jersey' (NOT 't-shirt'). Used to filter listings so phones don't appear under a T-shirt query.",
   "brand": "string or null",
   "model": "string or null",
   "color": "dominant color or official colorway in English, or null",
@@ -296,6 +314,170 @@ RESPONSE FORMAT (return ONLY this JSON, nothing else, no markdown):
   "selling_tip": "1-2 sentence selling tip in English",
   "confidence": "low" | "medium" | "high"
 }`;
+}
+
+/**
+ * Jersey season refinement via web search.
+ *
+ * Vision models reliably read a jersey's clues (team crest, manufacturer,
+ * chest sponsor, player name/number, patches) but DON'T have a reliable
+ * internal "sponsor + kit + design → exact season" map, so they confidently
+ * hallucinate the year. We fix this with a second, web-search-grounded call
+ * that only runs for jerseys: it looks the season up from real data instead
+ * of guessing from memory.
+ *
+ * Returns a partial patch to merge into the main analysis, or null on any
+ * failure (caller keeps the original analysis — graceful degradation).
+ */
+type JerseyPatch = {
+  brand?: string | null;
+  model?: string | null;
+  era?: string | null;
+  description?: string | null;
+  search_query?: string | null;
+  confidence?: "low" | "medium" | "high" | null;
+};
+
+async function refineJerseyYear(
+  client: Anthropic,
+  image: { data: string; mediaType: string },
+  parsed: Record<string, unknown>,
+  lang: "hu" | "en"
+): Promise<JerseyPatch | null> {
+  const knownTeam =
+    [parsed.brand, parsed.model].filter((x) => typeof x === "string" && x).join(" ") ||
+    "(not yet identified)";
+  const currentYear = new Date().getFullYear();
+
+  const instruction =
+    lang === "hu"
+      ? `Ez egy SPORT-/FOCIMEZ. A feladatod: a PONTOS SZEZON (évjárat) meghatározása web kereséssel, valós adatból.
+
+Eddigi azonosítás: ${knownTeam}
+A mai év: ${currentYear}.
+
+KRITIKUS SZABÁLYOK:
+- A szezont KIZÁRÓLAG a web keresés találataiból állapítsd meg. SOHA NE a saját emlékezetedből/tudásodból — a tudásod elavult lehet, és a legfrissebb szezonokat (pl. ${currentYear - 1}/${String(currentYear).slice(2)}, ${currentYear}/${String(currentYear + 1).slice(2)}) NEM feltétlenül ismered fejből.
+- KÖTELEZŐ legalább 2 web keresést végezned, MIELŐTT válaszolsz. Ha az első keresés nem egyértelmű, keress újra más kulcsszavakkal.
+- A friss mezek miatt MINDIG keress rá az aktuális évekre is (${currentYear - 1}, ${currentYear}), pl. "[csapat] away kit ${currentYear}".
+- RECENCY (NAGYON FONTOS): az eladásra kerülő mezek túlnyomó többsége az AKTUÁLIS vagy az előző 1-2 szezonból való. Ha a dizájn több szezonra is illhetne, MINDIG a legfrissebb illeszkedő szezont válaszd. NE ess vissza egy régebbi szezonra csak azért, mert azt ismered a memóriádból.
+- KERESÉS-TEKINTÉLY: ha a keresési találat ellentmond annak, amit a képről elsőre gondoltál, A KERESÉST KÖVESD, ne a benyomásodat. A te vizuális emlékezeted egy híres klub mezéről gyakran egy régebbi szezont idéz fel — ne bízz benne.
+
+LÉPÉSEK:
+1. Olvasd le a képről a konkrét jeleket: csapat (címer), mezgyártó (Nike/adidas/Puma/Kappa/Macron…), FŐSZPONZOR a mellkason, kit dizájn/szín/minta (csíkok, motívumok), bármilyen felirat, és a hátoldali játékosnév + szám ha látszik.
+2. KERESS RÁ a web search tool-lal: (a) a csapat + "home/away/third kit" + aktuális év; (b) a csapat + a megkülönböztető dizájnelem (pl. szín + mintázat). A dizájn pontos egyeztetése a találatokkal a legmegbízhatóbb.
+3. Vesd össze a képen látott dizájnt a keresési találatok kit-jeivel, és határozd meg a szezont (pl. "2025/26").
+
+Ha a találatok EGYÉRTELMŰ szezont adnak → confidence:"high".
+Ha SZŰKÍTETTED de nem 100%, adj sávot (pl. "2015–2017") és confidence:"medium".
+Ha a keresés nem ad megbízható szezont, confidence:"low" és era:null — NE tippelj a memóriádból.
+
+FONTOS: SOHA ne tegyél fel visszakérdezést a felhasználónak — a kép a kezedben van, olvasd le a jeleket magad, és add vissza a legjobb meghatározásodat. MINDIG a kért JSON-nal válaszolj.
+
+CSAK ezt a JSON-t add vissza, semmi mást, markdown nélkül:
+{
+  "brand": "a FOCICSAPAT / VÁLOGATOTT neve (pl. 'Real Madrid', 'Magyarország') — KÖTELEZŐ kitölteni, ez kerül a termék címébe. NE a gyártót (Nike/adidas) add meg itt.",
+  "model": "a mez típusa, csapatnév ÉS évszám NÉLKÜL (pl. 'idegenbeli mez', 'hazai mez') vagy null — az évszám az era mezőbe megy, ne ismételd itt",
+  "era": "a szezon, pl. '2016/17' vagy sáv vagy null",
+  "description": "2-3 természetes magyar mondat a mezről, KÖTELEZŐEN tartalmazza a csapatot ÉS a szezont (vagy a bizonytalanság jelzését). Technikai zsargon nélkül.",
+  "search_query": "angol kereső kifejezés: csapat + 'jersey' + szezon",
+  "confidence": "low" | "medium" | "high"
+}`
+      : `This is a SPORTS/FOOTBALL JERSEY. Your task: determine the EXACT SEASON (year) using web search, from real data.
+
+Identification so far: ${knownTeam}
+Current year: ${currentYear}.
+
+CRITICAL RULES:
+- Determine the season ONLY from web search results. NEVER from your own memory/training — your knowledge may be outdated and you likely DON'T know the latest seasons (e.g. ${currentYear - 1}/${String(currentYear).slice(2)}, ${currentYear}/${String(currentYear + 1).slice(2)}) off the top of your head.
+- You MUST run at least 2 web searches BEFORE answering. If the first search is inconclusive, search again with different keywords.
+- Because recent kits exist, ALWAYS also search the current years (${currentYear - 1}, ${currentYear}), e.g. "[team] away kit ${currentYear}".
+- RECENCY (VERY IMPORTANT): the vast majority of jerseys being sold are from the CURRENT or previous 1-2 seasons. If the design could fit multiple seasons, ALWAYS pick the most recent matching season. Do NOT fall back to an older season just because you remember it.
+- SEARCH AUTHORITY: if the search results contradict your first impression from the photo, FOLLOW THE SEARCH, not your impression. Your visual memory of a famous club's kit often recalls an older season — don't trust it.
+
+STEPS:
+1. Read the concrete clues off the image: team (crest), kit manufacturer (Nike/adidas/Puma/Kappa/Macron…), the main CHEST SPONSOR, kit design/colour/pattern (stripes, motifs), any text, and the player name + number on the back if visible.
+2. SEARCH with the web search tool: (a) team + "home/away/third kit" + current year; (b) team + the distinctive design element (e.g. colour + pattern). Matching the exact design against results is the most reliable.
+3. Compare the design you see against the kits in the search results, and determine the season (e.g. "2025/26").
+
+If results give an UNAMBIGUOUS season → confidence:"high".
+If you NARROWED it but aren't 100% → give a range (e.g. "2015–2017") and confidence:"medium".
+If search gives no reliable season → confidence:"low" and era:null — do NOT guess from memory.
+
+IMPORTANT: NEVER ask the user a clarifying question — you have the image, read the clues yourself and return your best determination. ALWAYS answer with the requested JSON.
+
+Return ONLY this JSON, nothing else, no markdown:
+{
+  "brand": "the FOOTBALL CLUB / NATIONAL TEAM name (e.g. 'Real Madrid', 'Hungary') — REQUIRED, this goes into the product title. Do NOT put the manufacturer (Nike/adidas) here.",
+  "model": "the kit type, WITHOUT the team name OR the year (e.g. 'away shirt', 'home shirt') or null — the year goes in the era field, do not repeat it here",
+  "era": "the season, e.g. '2016/17' or a range or null",
+  "description": "2-3 natural English sentences about the jersey, MUST include the team AND the season (or flag the uncertainty). No technical jargon.",
+  "search_query": "English search query: team + 'jersey' + season",
+  "confidence": "low" | "medium" | "high"
+}`;
+
+  try {
+    // The web search server tool isn't in the SDK 0.32.1 types; the runtime
+    // API accepts it. Cast the params to bypass the stale typings.
+    const response = await client.messages.create({
+      // Haiku for the refinement: the heavy lifting is the web search (a
+      // factual lookup, not creative work), so the faster/cheaper model gives
+      // the same season with noticeably lower latency. Verified to match
+      // Sonnet's accuracy on test jerseys.
+      model: "claude-haiku-4-5",
+      max_tokens: 1200,
+      // Factual season lookup — keep it deterministic so the same jersey
+      // doesn't yield different years on repeat scans.
+      temperature: 0,
+      tools: [
+        { type: "web_search_20250305", name: "web_search", max_uses: 5 },
+      ],
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: image.mediaType as
+                  | "image/jpeg"
+                  | "image/png"
+                  | "image/webp"
+                  | "image/gif",
+                data: image.data,
+              },
+            },
+            { type: "text", text: instruction },
+          ],
+        },
+      ],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+
+    // With tool use there can be multiple text blocks (model "thinking"
+    // between searches). The final answer is the LAST text block.
+    const textBlocks = response.content.filter(
+      (b): b is { type: "text"; text: string } => b.type === "text"
+    );
+    const last = textBlocks[textBlocks.length - 1];
+    if (!last) return null;
+
+    const cleaned = last.text
+      .replace(/```json\s*/g, "")
+      .replace(/```\s*/g, "")
+      .trim();
+    // The model sometimes wraps JSON in prose despite instructions — grab the
+    // outermost { … } block.
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+    if (start === -1 || end === -1 || end <= start) return null;
+    const patch = JSON.parse(cleaned.slice(start, end + 1)) as JerseyPatch;
+    return patch;
+  } catch (err) {
+    console.warn("[analyze] jersey year refinement failed:", err);
+    return null;
+  }
 }
 
 type Profile = {
@@ -507,6 +689,40 @@ export async function POST(req: NextRequest) {
     parsed.defects = defectsArr;
     if (defectsArr.length === 0 || parsed.is_definitely_new === true) {
       parsed.condition_discount_pct = 0;
+    }
+
+    // Jersey-only: vision models hallucinate the season, so ground it in a
+    // web search. Runs sequentially after the main analysis; only jerseys pay
+    // the extra latency/cost. Failure leaves the original analysis untouched.
+    if (parsed.recognized === true && parsed.item_type === "jersey") {
+      const patch = await refineJerseyYear(client, firstImage, parsed, lang || "hu");
+      if (patch) {
+        // The team name is the key title identifier for a jersey — override
+        // brand (which may hold the manufacturer or be null) with the team so
+        // the result heading always shows it.
+        if (typeof patch.brand === "string" && patch.brand.trim()) {
+          parsed.brand = patch.brand.trim();
+        }
+        if (typeof patch.model === "string" && patch.model.trim()) {
+          parsed.model = patch.model.trim();
+        }
+        if (typeof patch.era === "string" && patch.era.trim()) {
+          parsed.era = patch.era.trim();
+        }
+        if (typeof patch.description === "string" && patch.description.trim()) {
+          parsed.description = patch.description.trim();
+        }
+        if (typeof patch.search_query === "string" && patch.search_query.trim()) {
+          parsed.search_query = patch.search_query.trim();
+        }
+        if (
+          patch.confidence === "low" ||
+          patch.confidence === "medium" ||
+          patch.confidence === "high"
+        ) {
+          parsed.confidence = patch.confidence;
+        }
+      }
     }
 
     // Save scan to history (admin bypasses RLS but enforces user_id).

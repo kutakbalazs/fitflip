@@ -12,6 +12,13 @@ export type VerifyHints = {
   brand?: string;
   model?: string;
   color?: string;
+  /**
+   * The scanned item's category (sneaker, cap, hoodie, jersey, …). Used as a
+   * HARD constraint: a listing showing a different KIND of item (e.g. a cap
+   * when the target is a t-shirt) is always rejected, regardless of how well
+   * the brand/colour match.
+   */
+  itemType?: string;
 };
 
 export type VerifyOptions = {
@@ -45,8 +52,9 @@ The remaining images (Image 1, Image 2, …) are thumbnails from marketplace lis
 For EACH listing image, decide if it shows the SAME product as the target. Compare them VISUALLY — same brand markers, same model, same colorway pattern, same general cut (high-top vs low-top, length, fit).
 
 Decision rules (be precise, not biased either way):
-- "same: true" — the listing clearly shows the same model AND the same colorway pattern as the target. Different angle, lighting, background or photo quality are fine; the product itself must look like the same item.
-- "same: false" — the listing shows any of: a different model number (e.g. Jordan 4 vs Jordan 1), a different cut (low-top vs high-top), a different dominant colorway (e.g. green vs brown, red vs white), or a different brand. Be willing to mark false: a wrong colorway with the right model is still wrong.
+- CATEGORY GATE (check FIRST, overrides everything): the listing must show the SAME KIND of item as the target. If the target is a t-shirt, a cap / hat / shorts / bag / shoe is "same: false" — no matter how well the brand or colour matches. A jersey is not a hoodie, a cap is not a beanie, sneakers are not boots. When in doubt about the category, mark "same: false".
+- "same: true" — the listing passes the category gate AND clearly shows the same model AND the same colorway pattern as the target. Different angle, lighting, background or photo quality are fine; the product itself must look like the same item.
+- "same: false" — the listing shows any of: a different kind of item (see category gate), a different model number (e.g. Jordan 4 vs Jordan 1), a different cut (low-top vs high-top), a different dominant colorway (e.g. green vs brown, red vs white), or a different brand. Be willing to mark false: a wrong colorway with the right model is still wrong.
 - If you genuinely cannot tell from the thumbnail (extremely blurry, key area not visible), pick whichever side you find slightly more likely — do not lean systematically either way.
 
 Output ONLY a valid JSON object, NO markdown fences, NO other commentary:
@@ -59,6 +67,7 @@ const VERIFY_PROMPT_STRICT = `You are visually comparing marketplace listings to
 Image 0 is the target product. Images 1, 2, … are listing thumbnails.
 
 For EACH listing, decide "same: true" ONLY if the listing visually shows what looks like THE SAME specific product as the target:
+- CATEGORY GATE (check FIRST, overrides everything): the listing must show the SAME KIND of item as the target. A cap is not a t-shirt, a jersey is not a hoodie, sneakers are not boots. If the category differs, mark "same: false" no matter what else matches.
 - Same general category (sneaker / shirt / jacket / pants / hoodie / dress / etc.)
 - Same silhouette and cut (high-top vs low-top, hooded vs crew, slim vs loose, length, sleeve)
 - Same dominant colors AND same color distribution / pattern (a black-and-white shoe is NOT the same as an all-black shoe even if both have a swoosh)
@@ -175,8 +184,14 @@ export async function verifyListingsAgainstImage(
       ? `\n\nText context for the target product (use as a tiebreaker when the photo is ambiguous):\n${hintLines.join("\n")}`
       : "";
 
+  // Item type is a HARD constraint, not a tiebreaker — surface it separately
+  // and loudly so the category gate has something explicit to anchor on.
+  const typeBlock = hints.itemType
+    ? `\n\nThe target item is a: ${hints.itemType}. Any listing that is NOT a ${hints.itemType} MUST be "same: false".`
+    : "";
+
   const basePrompt = strict ? VERIFY_PROMPT_STRICT : VERIFY_PROMPT;
-  content.push({ type: "text", text: basePrompt + hintBlock });
+  content.push({ type: "text", text: basePrompt + typeBlock + hintBlock });
 
   let parsed: VerifyResponse | null = null;
   try {

@@ -41,7 +41,7 @@ function fallbackName(
 ): string {
   const TYPE_HU: Record<string, string> = {
     sneaker: "Sneaker", boot: "Bakancs", sandal: "Szandál",
-    "t-shirt": "Póló", longsleeve: "Hosszúujjú", hoodie: "Hoodie",
+    "t-shirt": "Póló", jersey: "Mez", longsleeve: "Hosszúujjú", hoodie: "Hoodie",
     sweatshirt: "Pulóver", jacket: "Kabát", coat: "Kabát", vest: "Mellény",
     pants: "Nadrág", jeans: "Farmer", shorts: "Rövidnadrág",
     skirt: "Szoknya", dress: "Ruha", cap: "Sapka", hat: "Kalap",
@@ -50,7 +50,7 @@ function fallbackName(
   };
   const TYPE_EN: Record<string, string> = {
     sneaker: "Sneaker", boot: "Boot", sandal: "Sandal",
-    "t-shirt": "T-shirt", longsleeve: "Longsleeve", hoodie: "Hoodie",
+    "t-shirt": "T-shirt", jersey: "Jersey", longsleeve: "Longsleeve", hoodie: "Hoodie",
     sweatshirt: "Sweatshirt", jacket: "Jacket", coat: "Coat", vest: "Vest",
     pants: "Pants", jeans: "Jeans", shorts: "Shorts",
     skirt: "Skirt", dress: "Dress", cap: "Cap", hat: "Hat",

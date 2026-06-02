@@ -11,6 +11,7 @@ export type ItemType =
   | "boot"
   | "sandal"
   | "t-shirt"
+  | "jersey"
   | "longsleeve"
   | "hoodie"
   | "sweatshirt"
@@ -52,6 +53,13 @@ export const ITEM_TYPE_KEYWORDS: Record<string, string[]> = {
     "t-shirt", "tshirt", "t shirt", "tee", " tee ",
     "póló", "polo", "ing", "felső", "felso",
     "koszulka", "tričko", "tricko",
+  ],
+  jersey: [
+    "jersey", "mez", "focimez", "futballmez", "meze",
+    "trikot", "trikot", "maillot", "dres", "dress shirt",
+    "koszulka piłkarska", "koszulka pilkarska", "shirt",
+    "home shirt", "away shirt", "third shirt", "kit",
+    "hazai mez", "vendég mez", "vendeg mez", "idegenbeli",
   ],
   longsleeve: [
     "longsleeve", "long sleeve", "long-sleeve", "hosszúujjú", "hosszuujju",

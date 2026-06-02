@@ -1271,14 +1271,27 @@ export default function HomePage() {
           <div className="w-full fade-in">
             <div className="relative aspect-square w-full rounded-2xl overflow-hidden mb-4">
               {loading && (
-                <div
-                  aria-hidden
-                  className="absolute inset-[-25%] ai-spin"
-                  style={{
-                    background:
-                      "conic-gradient(from 0deg, transparent 0deg, transparent 230deg, rgba(10,10,10,0.85) 340deg, transparent 360deg)",
-                  }}
-                />
+                <>
+                  {/* Light mode: dark sweep (unchanged). */}
+                  <div
+                    aria-hidden
+                    className="absolute inset-[-25%] ai-spin dark:hidden"
+                    style={{
+                      background:
+                        "conic-gradient(from 0deg, transparent 0deg, transparent 230deg, rgba(10,10,10,0.85) 340deg, transparent 360deg)",
+                    }}
+                  />
+                  {/* Dark mode: white sweep — the dark one is invisible on a
+                      near-black background. */}
+                  <div
+                    aria-hidden
+                    className="absolute inset-[-25%] ai-spin hidden dark:block"
+                    style={{
+                      background:
+                        "conic-gradient(from 0deg, transparent 0deg, transparent 230deg, rgba(255,255,255,0.9) 340deg, transparent 360deg)",
+                    }}
+                  />
+                </>
               )}
               <div
                 className={`absolute rounded-[14px] overflow-hidden bg-ink-50 dark:bg-ink-800 ${loading ? "inset-[3px]" : "inset-0 rounded-2xl"}`}

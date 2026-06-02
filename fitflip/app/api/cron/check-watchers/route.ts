@@ -171,6 +171,7 @@ async function processWatcher(
           brand: w.search_brand ?? undefined,
           model: w.search_model ?? undefined,
           color: w.search_color ?? undefined,
+          itemType: w.search_item_type ?? undefined,
         },
         // Watcher cron always runs strict mode — false positives are much
         // worse here than in the on-scan flow because the user can't see
