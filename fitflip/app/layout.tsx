@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import CookieBanner from "@/components/CookieBanner";
-import FeedbackBalloon from "@/components/FeedbackBalloon";
 import OnboardingGate from "@/components/OnboardingGate";
 import PullToRefresh from "@/components/PullToRefresh";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -61,7 +60,6 @@ export default function RootLayout({
             {children}
           </PullToRefresh>
           <OnboardingGate />
-          <FeedbackBalloon />
           <CookieBanner />
         </ThemeProvider>
       </body>
