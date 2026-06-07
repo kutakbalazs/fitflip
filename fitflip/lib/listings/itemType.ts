@@ -153,19 +153,18 @@ export const STRICT_FILTER_TYPES = new Set<string>([
   "watch",
   "bag",
   "belt",
-]);
-
-// Item types where a specific model can't be reliably text-matched (a
-// "Nike belt bag" listing matches many different Nike belt bags). For these
-// the listings panel must always present results as "similar", never as an
-// exact match — anything else misleads the user.
-export const SIMILAR_ONLY_TYPES = new Set<string>([
-  "bag",
-  "belt",
-  "sunglasses",
-  "watch",
   "cap",
   "hat",
+  "beanie",
+]);
+
+// Item types that are genuinely model-less (a belt / scarf / pair of gloves
+// rarely has an identifiable model), so the listings panel always presents
+// results as "similar", never exact. Bags, sunglasses, watches and caps DO
+// have identifiable models/lines (Neverfull, Wayfarer, G-Shock, 9FORTY), so
+// they're treated like sneakers — a genuine match shows as exact.
+export const SIMILAR_ONLY_TYPES = new Set<string>([
+  "belt",
   "beanie",
   "scarf",
   "gloves",

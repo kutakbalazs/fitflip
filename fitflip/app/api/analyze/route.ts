@@ -132,6 +132,15 @@ SPORTMEZEK / FOCIMEZEK (KÜLÖN FONTOS — az évjárat kötelező és pontos le
 - Ha NEM vagy 100%-ig biztos, adj SZŰK SÁVOT vagy közelítést és JELEZD a description-ben a bizonytalanságot (pl. "valószínűleg 2015 és 2017 közötti szezon, a szponzor alapján"). SOHA NE adj meg magabiztosan egyetlen rossz évszámot — a pontatlan év rosszabb, mint egy óvatos sáv.
 - A confidence NE legyen "high", ha a szezonban bizonytalan vagy, még ha a csapatot biztosan is tudod.
 
+KIEGÉSZÍTŐK PONTOS MODELLJE (táska, napszemüveg, óra, sapka — fontos a pontos hirdetés-egyezéshez):
+- Ezeknél is törekedj a KONKRÉT modell/vonal megnevezésére a "model" mezőben, ha biztosan felismered — ugyanúgy, mint egy sneakernél. Példák:
+  – táska: "Neverfull", "Speedy", "Heritage Hip Pack", "Pochette"
+  – napszemüveg: "Wayfarer", "Aviator", "Clubmaster", "Hawkers One"
+  – óra: "G-Shock", "Submariner", "Daytona", "Speedmaster"
+  – sapka: "9FORTY", "59FIFTY", "snapback", "trucker"
+- Ez teszi lehetővé, hogy pontos találatot hozzunk, ne csak hasonlót.
+- Ha NEM ismered fel biztosan a konkrét modellt, hagyd model:null — NE tippelj. (Generikus modell rossz egyezést okoz.)
+
 SZÍN MEZŐ (FONTOS, hirdetéskereséshez használjuk):
 - A "color" mező a darab DOMINÁNS színe vagy hivatalos colorway neve, ahogyan ténylegesen megjelenik egy hirdetés címében.
 - Sneakerre: hivatalos colorway nevet használj ha biztos vagy benne (pl. "Bred", "Chicago", "Hamilton Brown"). Ha nem, akkor egyszerű színt (pl. "black", "white", "red").
@@ -259,6 +268,15 @@ SPORTS / FOOTBALL JERSEYS (CRITICAL — the year is mandatory and must be accura
 - If you're confident of the season, state it precisely (e.g. "2016/17").
 - If you are NOT 100% sure, give a NARROW RANGE or approximation and FLAG the uncertainty in the description (e.g. "likely a 2015–2017 season based on the sponsor"). NEVER confidently state a single wrong year — an inaccurate year is worse than a cautious range.
 - confidence must NOT be "high" if you're unsure of the season, even when you're sure of the team.
+
+ACCESSORY-SPECIFIC MODEL (bags, sunglasses, watches, caps — important for accurate listing matches):
+- For these too, name the SPECIFIC model/line in the "model" field when you confidently recognise it — exactly like a sneaker. Examples:
+  – bag: "Neverfull", "Speedy", "Heritage Hip Pack", "Pochette"
+  – sunglasses: "Wayfarer", "Aviator", "Clubmaster", "Hawkers One"
+  – watch: "G-Shock", "Submariner", "Daytona", "Speedmaster"
+  – cap: "9FORTY", "59FIFTY", "snapback", "trucker"
+- This lets us surface exact matches, not just similar ones.
+- If you do NOT confidently recognise the specific model, leave model:null — do NOT guess. (A generic model produces poor matches.)
 
 COLOR FIELD (IMPORTANT, used for marketplace search):
 - The "color" field is the dominant color or official colorway as it would actually appear in a listing title.
