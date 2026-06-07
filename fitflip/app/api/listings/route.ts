@@ -1,11 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { searchAllMarketplaces } from "@/lib/listings/aggregate";
 import { verifyListingsAgainstImage } from "@/lib/listings/verify";
 import { filterListingsByItemType, isStrictFilterType } from "@/lib/listings/itemType";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
+
+// Fetch a scan's stored image (base64) for visual verification — used when
+// the caller passes a scanId instead of an inline image (e.g. the scan
+// detail page re-running a search).
+async function fetchScanImage(
+  userId: string,
+  scanId: string
+): Promise<{ data: string; mediaType: "image/jpeg" } | null> {
+  try {
+    const admin = createAdminClient();
+    const { data: scan } = await admin
+      .from("scans")
+      .select("image_path, user_id")
+      .eq("id", scanId)
+      .maybeSingle();
+    if (!scan?.image_path || scan.user_id !== userId) return null;
+    const { data: file, error } = await admin.storage
+      .from("scan-images")
+      .download(scan.image_path);
+    if (error || !file) return null;
+    const buf = Buffer.from(await file.arrayBuffer());
+    return { data: buf.toString("base64"), mediaType: "image/jpeg" };
+  } catch {
+    return null;
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,7 +58,7 @@ export async function POST(req: NextRequest) {
     const modelHint = typeof body?.model === "string" ? body.model : "";
     const colorHint = typeof body?.color === "string" ? body.color : "";
     const itemType = typeof body?.itemType === "string" ? body.itemType : "";
-    const originalImage =
+    let originalImage =
       body?.originalImage &&
       typeof body.originalImage === "object" &&
       typeof body.originalImage.data === "string" &&
@@ -45,6 +72,13 @@ export async function POST(req: NextRequest) {
               | "image/gif",
           }
         : null;
+
+    // Scan detail page passes a scanId instead of an inline image — fetch the
+    // stored image server-side for visual verification.
+    const scanId = typeof body?.scanId === "string" ? body.scanId : "";
+    if (!originalImage && scanId) {
+      originalImage = await fetchScanImage(user.id, scanId);
+    }
 
     // Backwards-compat: accept singular `query` too.
     if (queries.length === 0 && typeof body?.query === "string" && body.query.trim()) {

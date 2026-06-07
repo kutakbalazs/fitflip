@@ -729,7 +729,17 @@ export async function POST(req: NextRequest) {
     // Skip the insert when this exact image was already scanned by this user
     // — we don't want history duplicates of the same upload.
     let scanId: string | null = null;
-    if (existingScan) {
+    const recognized = parsed.recognized === true;
+    if (!recognized) {
+      // Failed scan (not clothing/footwear): don't persist to history. Clean
+      // up the image we just uploaded so it doesn't orphan in storage.
+      if (!existingScan && savedImagePath) {
+        await admin.storage
+          .from("scan-images")
+          .remove([savedImagePath])
+          .catch(() => {});
+      }
+    } else if (existingScan) {
       // Look up the existing scan's id so the watcher widget can target it.
       const { data: existingRow } = await admin
         .from("scans")
@@ -740,7 +750,7 @@ export async function POST(req: NextRequest) {
         .maybeSingle();
       scanId = existingRow?.id ?? null;
     }
-    if (!existingScan) {
+    if (recognized && !existingScan) {
       const insertPayload: Record<string, unknown> = {
         user_id: user.id,
         recognized: !!parsed.recognized,

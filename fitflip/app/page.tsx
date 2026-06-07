@@ -162,7 +162,6 @@ export default function HomePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
-  const scanParamHandled = useRef(false);
 
   const t = translations[lang];
 
@@ -233,18 +232,6 @@ export default function HomePage() {
     };
   }, [authenticated, images.length, result]);
 
-  // Deep-link from the floating scan button: /?scan=camera auto-opens the
-  // camera capture input once the authenticated home is ready.
-  useEffect(() => {
-    if (authenticated !== true || scanParamHandled.current) return;
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("scan") === "camera") {
-      scanParamHandled.current = true;
-      window.history.replaceState({}, "", "/");
-      // Defer so the input is mounted.
-      setTimeout(() => cameraInputRef.current?.click(), 150);
-    }
-  }, [authenticated]);
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
@@ -1206,9 +1193,9 @@ export default function HomePage() {
                       haptic("tap");
                       cameraInputRef.current?.click();
                     }}
-                    className="relative rounded-2xl bg-ink-900 text-white p-4 mb-5 cursor-pointer flex items-center gap-3"
+                    className="relative rounded-2xl bg-ink-900 text-white p-4 mb-5 cursor-pointer flex items-center gap-3 shadow-lg shadow-black/10 dark:bg-gradient-to-br dark:from-ink-700 dark:to-ink-900 dark:ring-1 dark:ring-white/15 dark:shadow-xl dark:shadow-black/50"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-white/10 dark:bg-white/15 flex items-center justify-center shrink-0">
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
                         <circle cx="12" cy="13" r="4" />
@@ -1216,15 +1203,11 @@ export default function HomePage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-display text-lg leading-tight">{t.tagline}</p>
-                      <p className="text-[11px] text-white/50 uppercase tracking-wider mt-0.5 truncate">
-                        {converting
-                          ? lang === "hu"
-                            ? "HEIC konverzió…"
-                            : "Converting HEIC…"
-                          : lang === "hu"
-                            ? "Készíts vagy válassz fotót"
-                            : "Take or pick a photo"}
-                      </p>
+                      {converting && (
+                        <p className="text-[11px] text-white/50 uppercase tracking-wider mt-0.5 truncate">
+                          {lang === "hu" ? "HEIC konverzió…" : "Converting HEIC…"}
+                        </p>
+                      )}
                     </div>
                     <button
                       type="button"
@@ -1281,7 +1264,7 @@ export default function HomePage() {
                             it.itemType ||
                             (lang === "hu" ? "Darab" : "Item");
                           return (
-                            <Link key={it.id} href="/history" className="text-left">
+                            <Link key={it.id} href={`/scan/${it.id}`} className="text-left">
                               <div className="aspect-square rounded-xl overflow-hidden bg-ink-50 dark:bg-ink-800 mb-2 flex items-center justify-center">
                                 {it.imageUrl ? (
                                   /* eslint-disable-next-line @next/next/no-img-element */

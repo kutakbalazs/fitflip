@@ -114,11 +114,8 @@ export default async function HistoryPage() {
           </div>
         ) : (
           <ul className="space-y-3">
-            {itemsWithUrls.map((scan) => (
-              <li
-                key={scan.id}
-                className="border border-ink-100 dark:border-ink-700 rounded-2xl p-5"
-              >
+            {itemsWithUrls.map((scan) => {
+              const inner = (
                 <div className="flex gap-4">
                   {scan.imageUrl ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
@@ -186,8 +183,25 @@ export default async function HistoryPage() {
                     )}
                   </div>
                 </div>
-              </li>
-            ))}
+              );
+              return (
+                <li
+                  key={scan.id}
+                  className="border border-ink-100 dark:border-ink-700 rounded-2xl overflow-hidden"
+                >
+                  {scan.recognized ? (
+                    <Link
+                      href={`/scan/${scan.id}`}
+                      className="block p-5 hover:bg-ink-50 dark:hover:bg-ink-800 transition"
+                    >
+                      {inner}
+                    </Link>
+                  ) : (
+                    <div className="p-5">{inner}</div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
