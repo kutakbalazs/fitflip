@@ -31,7 +31,9 @@ export default function ScanFab() {
     setLang(readLang());
   }, [pathname]);
 
-  if (!pathname || HIDDEN_PATHS.includes(pathname)) return null;
+  // Hidden on listed routes and on scan detail pages (which have their own
+  // inline "new scan" button at the bottom).
+  if (!pathname || HIDDEN_PATHS.includes(pathname) || pathname.startsWith("/scan")) return null;
 
   const label = lang === "hu" ? "Új scan" : "New scan";
   // History page wants the button much lower; elsewhere keep it clear of the footer.

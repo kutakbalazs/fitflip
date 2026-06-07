@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { readLang, type Lang } from "@/lib/lang";
 import { haptic } from "@/lib/haptics";
+import { setPendingScanFile } from "@/lib/pendingScan";
 import StoryModal from "@/components/StoryModal";
 import type { Listing } from "@/lib/listings/types";
 
@@ -43,6 +45,8 @@ function hypeBadgeStyle(score: number): string {
 }
 
 export default function ScanDetail({ data }: { data: ScanDetailData }) {
+  const router = useRouter();
+  const newScanInputRef = useRef<HTMLInputElement>(null);
   const [lang, setLang] = useState<Lang>("hu");
   const [showStory, setShowStory] = useState(false);
   const [listings, setListings] = useState<Listing[] | null>(null);
@@ -113,7 +117,7 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
         </Link>
       </header>
 
-      <section className="flex-1 px-6 py-6 max-w-2xl mx-auto w-full pb-28">
+      <section className="flex-1 px-6 py-6 max-w-2xl mx-auto w-full pb-10">
         {/* Image + hype badge */}
         {data.imageUrl && (
           <div className="relative aspect-square w-full max-w-xs mx-auto rounded-2xl overflow-hidden bg-ink-50 dark:bg-ink-800 mb-4">
@@ -287,6 +291,36 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
             <p className="text-sm text-ink-700 dark:text-ink-200 leading-relaxed">{data.sellingTip}</p>
           </div>
         )}
+
+        {/* Inline "new scan" button (this page has no floating button) */}
+        <input
+          ref={newScanInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (!file) return;
+            setPendingScanFile(file);
+            router.push("/");
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => {
+            haptic("tap");
+            newScanInputRef.current?.click();
+          }}
+          className="w-full mt-8 px-6 py-3.5 rounded-full bg-ink-900 dark:bg-white text-white dark:text-ink-900 font-medium text-sm hover:opacity-90 active:scale-[0.99] transition flex items-center justify-center gap-2"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+            <circle cx="12" cy="13" r="4" />
+          </svg>
+          {hu ? "Új scan" : "New scan"}
+        </button>
       </section>
 
       {data.story && (
