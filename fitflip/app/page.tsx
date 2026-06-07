@@ -12,6 +12,7 @@ import NotificationsBell from "@/components/NotificationsBell";
 import WatcherWidget from "@/components/WatcherWidget";
 import { haptic } from "@/lib/haptics";
 import { createClient } from "@/lib/supabase/client";
+import { takePendingScanFile } from "@/lib/pendingScan";
 
 type AnalysisResult = {
   recognized: boolean;
@@ -346,6 +347,13 @@ export default function HomePage() {
     Array.from(files).forEach((f) => processFile(f));
     e.target.value = "";
   };
+
+  // Photo captured via the floating scan button on another page: process it
+  // here on the home screen (shows the preview, same as picking a file).
+  useEffect(() => {
+    const file = takePendingScanFile();
+    if (file) processFile(file);
+  }, [processFile]);
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -1193,7 +1201,7 @@ export default function HomePage() {
                       haptic("tap");
                       cameraInputRef.current?.click();
                     }}
-                    className="relative rounded-2xl bg-ink-900 text-white p-4 mb-5 cursor-pointer flex items-center gap-3 shadow-lg shadow-black/10 dark:bg-gradient-to-br dark:from-ink-700 dark:to-ink-900 dark:ring-1 dark:ring-white/15 dark:shadow-xl dark:shadow-black/50"
+                    className="relative rounded-2xl bg-ink-900 text-white p-4 mb-5 cursor-pointer flex items-center gap-3 shadow-lg shadow-black/10 dark:bg-gradient-to-br dark:from-ink-500 dark:to-ink-800 dark:ring-1 dark:ring-white/25 dark:shadow-xl dark:shadow-black/50"
                   >
                     <div className="w-12 h-12 rounded-xl bg-white/10 dark:bg-white/15 flex items-center justify-center shrink-0">
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1500,7 +1508,7 @@ export default function HomePage() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => analyze()}
-                    className="flex-1 px-6 py-3 rounded-full bg-ink-900 text-white font-medium hover:bg-ink-700 transition"
+                    className="flex-1 px-6 py-3 rounded-full bg-ink-900 text-white font-medium hover:bg-ink-700 transition dark:bg-white dark:text-ink-900 dark:hover:bg-ink-100 dark:shadow-lg dark:shadow-black/40"
                   >
                     {images.length > 1
                       ? lang === "hu"

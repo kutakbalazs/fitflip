@@ -109,7 +109,7 @@ export default function StoryModal({ open, onClose, title, story, lang }: Props)
     >
       <div
         ref={cardRef}
-        className="w-full max-w-md bg-white dark:bg-ink-950 rounded-t-3xl sm:rounded-2xl shadow-xl max-h-[85dvh] overflow-y-auto overscroll-contain"
+        className="w-full max-w-md bg-white dark:bg-ink-800 dark:ring-1 dark:ring-white/15 rounded-t-3xl sm:rounded-2xl shadow-xl max-h-[85dvh] overflow-y-auto overscroll-contain"
         style={{
           transform: `translateY(${translateY}px)`,
           transition: closing || released ? `transform ${CLOSE_ANIM_MS}ms cubic-bezier(0.32, 0.72, 0, 1)` : "none",
@@ -123,7 +123,7 @@ export default function StoryModal({ open, onClose, title, story, lang }: Props)
         }}
         onTouchEnd={onTouchEnd}
       >
-        <div className="sticky top-0 bg-white dark:bg-ink-950 flex items-center justify-center pt-3 pb-1 sm:pt-4 sm:pb-2 rounded-t-3xl">
+        <div className="sticky top-0 bg-white dark:bg-ink-800 flex items-center justify-center pt-3 pb-1 sm:pt-4 sm:pb-2 rounded-t-3xl">
           <div className="sm:hidden w-10 h-1 rounded-full bg-ink-200" aria-hidden="true" />
           <button
             type="button"
