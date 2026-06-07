@@ -146,10 +146,23 @@ export default function HomePage() {
   const [showBrandInput, setShowBrandInput] = useState(false);
   const [brandInput, setBrandInput] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Dashboard stats for the mobile home (total identified value + count).
+  const [stats, setStats] = useState<{
+    count: number;
+    totalValueHuf: number;
+    recent: Array<{
+      id: string;
+      brand: string | null;
+      model: string | null;
+      itemType: string | null;
+      valueHuf: number | null;
+      imageUrl: string | null;
+    }>;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const scanParamHandled = useRef(false);
 
   const t = translations[lang];
 
@@ -198,6 +211,41 @@ export default function HomePage() {
     return () => window.clearTimeout(id);
   }, [banner]);
 
+  // Load dashboard stats (total identified value + count) when the
+  // authenticated home is showing the empty state.
+  useEffect(() => {
+    if (authenticated !== true) return;
+    if (images.length > 0 || result) return;
+    let cancelled = false;
+    fetch("/api/scan-stats")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled || !d) return;
+        setStats({
+          count: d.count ?? 0,
+          totalValueHuf: d.totalValueHuf ?? 0,
+          recent: Array.isArray(d.recent) ? d.recent : [],
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [authenticated, images.length, result]);
+
+  // Deep-link from the floating scan button: /?scan=camera auto-opens the
+  // camera capture input once the authenticated home is ready.
+  useEffect(() => {
+    if (authenticated !== true || scanParamHandled.current) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("scan") === "camera") {
+      scanParamHandled.current = true;
+      window.history.replaceState({}, "", "/");
+      // Defer so the input is mounted.
+      setTimeout(() => cameraInputRef.current?.click(), 150);
+    }
+  }, [authenticated]);
+
   useEffect(() => {
     if (!mobileMenuOpen) return;
     const onPointerDown = (e: MouseEvent | TouchEvent) => {
@@ -217,41 +265,6 @@ export default function HomePage() {
       document.removeEventListener("keydown", onKey);
     };
   }, [mobileMenuOpen]);
-
-  // Live camera background on mobile
-  useEffect(() => {
-    if (authenticated !== true) return;
-    if (typeof window === "undefined") return;
-    if (images.length > 0 || result || limitReached) return;
-
-    const isMobile = window.matchMedia("(max-width: 640px)").matches;
-    if (!isMobile) return;
-    if (!navigator.mediaDevices?.getUserMedia) return;
-
-    let cancelled = false;
-    let stream: MediaStream | null = null;
-
-    navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: "environment" }, audio: false })
-      .then((s) => {
-        if (cancelled) {
-          s.getTracks().forEach((t) => t.stop());
-          return;
-        }
-        stream = s;
-        if (videoRef.current) {
-          videoRef.current.srcObject = s;
-        }
-      })
-      .catch(() => {
-        // Permission denied or no camera — silent fallback to plain background
-      });
-
-    return () => {
-      cancelled = true;
-      if (stream) stream.getTracks().forEach((t) => t.stop());
-    };
-  }, [authenticated, images.length, result, limitReached]);
 
   const switchLang = (newLang: Lang) => {
     setLang(newLang);
@@ -1152,7 +1165,11 @@ export default function HomePage() {
       <section className="flex-1 flex flex-col items-center justify-start px-6 py-4 sm:py-12 max-w-2xl mx-auto w-full">
         {images.length === 0 && !result && (
           <div className="w-full text-center fade-in">
-            <h1 className="text-3xl sm:text-5xl font-display tracking-tight mb-4 sm:mb-8">
+            <h1
+              className={`text-3xl sm:text-5xl font-display tracking-tight mb-4 sm:mb-8 ${
+                authenticated === true ? "hidden sm:block" : ""
+              }`}
+            >
               {t.tagline}
             </h1>
 
@@ -1181,35 +1198,112 @@ export default function HomePage() {
               </div>
             ) : authenticated === true ? (
               <>
-                {/* Mobile: live camera viewfinder background — tap to capture */}
-                <div
-                  className="sm:hidden relative aspect-[4/5] rounded-2xl overflow-hidden bg-ink-900 mb-3 cursor-pointer"
-                  onClick={() => {
-                    haptic("tap");
-                    cameraInputRef.current?.click();
-                  }}
-                >
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="absolute inset-0 w-full h-full object-cover opacity-50"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    {converting ? (
-                      <div className="flex flex-col items-center gap-3 text-white">
-                        <div className="w-2 h-2 bg-white dark:bg-ink-950 rounded-full pulse-slow" />
-                        <p className="font-medium">
-                          {lang === "hu" ? "HEIC konverzió folyamatban…" : "Converting HEIC…"}
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-white/80 text-sm">
-                        {lang === "hu" ? "Készíts vagy válassz fotót" : "Take or pick a photo"}
+                {/* Mobile dashboard */}
+                <div className="sm:hidden text-left">
+                  {/* Top bar: tap anywhere = camera; Galéria = gallery */}
+                  <div
+                    onClick={() => {
+                      haptic("tap");
+                      cameraInputRef.current?.click();
+                    }}
+                    className="relative rounded-2xl bg-ink-900 text-white p-4 mb-5 cursor-pointer flex items-center gap-3"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-display text-lg leading-tight">{t.tagline}</p>
+                      <p className="text-[11px] text-white/50 uppercase tracking-wider mt-0.5 truncate">
+                        {converting
+                          ? lang === "hu"
+                            ? "HEIC konverzió…"
+                            : "Converting HEIC…"
+                          : lang === "hu"
+                            ? "Készíts vagy válassz fotót"
+                            : "Take or pick a photo"}
                       </p>
-                    )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        haptic("tap");
+                        fileInputRef.current?.click();
+                      }}
+                      className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 transition text-xs font-medium"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="9" cy="9" r="2" />
+                        <path d="m21 15-4.35-4.35a2 2 0 0 0-2.83 0L4 20" />
+                      </svg>
+                      {lang === "hu" ? "Galéria" : "Gallery"}
+                    </button>
                   </div>
+
+                  {/* Estimated identified total + count */}
+                  <div className="rounded-2xl border border-ink-100 dark:border-ink-700 p-5 mb-6">
+                    <p className="text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-1">
+                      {lang === "hu" ? "Becsült azonosított összérték" : "Estimated identified total"}
+                    </p>
+                    <p className="text-4xl font-display tracking-tight">
+                      {formatHuf(stats?.totalValueHuf ?? 0)}
+                    </p>
+                    <div className="mt-4 pt-4 border-t border-ink-100 dark:border-ink-800 flex items-baseline gap-2">
+                      <span className="text-2xl font-display">{stats?.count ?? 0}</span>
+                      <span className="text-xs text-ink-500 dark:text-ink-400">
+                        {lang === "hu" ? "eddig azonosított darab" : "items identified so far"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Recent items */}
+                  {stats && stats.recent.length > 0 && (
+                    <div className="mb-2">
+                      <div className="flex items-center justify-between mb-3">
+                        <h2 className="font-display text-lg tracking-tight">
+                          {lang === "hu" ? "Legutóbbi darabok" : "Recent items"}
+                        </h2>
+                        <Link
+                          href="/history"
+                          className="text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white transition"
+                        >
+                          {lang === "hu" ? "Összes →" : "All →"}
+                        </Link>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        {stats.recent.map((it) => {
+                          const name =
+                            `${it.brand ?? ""} ${it.model ?? ""}`.trim() ||
+                            it.itemType ||
+                            (lang === "hu" ? "Darab" : "Item");
+                          return (
+                            <Link key={it.id} href="/history" className="text-left">
+                              <div className="aspect-square rounded-xl overflow-hidden bg-ink-50 dark:bg-ink-800 mb-2 flex items-center justify-center">
+                                {it.imageUrl ? (
+                                  /* eslint-disable-next-line @next/next/no-img-element */
+                                  <img src={it.imageUrl} alt={name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-ink-300 dark:text-ink-600" aria-hidden="true">
+                                    <rect x="3" y="3" width="18" height="18" rx="3" />
+                                    <circle cx="9" cy="9" r="2" />
+                                    <path d="m21 15-4-4-8 8" />
+                                  </svg>
+                                )}
+                              </div>
+                              <p className="text-sm font-medium truncate">{name}</p>
+                              {it.valueHuf != null && (
+                                <p className="text-xs text-ink-500 dark:text-ink-400">~ {formatHuf(it.valueHuf)}</p>
+                              )}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Desktop: drag-drop zone */}
@@ -1243,13 +1337,13 @@ export default function HomePage() {
 
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full mt-3 px-4 py-3 rounded-xl border border-ink-100 dark:border-ink-700 dark:bg-ink-900 hover:border-ink-300 hover:bg-ink-50 dark:hover:bg-ink-800 transition text-sm font-medium"
+                  className="hidden sm:block w-full mt-3 px-4 py-3 rounded-xl border border-ink-100 dark:border-ink-700 dark:bg-ink-900 hover:border-ink-300 hover:bg-ink-50 dark:hover:bg-ink-800 transition text-sm font-medium"
                 >
                   {t.chooseFile}
                 </button>
 
                 {!isPremium && (
-                  <p className="text-xs text-ink-500 dark:text-ink-400 mt-4">
+                  <p className="text-xs text-ink-500 dark:text-ink-400 mt-4 text-center sm:text-left">
                     {t.scansLeftFull.replace("{n}", scansLeft.toString())}
                   </p>
                 )}

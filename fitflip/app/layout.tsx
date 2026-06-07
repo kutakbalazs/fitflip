@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import CookieBanner from "@/components/CookieBanner";
 import OnboardingGate from "@/components/OnboardingGate";
+import ScanFab from "@/components/ScanFab";
 import PullToRefresh from "@/components/PullToRefresh";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { themeInitScript } from "@/lib/theme";
@@ -60,6 +61,7 @@ export default function RootLayout({
             {children}
           </PullToRefresh>
           <OnboardingGate />
+          <ScanFab />
           <CookieBanner />
         </ThemeProvider>
       </body>
