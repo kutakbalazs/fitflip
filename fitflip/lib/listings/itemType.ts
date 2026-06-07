@@ -155,6 +155,27 @@ export const STRICT_FILTER_TYPES = new Set<string>([
   "belt",
 ]);
 
+// Item types where a specific model can't be reliably text-matched (a
+// "Nike belt bag" listing matches many different Nike belt bags). For these
+// the listings panel must always present results as "similar", never as an
+// exact match — anything else misleads the user.
+export const SIMILAR_ONLY_TYPES = new Set<string>([
+  "bag",
+  "belt",
+  "sunglasses",
+  "watch",
+  "cap",
+  "hat",
+  "beanie",
+  "scarf",
+  "gloves",
+  "accessory",
+]);
+
+export function isSimilarOnlyType(itemType: string | null | undefined): boolean {
+  return !!itemType && SIMILAR_ONLY_TYPES.has(itemType.toLowerCase());
+}
+
 export function isStrictFilterType(itemType: string | null | undefined): boolean {
   return !!itemType && STRICT_FILTER_TYPES.has(itemType.toLowerCase());
 }

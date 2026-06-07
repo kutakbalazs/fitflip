@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { searchAllMarketplaces } from "@/lib/listings/aggregate";
 import { verifyListingsAgainstImage } from "@/lib/listings/verify";
-import { filterListingsByItemType, isStrictFilterType } from "@/lib/listings/itemType";
+import { filterListingsByItemType, isStrictFilterType, isSimilarOnlyType } from "@/lib/listings/itemType";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -138,9 +138,13 @@ export async function POST(req: NextRequest) {
       finalListings = finalListings.slice(0, 6);
     }
 
+    // Accessories/jewellery/headwear can't be pinned to a specific model via
+    // text, so never claim an exact match — always present as "similar".
+    const exactFinal = isSimilarOnlyType(itemType) ? false : exact;
+
     return NextResponse.json({
       listings: finalListings,
-      exact,
+      exact: exactFinal,
       visuallyVerified,
     });
   } catch (err) {
