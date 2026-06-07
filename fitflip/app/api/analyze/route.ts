@@ -165,7 +165,7 @@ VÁLASZ FORMÁTUM (CSAK ezt a JSON-t add vissza, semmi mást, semmi markdown):
 {
   "recognized": true | false,
   "category": "sneaker" | "vintage_clothing" | "streetwear" | "designer" | "other",
-  "item_type": "konkrét típus, KÖTELEZŐ kitölteni — válassz ebből a listából: sneaker | boot | sandal | t-shirt | jersey | longsleeve | hoodie | sweatshirt | jacket | coat | vest | pants | jeans | shorts | skirt | dress | cap | hat | beanie | bag | belt | scarf | gloves | accessory | other. Akkor is add meg ha brand:null. Pl. egy logó-nélküli fekete pólóra: 't-shirt'. SPORTMEZRE/FOCIMEZRE: 'jersey' (NE 't-shirt'). Hirdetés-szűréshez használjuk, hogy ne dobjon fel pl. telefont egy pólóra.",
+  "item_type": "konkrét típus, KÖTELEZŐ kitölteni — válassz ebből a listából: sneaker | boot | sandal | t-shirt | jersey | longsleeve | hoodie | sweatshirt | jacket | coat | vest | pants | jeans | shorts | skirt | dress | cap | hat | beanie | bag | belt | scarf | gloves | sunglasses | watch | accessory | other. Akkor is add meg ha brand:null. Pl. egy logó-nélküli fekete pólóra: 't-shirt'. SPORTMEZRE/FOCIMEZRE: 'jersey' (NE 't-shirt'). NAPSZEMÜVEGRE: 'sunglasses'. ÓRÁRA: 'watch'. Hirdetés-szűréshez használjuk, hogy ne dobjon fel pl. cipőt egy napszemüvegre.",
   "brand": "string vagy null",
   "model": "string vagy null",
   "color": "domináns szín vagy hivatalos colorway angolul, vagy null",
@@ -293,7 +293,7 @@ RESPONSE FORMAT (return ONLY this JSON, nothing else, no markdown):
 {
   "recognized": true | false,
   "category": "sneaker" | "vintage_clothing" | "streetwear" | "designer" | "other",
-  "item_type": "specific type, REQUIRED, pick from: sneaker | boot | sandal | t-shirt | jersey | longsleeve | hoodie | sweatshirt | jacket | coat | vest | pants | jeans | shorts | skirt | dress | cap | hat | beanie | bag | belt | scarf | gloves | accessory | other. Always fill, even when brand:null. E.g. a logo-less black tee: 't-shirt'. For a SPORTS/FOOTBALL JERSEY use 'jersey' (NOT 't-shirt'). Used to filter listings so phones don't appear under a T-shirt query.",
+  "item_type": "specific type, REQUIRED, pick from: sneaker | boot | sandal | t-shirt | jersey | longsleeve | hoodie | sweatshirt | jacket | coat | vest | pants | jeans | shorts | skirt | dress | cap | hat | beanie | bag | belt | scarf | gloves | sunglasses | watch | accessory | other. Always fill, even when brand:null. E.g. a logo-less black tee: 't-shirt'. For a SPORTS/FOOTBALL JERSEY use 'jersey' (NOT 't-shirt'). For SUNGLASSES use 'sunglasses'. For a WATCH use 'watch'. Used to filter listings so e.g. shoes don't appear under a sunglasses query.",
   "brand": "string or null",
   "model": "string or null",
   "color": "dominant color or official colorway in English, or null",

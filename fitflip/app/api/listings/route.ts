@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { searchAllMarketplaces } from "@/lib/listings/aggregate";
 import { verifyListingsAgainstImage } from "@/lib/listings/verify";
-import { filterListingsByItemType } from "@/lib/listings/itemType";
+import { filterListingsByItemType, isStrictFilterType } from "@/lib/listings/itemType";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -70,8 +70,10 @@ export async function POST(req: NextRequest) {
     // Strict mode: when the AI couldn't identify the brand we have less to
     // anchor on, so we ask the verifier to be much pickier and cap the
     // result count. Better to show 2 high-confidence matches than 10 noisy
-    // ones in this scenario.
-    const strict = !brandHint;
+    // ones in this scenario. Also strict for non-apparel accessories
+    // (sunglasses, watch, …) where a wrong-category match is egregious —
+    // strict mode disables the "keep top 3 anyway" fallback.
+    const strict = !brandHint || isStrictFilterType(itemType);
 
     // If we have the user's image, ask the model to look at every listing
     // thumbnail and drop ones that aren't actually the same product.

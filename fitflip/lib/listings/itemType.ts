@@ -30,6 +30,8 @@ export type ItemType =
   | "belt"
   | "scarf"
   | "gloves"
+  | "sunglasses"
+  | "watch"
   | "accessory"
   | "other";
 
@@ -128,23 +130,55 @@ export const ITEM_TYPE_KEYWORDS: Record<string, string[]> = {
   gloves: [
     "gloves", "kesztyű", "kesztyu", "handschuh", "rękawiczki", "rekawiczki",
   ],
+  sunglasses: [
+    "sunglasses", "sunglass", "napszemüveg", "napszemuveg", "szemüveg", "szemuveg",
+    "sonnenbrille", "brille", "okulary", "okulary przeciwsłoneczne",
+    "sluneční brýle", "slnečné okuliare", "okuliare", "brýle",
+    "shades", "eyewear", "ray-ban", "rayban", "wayfarer", "aviator",
+  ],
+  watch: [
+    "watch", "óra", "ora", "karóra", "karora", "armbanduhr", "uhr",
+    "zegarek", "hodinky", "hodinky", "smartwatch",
+  ],
   accessory: [], // no filter — too generic
   other: [],     // no filter
 };
+
+// Non-apparel accessories where showing a wrong-category listing is
+// egregious (a dress under a sunglasses search). For these we do NOT fall
+// back to the unfiltered list when the keyword filter empties everything —
+// an empty panel is far better than apparel under an accessory search.
+export const STRICT_FILTER_TYPES = new Set<string>([
+  "sunglasses",
+  "watch",
+  "bag",
+  "belt",
+]);
+
+export function isStrictFilterType(itemType: string | null | undefined): boolean {
+  return !!itemType && STRICT_FILTER_TYPES.has(itemType.toLowerCase());
+}
 
 export function filterListingsByItemType<T extends { title: string }>(
   listings: T[],
   itemType: string | null | undefined
 ): T[] {
   if (!itemType) return listings;
-  const keywords = ITEM_TYPE_KEYWORDS[itemType.toLowerCase()];
+  const type = itemType.toLowerCase();
+  const keywords = ITEM_TYPE_KEYWORDS[type];
   if (!keywords || keywords.length === 0) return listings;
   const filtered = listings.filter((l) => {
     const t = ` ${l.title.toLowerCase()} `;
     return keywords.some((kw) => t.includes(kw.toLowerCase()));
   });
-  // Safety net: if the filter eliminates *everything* we'd rather show a
-  // possibly-noisy result than an empty grid (caller can then warn the user).
+  // For strict (non-apparel accessory) types, never fall back — return the
+  // empty set so the caller shows "no matches" instead of random clothing.
+  if (filtered.length === 0 && STRICT_FILTER_TYPES.has(type)) {
+    return filtered;
+  }
+  // Apparel safety net: if the filter eliminates *everything* we'd rather
+  // show a possibly-noisy result than an empty grid (keyword dicts are
+  // incomplete; caller can still warn the user).
   return filtered.length === 0 ? listings : filtered;
 }
 

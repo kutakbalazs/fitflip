@@ -46,7 +46,8 @@ function fallbackName(
     pants: "Nadrág", jeans: "Farmer", shorts: "Rövidnadrág",
     skirt: "Szoknya", dress: "Ruha", cap: "Sapka", hat: "Kalap",
     beanie: "Kötött sapka", bag: "Táska", belt: "Öv", scarf: "Sál",
-    gloves: "Kesztyű", accessory: "Kiegészítő", other: "Darab",
+    gloves: "Kesztyű", sunglasses: "Napszemüveg", watch: "Óra",
+    accessory: "Kiegészítő", other: "Darab",
   };
   const TYPE_EN: Record<string, string> = {
     sneaker: "Sneaker", boot: "Boot", sandal: "Sandal",
@@ -55,7 +56,8 @@ function fallbackName(
     pants: "Pants", jeans: "Jeans", shorts: "Shorts",
     skirt: "Skirt", dress: "Dress", cap: "Cap", hat: "Hat",
     beanie: "Beanie", bag: "Bag", belt: "Belt", scarf: "Scarf",
-    gloves: "Gloves", accessory: "Accessory", other: "Item",
+    gloves: "Gloves", sunglasses: "Sunglasses", watch: "Watch",
+    accessory: "Accessory", other: "Item",
   };
   const map = lang === "hu" ? TYPE_HU : TYPE_EN;
   const noun = itemType && map[itemType] ? map[itemType] : map.other;

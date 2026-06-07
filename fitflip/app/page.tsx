@@ -141,6 +141,10 @@ export default function HomePage() {
   // Optional size, surfaced once a photo is picked. Helps the model when
   // it's pricing sized goods (sneakers, jeans).
   const [sizeInput, setSizeInput] = useState("");
+  // Optional pre-scan brand hint: a checkbox reveals a brand field so the
+  // user can tell us the brand/model before analysis (fed in as the hint).
+  const [showBrandInput, setShowBrandInput] = useState(false);
+  const [brandInput, setBrandInput] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -569,13 +573,19 @@ export default function HomePage() {
     setError(null);
     try {
       const trimmedSize = sizeInput.trim();
+      // Fresh scan with no explicit refinement hint: fall back to the
+      // pre-scan brand the user optionally typed in.
+      const effectiveHint =
+        (hint && hint.trim()) ||
+        (showBrandInput ? brandInput.trim() : "") ||
+        "";
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           images: images.map(({ data, mediaType }) => ({ data, mediaType })),
           lang,
-          ...(hint ? { hint } : {}),
+          ...(effectiveHint ? { hint: effectiveHint } : {}),
           ...(trimmedSize ? { size: trimmedSize } : {}),
         }),
       });
@@ -619,6 +629,8 @@ export default function HomePage() {
     setRefinementDismissed(false);
     setRefinementLoading(false);
     setSizeInput("");
+    setShowBrandInput(false);
+    setBrandInput("");
     setLastSearchParams(null);
   };
 
@@ -1380,6 +1392,33 @@ export default function HomePage() {
                     className="w-full px-3 py-2 rounded-lg border border-ink-100 dark:border-ink-700 bg-white dark:bg-ink-950 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900/10"
                   />
                   <p className="text-[11px] text-ink-500 dark:text-ink-400 mt-1">{t.sizeInputHelp}</p>
+
+                  {/* Optional pre-scan brand hint */}
+                  <label className="flex items-center gap-2 mt-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={showBrandInput}
+                      onChange={(e) => setShowBrandInput(e.target.checked)}
+                      className="w-4 h-4 accent-ink-900 shrink-0"
+                    />
+                    <span className="text-xs font-medium text-ink-700 dark:text-ink-200">
+                      {t.brandCheckboxLabel}
+                    </span>
+                  </label>
+                  {showBrandInput && (
+                    <div className="mt-2 fade-in">
+                      <input
+                        id="ff-brand-input"
+                        type="text"
+                        value={brandInput}
+                        onChange={(e) => setBrandInput(e.target.value)}
+                        placeholder={t.brandInputPlaceholder}
+                        maxLength={80}
+                        className="w-full px-3 py-2 rounded-lg border border-ink-100 dark:border-ink-700 bg-white dark:bg-ink-950 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900/10"
+                      />
+                      <p className="text-[11px] text-ink-500 dark:text-ink-400 mt-1">{t.brandInputHelp}</p>
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-3">
                   <button
