@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { searchAllMarketplaces } from "@/lib/listings/aggregate";
+import { searchAllMarketplaces, titleHasColor, titleMentionsAnyColor } from "@/lib/listings/aggregate";
 import { verifyListingsAgainstImage } from "@/lib/listings/verify";
 import { filterListingsByItemType, isStrictFilterType, isSimilarOnlyType } from "@/lib/listings/itemType";
 
@@ -140,7 +140,21 @@ export async function POST(req: NextRequest) {
 
     // Accessories/jewellery/headwear can't be pinned to a specific model via
     // text, so never claim an exact match — always present as "similar".
-    const exactFinal = isSimilarOnlyType(itemType) ? false : exact;
+    let exactFinal = isSimilarOnlyType(itemType) ? false : exact;
+
+    // Colorway guard: the exact flag is computed before visual verification,
+    // and the verifier's safety-net can resurface wrong-colour items. If the
+    // SHOWN listings name colours but NONE matches the scanned colour, these
+    // are different colorways (e.g. a blue Gazelle scan returning red/green
+    // Gazelles) → downgrade to "similar". (We only downgrade when listings
+    // actually mention a colour, so terse colourless titles don't false-flag.)
+    if (exactFinal && colorTokens.length > 0 && finalListings.length > 0) {
+      const anyScannedColor = finalListings.some((l) => titleHasColor(l.title, colorTokens));
+      const anyMentionsColor = finalListings.some((l) => titleMentionsAnyColor(l.title));
+      if (!anyScannedColor && anyMentionsColor) {
+        exactFinal = false;
+      }
+    }
 
     return NextResponse.json({
       listings: finalListings,

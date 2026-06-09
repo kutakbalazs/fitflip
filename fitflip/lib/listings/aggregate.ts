@@ -47,6 +47,34 @@ function titleContains(titleNorm: string, keyword: string): boolean {
   return variants.some((v) => v.length > 0 && titleNorm.includes(v));
 }
 
+// Word-boundary match (normalize turns punctuation into spaces, so words are
+// space-delimited) — avoids "red" matching inside "shredded".
+function wordInTitle(titleNorm: string, word: string): boolean {
+  if (!word) return false;
+  return new RegExp(`(^|\\s)${word}(\\s|$)`).test(titleNorm);
+}
+
+// Every known colour word (across languages) — used to detect whether a
+// listing title names a colour at all.
+const ALL_COLOR_WORDS = Array.from(
+  new Set(Object.values(HU_COLOR_ALIASES).flat().map(normalize))
+);
+
+/** True if the title names the scanned colour (alias-aware, e.g. blue↔kék). */
+export function titleHasColor(title: string, colorTokens: string[]): boolean {
+  if (colorTokens.length === 0) return true;
+  const norm = normalize(title);
+  return colorTokens.some((c) =>
+    aliasesFor(c).some((v) => wordInTitle(norm, v))
+  );
+}
+
+/** True if the title names ANY known colour. */
+export function titleMentionsAnyColor(title: string): boolean {
+  const norm = normalize(title);
+  return ALL_COLOR_WORDS.some((w) => wordInTitle(norm, w));
+}
+
 export type SearchResult = { listings: Listing[]; exact: boolean };
 
 type ScoredListing = {
