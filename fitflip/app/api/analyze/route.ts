@@ -502,6 +502,9 @@ type Profile = {
   is_premium: boolean;
   scan_count_today: number;
   scan_count_reset_at: string;
+  // Streak columns are a later addition — optional so older schemas work.
+  streak_count?: number | null;
+  last_scan_date?: string | null;
 };
 
 function nextMidnightUtc(): Date {
@@ -511,12 +514,56 @@ function nextMidnightUtc(): Date {
   return d;
 }
 
+// Daily streak is tracked in the user's local (Hungarian) day, not UTC —
+// a scan at 00:30 Budapest time should count for that calendar day.
+function budapestDate(offsetDays = 0): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Budapest" }).format(
+    new Date(Date.now() + offsetDays * 86_400_000)
+  );
+}
+
+/**
+ * New streak value for a scan happening "now":
+ * - already scanned today → unchanged
+ * - scanned yesterday → +1
+ * - anything older (or first scan) → reset to 1
+ */
+function nextStreak(profile: Profile): number {
+  const today = budapestDate();
+  const yesterday = budapestDate(-1);
+  const last = profile.last_scan_date ?? null;
+  const current = profile.streak_count ?? 0;
+  if (last === today) return Math.max(1, current);
+  if (last === yesterday) return current + 1;
+  return 1;
+}
+
+/** Streak to DISPLAY: alive only if the last scan was today or yesterday. */
+function displayStreak(profile: Profile): number {
+  const last = profile.last_scan_date ?? null;
+  if (last === budapestDate() || last === budapestDate(-1)) {
+    return profile.streak_count ?? 0;
+  }
+  return 0;
+}
+
+const PROFILE_COLS = "is_premium, scan_count_today, scan_count_reset_at, streak_count, last_scan_date";
+const PROFILE_COLS_LEGACY = "is_premium, scan_count_today, scan_count_reset_at";
+
 async function getOrResetProfile(admin: ReturnType<typeof createAdminClient>, userId: string): Promise<Profile | null> {
-  const { data: profile } = await admin
+  // Two-step select: streak columns may not exist yet (pre-migration).
+  let { data: profile } = await admin
     .from("profiles")
-    .select("is_premium, scan_count_today, scan_count_reset_at")
+    .select(PROFILE_COLS)
     .eq("id", userId)
     .single();
+  if (!profile) {
+    ({ data: profile } = await admin
+      .from("profiles")
+      .select(PROFILE_COLS_LEGACY)
+      .eq("id", userId)
+      .single());
+  }
 
   if (!profile) return null;
 
@@ -529,9 +576,12 @@ async function getOrResetProfile(admin: ReturnType<typeof createAdminClient>, us
         scan_count_reset_at: nextMidnightUtc().toISOString(),
       })
       .eq("id", userId)
-      .select("is_premium, scan_count_today, scan_count_reset_at")
+      .select(PROFILE_COLS_LEGACY)
       .single();
-    return updated as Profile | null;
+    // Keep the streak fields we already read; the reset doesn't touch them.
+    return updated
+      ? ({ ...(profile as Profile), ...(updated as Partial<Profile>) } as Profile)
+      : null;
   }
   return profile as Profile;
 }
@@ -845,6 +895,20 @@ export async function POST(req: NextRequest) {
         .eq("id", user.id);
     }
 
+    // Daily streak: every completed scan keeps the chain alive. Separate
+    // update so a missing column (pre-migration schema) can never break the
+    // scan-count bookkeeping above.
+    const streak = nextStreak(profile);
+    try {
+      const { error: streakError } = await admin
+        .from("profiles")
+        .update({ streak_count: streak, last_scan_date: budapestDate() })
+        .eq("id", user.id);
+      if (streakError) console.warn("[analyze] streak update skipped:", streakError.message);
+    } catch {
+      /* streak columns missing — feature silently off until migration */
+    }
+
     const newProfile: Profile = {
       ...profile,
       scan_count_today: profile.scan_count_today + 1,
@@ -854,6 +918,7 @@ export async function POST(req: NextRequest) {
       ...parsed,
       scan_id: scanId,
       scansLeft: scansLeftFor(newProfile),
+      streak,
     });
   } catch (err) {
     console.error("[/api/analyze] error:", err);
@@ -877,5 +942,6 @@ export async function GET() {
     scansLeft: scansLeftFor(profile),
     authenticated: true,
     isPremium: profile.is_premium,
+    streak: displayStreak(profile),
   });
 }

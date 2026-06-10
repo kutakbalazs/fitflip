@@ -148,6 +148,8 @@ export default function HomePage() {
   const [showBrandInput, setShowBrandInput] = useState(false);
   const [brandInput, setBrandInput] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Daily scan streak ("🔥 X napos sorozat") — gamification/retention.
+  const [streak, setStreak] = useState(0);
   // Dashboard stats for the mobile home (total identified value + count).
   const [stats, setStats] = useState<{
     count: number;
@@ -192,6 +194,7 @@ export default function HomePage() {
           if (d.authenticated && d.scansLeft <= 0 && !d.isPremium) setLimitReached(true);
         }
         if (d.isPremium) setIsPremium(true);
+        if (typeof d.streak === "number") setStreak(d.streak);
       })
       .catch(() => {});
 
@@ -624,6 +627,7 @@ export default function HomePage() {
         setScansLeft(data.scansLeft);
         if (data.scansLeft <= 0) setLimitReached(true);
       }
+      if (typeof data.streak === "number") setStreak(data.streak);
     } catch {
       setError(t.error);
       haptic("error");
@@ -1250,9 +1254,14 @@ export default function HomePage() {
                     </p>
                     <div className="mt-4 pt-4 border-t border-ink-100 dark:border-ink-800 flex items-baseline gap-2">
                       <span className="text-2xl font-display">{stats?.count ?? 0}</span>
-                      <span className="text-xs text-ink-500 dark:text-ink-400">
+                      <span className="text-xs text-ink-500 dark:text-ink-400 flex-1">
                         {lang === "hu" ? "eddig azonosított darab" : "items identified so far"}
                       </span>
+                      {streak > 0 && (
+                        <span className="shrink-0 self-center inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 text-[11px] font-semibold">
+                          🔥 {streak} {lang === "hu" ? "napos sorozat" : streak === 1 ? "day streak" : "day streak"}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -1913,6 +1922,13 @@ export default function HomePage() {
                   >
                     {t.newScan}
                   </button>
+                  {streak > 0 && (
+                    <p className="mt-3">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 text-[11px] font-semibold">
+                        🔥 {streak} {lang === "hu" ? "napos sorozat" : "day streak"}
+                      </span>
+                    </p>
+                  )}
                   {!isPremium && (
                     <p className="text-xs text-ink-500 dark:text-ink-400 mt-3">
                       {t.scansLeftFull.replace("{n}", result.scansLeft.toString())}
