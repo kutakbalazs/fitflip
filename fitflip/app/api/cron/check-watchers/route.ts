@@ -168,7 +168,9 @@ async function processWatcher(
   let verified = candidates;
   if (originalImage) {
     try {
-      verified = await verifyListingsAgainstImage(
+      // Notifications must stay precise: only the confirmed matches count,
+      // the rejected "similar" ones are discarded here.
+      ({ kept: verified } = await verifyListingsAgainstImage(
         originalImage,
         candidates,
         {
@@ -181,7 +183,7 @@ async function processWatcher(
         // worse here than in the on-scan flow because the user can't see
         // the photo side-by-side, they just trust the notification.
         { strict: true, model: "claude-haiku-4-5" }
-      );
+      ));
     } catch (err) {
       console.warn(`[cron] verify failed for ${w.id}, using unverified:`, err);
     }

@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { searchAllMarketplaces, titleHasColor, titleMentionsAnyColor } from "@/lib/listings/aggregate";
 import { verifyListingsAgainstImage } from "@/lib/listings/verify";
 import { filterListingsByItemType, isStrictFilterType, isSimilarOnlyType } from "@/lib/listings/itemType";
+import type { Listing } from "@/lib/listings/types";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -110,12 +111,16 @@ export async function POST(req: NextRequest) {
     const strict = !brandHint || isStrictFilterType(itemType);
 
     // If we have the user's image, ask the model to look at every listing
-    // thumbnail and drop ones that aren't actually the same product.
+    // thumbnail and split them: confirmed same-product matches vs rejected
+    // ones. Rejections are still text-relevant (same model, different
+    // colorway etc.), so they're returned separately as "similar" — shown
+    // to the user clearly labelled, never mixed with exact matches.
     let finalListings = listings;
+    let similar: Listing[] = [];
     let visuallyVerified = false;
     if (originalImage && listings.length > 0) {
       try {
-        finalListings = await verifyListingsAgainstImage(
+        const { kept, dropped } = await verifyListingsAgainstImage(
           originalImage,
           listings,
           {
@@ -126,6 +131,8 @@ export async function POST(req: NextRequest) {
           },
           { strict }
         );
+        finalListings = kept;
+        similar = dropped;
         visuallyVerified = true;
       } catch (err) {
         console.warn("[/api/listings] verification failed, returning unfiltered:", err);
@@ -158,6 +165,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       listings: finalListings,
+      similar,
       exact: exactFinal,
       visuallyVerified,
     });

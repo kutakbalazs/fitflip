@@ -7,6 +7,7 @@ import { readLang, type Lang } from "@/lib/lang";
 import { haptic } from "@/lib/haptics";
 import { setPendingScanFile } from "@/lib/pendingScan";
 import StoryModal from "@/components/StoryModal";
+import AllListingsOverlay from "@/components/AllListingsOverlay";
 import type { Listing } from "@/lib/listings/types";
 
 export type ScanDetailData = {
@@ -50,6 +51,8 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
   const [lang, setLang] = useState<Lang>("hu");
   const [showStory, setShowStory] = useState(false);
   const [listings, setListings] = useState<Listing[] | null>(null);
+  const [similarListings, setSimilarListings] = useState<Listing[]>([]);
+  const [showAllListings, setShowAllListings] = useState(false);
   const [listingsExact, setListingsExact] = useState(true);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -109,9 +112,11 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
       });
       const json = await res.json();
       setListings(Array.isArray(json?.listings) ? json.listings : []);
+      setSimilarListings(Array.isArray(json?.similar) ? json.similar : []);
       setListingsExact(json?.exact !== false);
     } catch {
       setListings([]);
+      setSimilarListings([]);
       setListingsExact(true);
     } finally {
       setLoading(false);
@@ -281,7 +286,7 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
                 </div>
               )}
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {listings.map((l, idx) => (
+                {listings.slice(0, 6).map((l, idx) => (
                   <li key={`${l.source}-${idx}`} className="border border-ink-100 dark:border-ink-700 rounded-2xl overflow-hidden bg-white dark:bg-ink-950 hover:border-ink-300 transition">
                     <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex gap-3 p-3">
                       {l.imageUrl ? (
@@ -301,6 +306,20 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
                   </li>
                 ))}
               </ul>
+              {(listings.length > 6 || similarListings.length > 0) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    haptic("tap");
+                    setShowAllListings(true);
+                  }}
+                  className="w-full mt-3 px-4 py-2.5 rounded-full border border-ink-200 dark:border-ink-700 hover:bg-ink-50 dark:hover:bg-ink-800 transition text-sm font-medium"
+                >
+                  {hu
+                    ? `Összes megjelenítése (${listings.length + similarListings.length})`
+                    : `Show all (${listings.length + similarListings.length})`}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={runSearch}
@@ -313,7 +332,21 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
 
           {!loading && searched && listings && listings.length === 0 && (
             <div className="border border-ink-100 dark:border-ink-700 rounded-2xl p-6 bg-ink-50 dark:bg-ink-800 text-center text-sm text-ink-500 dark:text-ink-400">
-              {hu ? "Most nincs aktív hirdetés ehhez a darabhoz." : "No active listings for this piece right now."}
+              <p>{hu ? "Most nincs aktív hirdetés ehhez a darabhoz." : "No active listings for this piece right now."}</p>
+              {similarListings.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    haptic("tap");
+                    setShowAllListings(true);
+                  }}
+                  className="mt-4 px-5 py-2.5 rounded-full border border-ink-200 dark:border-ink-700 hover:bg-white dark:hover:bg-ink-900 transition text-sm font-medium text-ink-700 dark:text-ink-200"
+                >
+                  {hu
+                    ? `Hasonló darabok megtekintése (${similarListings.length})`
+                    : `View similar items (${similarListings.length})`}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -355,6 +388,14 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
           {hu ? "Új scan" : "New scan"}
         </button>
       </section>
+
+      <AllListingsOverlay
+        open={showAllListings}
+        onClose={() => setShowAllListings(false)}
+        lang={lang}
+        exactListings={listings ?? []}
+        similarListings={similarListings}
+      />
 
       {data.story && (
         <StoryModal

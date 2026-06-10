@@ -10,6 +10,7 @@ import BackToTop from "@/components/BackToTop";
 import StoryModal from "@/components/StoryModal";
 import NotificationsBell from "@/components/NotificationsBell";
 import WatcherWidget from "@/components/WatcherWidget";
+import AllListingsOverlay from "@/components/AllListingsOverlay";
 import { haptic } from "@/lib/haptics";
 import { createClient } from "@/lib/supabase/client";
 import { takePendingScanFile } from "@/lib/pendingScan";
@@ -132,6 +133,10 @@ export default function HomePage() {
   const [showStory, setShowStory] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [listings, setListings] = useState<Listing[] | null>(null);
+  // Listings the visual verifier rejected (other colorway/finish) — shown
+  // separately, clearly labelled, never mixed with the exact matches.
+  const [similarListings, setSimilarListings] = useState<Listing[]>([]);
+  const [showAllListings, setShowAllListings] = useState(false);
   const [listingsExact, setListingsExact] = useState(true);
   const [listingsLoading, setListingsLoading] = useState(false);
   const [lastSearchParams, setLastSearchParams] = useState<SearchParams | null>(null);
@@ -370,6 +375,8 @@ export default function HomePage() {
   useEffect(() => {
     if (!result) {
       setListings(null);
+      setSimilarListings([]);
+      setShowAllListings(false);
       return;
     }
     const brand = result.brand?.trim() ?? "";
@@ -505,6 +512,8 @@ export default function HomePage() {
     let cancelled = false;
     setListingsLoading(true);
     setListings(null);
+    setSimilarListings([]);
+    setShowAllListings(false);
     fetch("/api/listings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -521,19 +530,22 @@ export default function HomePage() {
       }),
     })
       .then(async (res) => {
-        if (!res.ok) return { listings: [] as Listing[], exact: true };
+        if (!res.ok) return { listings: [] as Listing[], similar: [] as Listing[], exact: true };
         const data = await res.json();
         const items = Array.isArray(data?.listings) ? (data.listings as Listing[]) : [];
-        return { listings: items, exact: data?.exact !== false };
+        const sim = Array.isArray(data?.similar) ? (data.similar as Listing[]) : [];
+        return { listings: items, similar: sim, exact: data?.exact !== false };
       })
-      .then(({ listings: items, exact }) => {
+      .then(({ listings: items, similar: sim, exact }) => {
         if (cancelled) return;
         setListings(items);
+        setSimilarListings(sim);
         setListingsExact(exact);
       })
       .catch(() => {
         if (cancelled) return;
         setListings([]);
+        setSimilarListings([]);
         setListingsExact(true);
       })
       .finally(() => {
@@ -641,6 +653,8 @@ export default function HomePage() {
     setResult(null);
     setError(null);
     setListings(null);
+    setSimilarListings([]);
+    setShowAllListings(false);
     setListingsExact(true);
     setRefinementText("");
     setRefinementDismissed(false);
@@ -1848,7 +1862,7 @@ export default function HomePage() {
                           );
                         })()}
                         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {displayedListings.map(({ listing: l, match: matched }, idx) => (
+                          {displayedListings.slice(0, 6).map(({ listing: l, match: matched }, idx) => (
                           <li key={`${l.source}-${idx}`} className={`border rounded-2xl overflow-hidden bg-white dark:bg-ink-950 hover:border-ink-300 transition ${matched ? "border-emerald-300 dark:border-emerald-800 ring-1 ring-emerald-200" : "border-ink-100 dark:border-ink-700"}`}>
                             <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex gap-3 p-3">
                               {l.imageUrl ? (
@@ -1890,7 +1904,37 @@ export default function HomePage() {
                           </li>
                         ))}
                         </ul>
+                        {(displayedListings.length > 6 || similarListings.length > 0) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              haptic("tap");
+                              setShowAllListings(true);
+                            }}
+                            className="w-full mt-3 px-4 py-2.5 rounded-full border border-ink-200 dark:border-ink-700 hover:bg-ink-50 dark:hover:bg-ink-800 transition text-sm font-medium"
+                          >
+                            {lang === "hu"
+                              ? `Összes megjelenítése (${displayedListings.length + similarListings.length})`
+                              : `Show all (${displayedListings.length + similarListings.length})`}
+                          </button>
+                        )}
                       </>
+                    ) : similarListings.length > 0 ? (
+                      <div className="border border-ink-100 dark:border-ink-700 rounded-2xl p-8 bg-ink-50 dark:bg-ink-800 text-center">
+                        <p className="text-sm text-ink-700 dark:text-ink-200 font-medium mb-4">{t.listingsEmpty}</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            haptic("tap");
+                            setShowAllListings(true);
+                          }}
+                          className="px-5 py-2.5 rounded-full border border-ink-200 dark:border-ink-700 hover:bg-white dark:hover:bg-ink-900 transition text-sm font-medium"
+                        >
+                          {lang === "hu"
+                            ? `Hasonló darabok megtekintése (${similarListings.length})`
+                            : `View similar items (${similarListings.length})`}
+                        </button>
+                      </div>
                     ) : (
                       <div className="border border-ink-100 dark:border-ink-700 rounded-2xl p-8 bg-ink-50 dark:bg-ink-800 text-center">
                         <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-white dark:bg-ink-950 border border-ink-100 dark:border-ink-700 flex items-center justify-center text-ink-400 dark:text-ink-500">
@@ -2018,6 +2062,14 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      <AllListingsOverlay
+        open={showAllListings}
+        onClose={() => setShowAllListings(false)}
+        lang={lang}
+        exactListings={displayedListings ? displayedListings.map((e) => e.listing) : []}
+        similarListings={similarListings}
+      />
 
       {result?.story && (
         <StoryModal

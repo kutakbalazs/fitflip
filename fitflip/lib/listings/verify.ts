@@ -110,6 +110,14 @@ async function fetchAsBase64(url: string): Promise<FetchedImage | null> {
 type VerifyMatch = { i: number; same: boolean };
 type VerifyResponse = { matches: VerifyMatch[] };
 
+/**
+ * kept    — listings the verifier confirmed as the same product.
+ * dropped — listings it rejected (wrong colorway/model/category). Still
+ *           text-relevant, so callers may present them as "similar items";
+ *           they must never be mixed in with the exact matches.
+ */
+export type VerifyResult = { kept: Listing[]; dropped: Listing[] };
+
 // Safety net: only when the verifier wants to drop everything (>90%) do we
 // suspect over-filtering. In that case, fall back to the top half of the
 // aggregator's already-scored listings — never to the full unfiltered set,
@@ -121,19 +129,19 @@ export async function verifyListingsAgainstImage(
   listings: Listing[],
   hints: VerifyHints = {},
   options: VerifyOptions = {}
-): Promise<Listing[]> {
+): Promise<VerifyResult> {
   const strict = options.strict === true;
   const apiKey = process.env.ANTHROPIC_API_KEY || process.env.FITFLIP_ANTHROPIC_KEY;
   if (!apiKey) {
     console.warn("[verify] no API key set, skipping verification");
-    return listings;
+    return { kept: listings, dropped: [] };
   }
 
   const candidates = listings
     .map((listing, idx) => ({ listing, idx }))
     .filter(({ listing }) => listing.imageUrl && listing.imageUrl.startsWith("http"));
 
-  if (candidates.length === 0) return listings;
+  if (candidates.length === 0) return { kept: listings, dropped: [] };
 
   // Parallel-fetch each listing's thumbnail. Anything that fails to load is
   // skipped from the AI prompt — we can't visually check those, so we'll
@@ -149,7 +157,7 @@ export async function verifyListingsAgainstImage(
       f.image !== null
   );
 
-  if (verifiable.length === 0) return listings;
+  if (verifiable.length === 0) return { kept: listings, dropped: [] };
 
   const client = new Anthropic({ apiKey });
 
@@ -203,7 +211,7 @@ export async function verifyListingsAgainstImage(
     const textBlock = response.content.find((b) => b.type === "text");
     if (!textBlock || textBlock.type !== "text") {
       console.warn("[verify] no text response from model");
-      return listings;
+      return { kept: listings, dropped: [] };
     }
     const cleaned = textBlock.text
       .replace(/```json\s*/g, "")
@@ -212,10 +220,10 @@ export async function verifyListingsAgainstImage(
     parsed = JSON.parse(cleaned) as VerifyResponse;
   } catch (err) {
     console.warn("[verify] failed, returning unfiltered:", err);
-    return listings;
+    return { kept: listings, dropped: [] };
   }
 
-  if (!parsed || !Array.isArray(parsed.matches)) return listings;
+  if (!parsed || !Array.isArray(parsed.matches)) return { kept: listings, dropped: [] };
 
   // 1-based position (the model's `i`) → original listings index
   const positionToOriginalIdx = new Map<number, number>();
@@ -233,6 +241,7 @@ export async function verifyListingsAgainstImage(
 
   const dropRatio = droppedIdx.size / listings.length;
   const kept = listings.filter((_, idx) => !droppedIdx.has(idx));
+  const dropped = listings.filter((_, idx) => droppedIdx.has(idx));
 
   // Safety net: only when essentially everything dropped — keep the top
   // few candidates from the aggregator so the panel isn't empty. We don't
@@ -244,7 +253,8 @@ export async function verifyListingsAgainstImage(
     console.warn(
       `[verify] dropped ${droppedIdx.size}/${listings.length} — over ${Math.round(MAX_DROP_RATIO * 100)}% threshold, returning top ${topFew.length} as best-guess fallback`
     );
-    return topFew;
+    const topSet = new Set(topFew.map((l) => l.url));
+    return { kept: topFew, dropped: listings.filter((l) => !topSet.has(l.url)) };
   }
 
   console.log(`[verify] kept ${kept.length}/${listings.length}${strict ? " (strict)" : ""}`);
@@ -254,7 +264,12 @@ export async function verifyListingsAgainstImage(
   // drop them too: with no brand to anchor on, an unverifiable listing is
   // more likely to be noise.
   if (strict) {
-    return kept.filter((l) => l.imageUrl);
+    const strictKept = kept.filter((l) => l.imageUrl);
+    const strictKeptSet = new Set(strictKept.map((l) => l.url));
+    return {
+      kept: strictKept,
+      dropped: listings.filter((l) => !strictKeptSet.has(l.url)),
+    };
   }
-  return kept;
+  return { kept, dropped };
 }
