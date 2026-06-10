@@ -10,6 +10,7 @@ type ScanRow = {
   brand: string | null;
   model: string | null;
   item_type: string | null;
+  color?: string | null;
   estimated_value_min_huf: number | null;
   estimated_value_max_huf: number | null;
   image_path: string | null;
@@ -21,6 +22,7 @@ type RecentItem = {
   brand: string | null;
   model: string | null;
   itemType: string | null;
+  color: string | null;
   valueHuf: number | null;
   imageUrl: string | null;
 };
@@ -38,20 +40,42 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const { data, error } = await supabase
-    .from("scans")
-    .select(
-      "id, recognized, brand, model, item_type, estimated_value_min_huf, estimated_value_max_huf, image_path, created_at"
-    )
-    .order("created_at", { ascending: false })
-    .limit(500);
+  // The color column is a recent addition — fall back to a column list
+  // without it when the migration hasn't run yet.
+  const fullCols =
+    "id, recognized, brand, model, item_type, color, estimated_value_min_huf, estimated_value_max_huf, image_path, created_at";
+  const legacyCols =
+    "id, recognized, brand, model, item_type, estimated_value_min_huf, estimated_value_max_huf, image_path, created_at";
 
-  if (error) {
-    console.error("[/api/scan-stats] error:", error);
-    return NextResponse.json({ count: 0, totalValueHuf: 0, recent: [] });
+  // Page through ALL scans (1000 per batch) so the total isn't capped at an
+  // arbitrary row limit for heavy users.
+  const PAGE = 1000;
+  const rows: ScanRow[] = [];
+  let cols = fullCols;
+  for (let from = 0; ; from += PAGE) {
+    let { data, error } = await supabase
+      .from("scans")
+      .select(cols)
+      .order("created_at", { ascending: false })
+      .range(from, from + PAGE - 1);
+    if (error && cols === fullCols) {
+      // Retry this batch without the color column (older schema).
+      cols = legacyCols;
+      ({ data, error } = await supabase
+        .from("scans")
+        .select(cols)
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE - 1));
+    }
+    if (error) {
+      console.error("[/api/scan-stats] error:", error);
+      return NextResponse.json({ count: 0, totalValueHuf: 0, recent: [] });
+    }
+    const batch = (data ?? []) as unknown as ScanRow[];
+    rows.push(...batch);
+    if (batch.length < PAGE) break;
   }
 
-  const rows = (data ?? []) as ScanRow[];
   const recognized = rows.filter((r) => r.recognized !== false);
 
   const count = recognized.length;
@@ -74,6 +98,7 @@ export async function GET() {
         brand: r.brand,
         model: r.model,
         itemType: r.item_type,
+        color: r.color ?? null,
         valueHuf: scanValue(r),
         imageUrl,
       };

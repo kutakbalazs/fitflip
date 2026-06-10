@@ -50,6 +50,7 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
   const [lang, setLang] = useState<Lang>("hu");
   const [showStory, setShowStory] = useState(false);
   const [listings, setListings] = useState<Listing[] | null>(null);
+  const [listingsExact, setListingsExact] = useState(true);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
@@ -69,6 +70,16 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
       const model = data.model?.trim() ?? "";
       const color = data.color?.trim() ?? "";
       const sq = data.searchQuery?.trim() ?? "";
+      const brandTokens = brand ? brand.split(/\s+/).filter(Boolean) : [];
+      const modelTokens = model ? model.split(/\s+/).filter(Boolean) : [];
+      const colorTokens = color ? color.split(/\s+/).filter(Boolean) : [];
+
+      // Same query-variant strategy as the fresh-scan flow: different
+      // marketplaces respond to different phrasings, so cast a wide net.
+      const lastBrand = brandTokens[brandTokens.length - 1] ?? "";
+      const firstModel = modelTokens[0] ?? "";
+      const firstColor = colorTokens[0] ?? "";
+      const lastColor = colorTokens[colorTokens.length - 1] ?? "";
       const queries: string[] = [];
       const push = (q: string) => {
         const t = q.trim();
@@ -76,7 +87,9 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
       };
       if (brand) push(`${brand} ${model}`.trim());
       if (sq) push(sq);
-      if (brand && model && color) push(`${brand} ${model} ${color}`);
+      if (lastBrand && firstModel) push(`${lastBrand} ${firstModel}`);
+      if (lastBrand && firstModel && firstColor) push(`${lastBrand} ${firstModel} ${firstColor}`);
+      if (lastBrand && lastColor) push(`${lastBrand} ${lastColor}`);
       if (queries.length === 0 && model) push(model);
 
       const res = await fetch("/api/listings", {
@@ -84,9 +97,9 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           queries,
-          brandTokens: brand ? brand.split(/\s+/).filter(Boolean) : [],
-          modelTokens: model ? model.split(/\s+/).filter(Boolean) : [],
-          colorTokens: color ? color.split(/\s+/).filter(Boolean) : [],
+          brandTokens,
+          modelTokens,
+          colorTokens,
           brand,
           model,
           color,
@@ -96,8 +109,10 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
       });
       const json = await res.json();
       setListings(Array.isArray(json?.listings) ? json.listings : []);
+      setListingsExact(json?.exact !== false);
     } catch {
       setListings([]);
+      setListingsExact(true);
     } finally {
       setLoading(false);
     }
@@ -247,6 +262,24 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
 
           {!loading && searched && listings && listings.length > 0 && (
             <>
+              {!listingsExact && (
+                <div className="mb-3 flex items-start gap-2 p-3 rounded-xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-900/60 text-sky-900 dark:text-sky-200">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                  </svg>
+                  <p className="text-xs leading-snug">
+                    <strong className="font-semibold">
+                      {hu ? "Hasonló találatok" : "Similar matches"}
+                    </strong>
+                    {" — "}
+                    {hu
+                      ? "ebben a pontos modellben/színben nincs aktuális hirdetés. Az alábbiak kapcsolódó találatok."
+                      : "no listings for this exact model/colorway. The ones below are related matches."}
+                  </p>
+                </div>
+              )}
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {listings.map((l, idx) => (
                   <li key={`${l.source}-${idx}`} className="border border-ink-100 dark:border-ink-700 rounded-2xl overflow-hidden bg-white dark:bg-ink-950 hover:border-ink-300 transition">

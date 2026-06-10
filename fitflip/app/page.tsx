@@ -13,6 +13,7 @@ import WatcherWidget from "@/components/WatcherWidget";
 import { haptic } from "@/lib/haptics";
 import { createClient } from "@/lib/supabase/client";
 import { takePendingScanFile } from "@/lib/pendingScan";
+import { fallbackName } from "@/lib/itemTypeNames";
 
 type AnalysisResult = {
   recognized: boolean;
@@ -156,6 +157,7 @@ export default function HomePage() {
       brand: string | null;
       model: string | null;
       itemType: string | null;
+      color: string | null;
       valueHuf: number | null;
       imageUrl: string | null;
     }>;
@@ -537,6 +539,9 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
+    // `images` intentionally omitted: the search must only re-run when a new
+    // RESULT arrives, not when the user adds/removes photos mid-flow.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPremium, result, refinementDismissed]);
 
   useEffect(() => {
@@ -1269,8 +1274,7 @@ export default function HomePage() {
                         {stats.recent.map((it) => {
                           const name =
                             `${it.brand ?? ""} ${it.model ?? ""}`.trim() ||
-                            it.itemType ||
-                            (lang === "hu" ? "Darab" : "Item");
+                            fallbackName(it.itemType, it.color, lang);
                           return (
                             <Link key={it.id} href={`/scan/${it.id}`} className="text-left">
                               <div className="aspect-square rounded-xl overflow-hidden bg-ink-50 dark:bg-ink-800 mb-2 flex items-center justify-center">

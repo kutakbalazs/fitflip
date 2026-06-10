@@ -25,11 +25,19 @@ function isSizeToken(tok: string): boolean {
   return SIZE_TOKEN_PATTERNS.some((re) => re.test(tok));
 }
 
+// Hungarian suffixed size forms: "42-es", "38-as", "46-os", "45-ös",
+// "M-es", "XL-es". Strip the suffix and keep the base ("42", "M") — the
+// word-boundary title match then catches both "42" and "42-es" in listings.
+function stripHuSuffix(tok: string): string {
+  const m = tok.match(/^(.+?)-(es|as|os|ös)$/i);
+  return m ? m[1] : tok;
+}
+
 export function extractSizeTokens(raw: string): string[] {
   if (!raw) return [];
   return raw
     .split(/[\s,/]+/)
-    .map((s) => s.trim())
+    .map((s) => stripHuSuffix(s.trim()))
     .filter((s) => s.length > 0 && isSizeToken(s));
 }
 

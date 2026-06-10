@@ -6,6 +6,16 @@ import { readLang } from "@/lib/lang";
 
 const STORAGE_KEY = "ff-cookie-consent";
 
+// Other fixed bottom UI (the floating scan button) listens for this event
+// and lifts itself above the banner while it's on screen.
+function announceVisibility(visible: boolean) {
+  try {
+    window.dispatchEvent(new CustomEvent("ff-cookie-banner", { detail: { visible } }));
+  } catch {
+    /* ignore */
+  }
+}
+
 export default function CookieBanner() {
   const [visible, setVisible] = useState(false);
   const [lang, setLang] = useState<"hu" | "en">("hu");
@@ -13,7 +23,10 @@ export default function CookieBanner() {
   useEffect(() => {
     try {
       const consented = localStorage.getItem(STORAGE_KEY);
-      if (!consented) setVisible(true);
+      if (!consented) {
+        setVisible(true);
+        announceVisibility(true);
+      }
     } catch {
       /* ignore */
     }
@@ -27,6 +40,7 @@ export default function CookieBanner() {
       /* ignore */
     }
     setVisible(false);
+    announceVisibility(false);
   };
 
   if (!visible) return null;

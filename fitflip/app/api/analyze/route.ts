@@ -470,8 +470,8 @@ Return ONLY this JSON, nothing else, no markdown:
           ],
         },
       ],
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
+      // `as any`: the web_search server tool isn't in SDK 0.32.1's types.
+    } as any); // eslint-disable-line
 
     // With tool use there can be multiple text blocks (model "thinking"
     // between searches). The final answer is the LAST text block.
