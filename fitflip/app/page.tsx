@@ -1602,7 +1602,7 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <dl className="divide-y divide-ink-100">
+                  <dl className="divide-y divide-ink-100 dark:divide-ink-800">
                     {result.condition && (
                       <div className="flex justify-between px-6 py-3 text-sm">
                         <dt className="text-ink-500 dark:text-ink-400">{t.condition}</dt>
@@ -1785,11 +1785,11 @@ export default function HomePage() {
                         {Array.from({ length: 6 }).map((_, i) => (
                           <li key={i} className="border border-ink-100 dark:border-ink-700 rounded-2xl overflow-hidden bg-white dark:bg-ink-950">
                             <div className="flex gap-3 p-3">
-                              <div className="w-20 h-20 rounded-lg bg-ink-100 shrink-0 pulse-slow" />
+                              <div className="w-20 h-20 rounded-lg bg-ink-100 dark:bg-ink-800 shrink-0 pulse-slow" />
                               <div className="flex-1 min-w-0 space-y-2 py-1">
-                                <div className="h-3 w-4/5 rounded bg-ink-100 pulse-slow" />
-                                <div className="h-3 w-2/5 rounded bg-ink-100 pulse-slow" />
-                                <div className="h-2.5 w-3/5 rounded bg-ink-100 pulse-slow" />
+                                <div className="h-3 w-4/5 rounded bg-ink-100 dark:bg-ink-800 pulse-slow" />
+                                <div className="h-3 w-2/5 rounded bg-ink-100 dark:bg-ink-800 pulse-slow" />
+                                <div className="h-2.5 w-3/5 rounded bg-ink-100 dark:bg-ink-800 pulse-slow" />
                               </div>
                             </div>
                           </li>

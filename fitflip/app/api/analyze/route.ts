@@ -776,6 +776,7 @@ export async function POST(req: NextRequest) {
         item_type: typeof parsed.item_type === "string" && parsed.item_type.trim().length > 0 ? parsed.item_type : null,
         brand: (parsed.brand as string) ?? null,
         model: (parsed.model as string) ?? null,
+        color: typeof parsed.color === "string" && parsed.color.trim().length > 0 ? parsed.color : null,
         era: (parsed.era as string) ?? null,
         condition: (parsed.condition as string) ?? null,
         estimated_value_min_huf: (parsed.estimated_value_min_huf as number) ?? null,
@@ -816,6 +817,7 @@ export async function POST(req: NextRequest) {
         // Some columns may be missing in older DB schemas — retry without
         // the optional ones so the scan still saves.
         const fallback = { ...insertPayload };
+        delete fallback.color;
         delete fallback.image_hash;
         delete fallback.defects;
         delete fallback.condition_discount_pct;

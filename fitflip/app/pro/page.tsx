@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { readLang, writeLang, type Lang } from "@/lib/lang";
-import { createClient } from "@/lib/supabase/client";
 
 type AuthState =
   | { status: "loading" }
@@ -32,19 +31,20 @@ export default function ProPage() {
 
   useEffect(() => {
     setLang(readLang());
-    const supabase = createClient();
-    supabase.auth.getUser().then(async ({ data }) => {
-      if (!data.user) {
-        setAuth({ status: "anon" });
-        return;
-      }
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_premium")
-        .eq("id", data.user.id)
-        .maybeSingle();
-      setAuth({ status: profile?.is_premium ? "premium" : "free" });
-    });
+    // Premium state comes from the server (/api/analyze GET) rather than a
+    // direct client-side profiles read — the latter depends on RLS select
+    // policies and could misreport a premium user as free (risking a
+    // duplicate Stripe subscription from this page's CTA).
+    fetch("/api/analyze")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d || d.authenticated !== true) {
+          setAuth({ status: "anon" });
+          return;
+        }
+        setAuth({ status: d.isPremium ? "premium" : "free" });
+      })
+      .catch(() => setAuth({ status: "anon" }));
   }, []);
 
   const switchLang = (l: Lang) => {

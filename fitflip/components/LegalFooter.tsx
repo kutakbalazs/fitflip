@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { readLang } from "@/lib/lang";
 
 type Props = {
   className?: string;
@@ -11,12 +12,7 @@ export default function LegalFooter({ className = "" }: Props) {
   const [lang, setLang] = useState<"hu" | "en">("hu");
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("ff-lang");
-      if (saved === "en") setLang("en");
-    } catch {
-      /* ignore */
-    }
+    setLang(readLang());
   }, []);
 
   return (

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { readLang } from "@/lib/lang";
 import LegalFooter from "@/components/LegalFooter";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -18,12 +19,7 @@ export default function AccountPage() {
   const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
-    try {
-      const savedLang = localStorage.getItem("ff-lang");
-      if (savedLang === "en") setLang("en");
-    } catch {
-      /* ignore */
-    }
+    setLang(readLang());
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) {
         router.replace("/login");

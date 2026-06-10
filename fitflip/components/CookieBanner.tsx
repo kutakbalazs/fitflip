@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { readLang } from "@/lib/lang";
 
 const STORAGE_KEY = "ff-cookie-consent";
 
@@ -13,11 +14,10 @@ export default function CookieBanner() {
     try {
       const consented = localStorage.getItem(STORAGE_KEY);
       if (!consented) setVisible(true);
-      const savedLang = localStorage.getItem("ff-lang");
-      if (savedLang === "en") setLang("en");
     } catch {
       /* ignore */
     }
+    setLang(readLang());
   }, []);
 
   const dismiss = (choice: "all" | "necessary") => {
