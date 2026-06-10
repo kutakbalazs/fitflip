@@ -181,15 +181,27 @@ export function isStrictFilterType(itemType: string | null | undefined): boolean
 
 export function filterListingsByItemType<T extends { title: string }>(
   listings: T[],
-  itemType: string | null | undefined
+  itemType: string | null | undefined,
+  modelTokens: string[] = []
 ): T[] {
   if (!itemType) return listings;
   const type = itemType.toLowerCase();
   const keywords = ITEM_TYPE_KEYWORDS[type];
   if (!keywords || keywords.length === 0) return listings;
+  // A distinctive model word from the scan (e.g. "Spezial") identifies the
+  // item type by itself — sellers often title sneakers "Adidas Handball
+  // Spezial 42" with no generic type word ("cipő", "sneaker", "buty") at
+  // all, and the keyword filter alone would wrongly drop those. Short
+  // tokens (< 4 chars: "OG", "Low", numbers) are too noisy to count.
+  const strongModelTokens = modelTokens
+    .map((tok) => tok.trim().toLowerCase())
+    .filter((tok) => tok.length >= 4);
   const filtered = listings.filter((l) => {
     const t = ` ${l.title.toLowerCase()} `;
-    return keywords.some((kw) => t.includes(kw.toLowerCase()));
+    return (
+      keywords.some((kw) => t.includes(kw.toLowerCase())) ||
+      strongModelTokens.some((mt) => t.includes(mt))
+    );
   });
   // For strict (non-apparel accessory) types, never fall back — return the
   // empty set so the caller shows "no matches" instead of random clothing.

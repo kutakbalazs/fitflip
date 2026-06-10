@@ -24,7 +24,7 @@ export async function GET() {
       modelTokens,
       colorTokens
     );
-    const typed = filterListingsByItemType(raw, itemType);
+    const typed = filterListingsByItemType(raw, itemType, modelTokens);
 
     // Strict color filter for the demo: only keep listings whose title
     // mentions grey/gray/szürke (or "ash" which is a recognized grey

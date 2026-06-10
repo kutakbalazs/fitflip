@@ -106,7 +106,11 @@ async function processWatcher(
     w.search_model_tokens ?? [],
     w.search_color_tokens ?? []
   );
-  const typeFiltered = filterListingsByItemType(raw, w.search_item_type ?? "");
+  const typeFiltered = filterListingsByItemType(
+    raw,
+    w.search_item_type ?? "",
+    w.search_model_tokens ?? []
+  );
 
   // Only listings (a) under target price, (b) not in baseline.
   const baseline = new Set(w.baseline_urls ?? []);

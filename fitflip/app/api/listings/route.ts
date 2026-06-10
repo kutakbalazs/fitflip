@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
     // Item-type filter: drop listings whose title clearly doesn't match the
     // scanned type (e.g. a phone listing under a T-shirt search). Falls back
     // to unfiltered if the filter would leave us with nothing.
-    const listings = filterListingsByItemType(rawListings, itemType);
+    const listings = filterListingsByItemType(rawListings, itemType, modelTokens);
 
     // Strict mode: when the AI couldn't identify the brand we have less to
     // anchor on, so we ask the verifier to be much pickier and cap the
