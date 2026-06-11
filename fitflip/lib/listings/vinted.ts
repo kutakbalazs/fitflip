@@ -62,14 +62,66 @@ function parsePriceAmount(
   return null;
 }
 
-export async function searchVinted(query: string, limit = 6): Promise<Listing[]> {
+// Vinted's structured colour IDs (from /api/v2/colors). Sellers tag the
+// item's colour separately from the title, so filtering on colour IDs
+// surfaces e.g. blue Spezials whose title never mentions a colour — exactly
+// what a user gets when filtering manually on vinted.hu.
+const VINTED_COLOR_IDS: Record<string, number[]> = {
+  black: [1], fekete: [1],
+  grey: [3], gray: [3], szurke: [3],
+  white: [12], feher: [12],
+  cream: [20], krem: [20],
+  beige: [4], bezs: [4],
+  apricot: [21], coral: [22],
+  orange: [11], narancs: [11], narancssarga: [11],
+  red: [7], piros: [7], voros: [7],
+  burgundy: [23], bordo: [23],
+  pink: [5, 24], rozsaszin: [24],
+  purple: [6, 25], lila: [25],
+  // Shade names are fuzzy — map the whole blue family for any blue word.
+  blue: [9, 26, 27], kek: [9, 26, 27],
+  navy: [27, 9], sotetkek: [27],
+  turquoise: [17], turkiz: [17],
+  mint: [30], menta: [30],
+  green: [10, 28], zold: [10],
+  khaki: [16],
+  brown: [2], barna: [2],
+  yellow: [8], sarga: [8], mustard: [29],
+  silver: [13], ezust: [13],
+  gold: [14], arany: [14],
+};
+
+/** Map scanned colour tokens ("light blue", "black/white/gum", "kék") to Vinted colour IDs. */
+export function vintedColorIdsFor(colorTokens: string[]): number[] {
+  const ids = new Set<number>();
+  for (const tok of colorTokens) {
+    const words = tok
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .split(/[^a-z]+/)
+      .filter(Boolean);
+    for (const w of words) {
+      for (const id of VINTED_COLOR_IDS[w] ?? []) ids.add(id);
+    }
+  }
+  return Array.from(ids);
+}
+
+export async function searchVinted(
+  query: string,
+  limit = 6,
+  colorIds?: number[]
+): Promise<Listing[]> {
   try {
     const { token, cookieHeader } = await getAuth();
     if (!token) {
       console.warn("[vinted] no access token in homepage cookies");
       return [];
     }
-    const url = `https://www.vinted.hu/api/v2/catalog/items?search_text=${encodeURIComponent(query)}&per_page=${limit}&order=relevance`;
+    const colorParam =
+      colorIds && colorIds.length > 0 ? `&color_ids=${colorIds.join(",")}` : "";
+    const url = `https://www.vinted.hu/api/v2/catalog/items?search_text=${encodeURIComponent(query)}&per_page=${limit}&order=relevance${colorParam}`;
 
     const res = await fetch(url, {
       headers: {

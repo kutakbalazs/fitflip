@@ -64,6 +64,55 @@ function hypeBadgeStyle(score: number): string {
   return "bg-white dark:bg-ink-950 text-ink-700 dark:text-ink-200 border border-ink-200 dark:border-ink-700";
 }
 
+// Inline preview of a few "similar" listings (rejected by the visual
+// verifier — other colorway/finish) shown under the exact matches.
+function SimilarPreview({ items, lang }: { items: Listing[]; lang: Lang }) {
+  if (items.length === 0) return null;
+  return (
+    <div className="mt-4">
+      <p className="text-xs uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-2">
+        {lang === "hu" ? "Hasonló darabok" : "Similar items"}
+      </p>
+      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {items.map((l, idx) => (
+          <li
+            key={`sim-${l.source}-${idx}`}
+            className="border border-ink-100 dark:border-ink-700 rounded-2xl overflow-hidden bg-white dark:bg-ink-950 hover:border-ink-300 transition"
+          >
+            <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex gap-3 p-3">
+              {l.imageUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={l.imageUrl}
+                  alt={l.title}
+                  loading="lazy"
+                  className="w-20 h-20 rounded-lg object-cover bg-ink-50 dark:bg-ink-800 shrink-0"
+                />
+              ) : (
+                <div className="w-20 h-20 rounded-lg bg-ink-50 dark:bg-ink-800 shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium line-clamp-2">{l.title}</p>
+                <p className="text-sm text-ink-900 dark:text-ink-50 mt-1">{l.priceLabel}</p>
+                <p className="text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400 mt-1">
+                  {l.source === "vinted"
+                    ? "Vinted"
+                    : l.source === "jofogas"
+                      ? "Jófogás"
+                      : l.source === "ebay"
+                        ? "eBay"
+                        : (l.source as string)}
+                  {l.location ? ` · ${l.location}` : ""}
+                </p>
+              </div>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 const isHeicFile = (file: File): boolean => {
   const name = file.name.toLowerCase();
   return (
@@ -1904,7 +1953,10 @@ export default function HomePage() {
                           </li>
                         ))}
                         </ul>
-                        {(displayedListings.length > 6 || similarListings.length > 0) && (
+                        {similarListings.length > 0 && (
+                          <SimilarPreview items={similarListings.slice(0, 3)} lang={lang} />
+                        )}
+                        {(displayedListings.length > 6 || similarListings.length > 3) && (
                           <button
                             type="button"
                             onClick={() => {
@@ -1920,21 +1972,26 @@ export default function HomePage() {
                         )}
                       </>
                     ) : similarListings.length > 0 ? (
-                      <div className="border border-ink-100 dark:border-ink-700 rounded-2xl p-8 bg-ink-50 dark:bg-ink-800 text-center">
-                        <p className="text-sm text-ink-700 dark:text-ink-200 font-medium mb-4">{t.listingsEmpty}</p>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            haptic("tap");
-                            setShowAllListings(true);
-                          }}
-                          className="px-5 py-2.5 rounded-full border border-ink-200 dark:border-ink-700 hover:bg-white dark:hover:bg-ink-900 transition text-sm font-medium"
-                        >
-                          {lang === "hu"
-                            ? `Hasonló darabok megtekintése (${similarListings.length})`
-                            : `View similar items (${similarListings.length})`}
-                        </button>
-                      </div>
+                      <>
+                        <div className="border border-ink-100 dark:border-ink-700 rounded-2xl p-5 bg-ink-50 dark:bg-ink-800 text-center mb-1">
+                          <p className="text-sm text-ink-700 dark:text-ink-200 font-medium">{t.listingsEmpty}</p>
+                        </div>
+                        <SimilarPreview items={similarListings.slice(0, 3)} lang={lang} />
+                        {similarListings.length > 3 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              haptic("tap");
+                              setShowAllListings(true);
+                            }}
+                            className="w-full mt-3 px-4 py-2.5 rounded-full border border-ink-200 dark:border-ink-700 hover:bg-ink-50 dark:hover:bg-ink-800 transition text-sm font-medium"
+                          >
+                            {lang === "hu"
+                              ? `Összes megjelenítése (${similarListings.length})`
+                              : `Show all (${similarListings.length})`}
+                          </button>
+                        )}
+                      </>
                     ) : (
                       <div className="border border-ink-100 dark:border-ink-700 rounded-2xl p-8 bg-ink-50 dark:bg-ink-800 text-center">
                         <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-white dark:bg-ink-950 border border-ink-100 dark:border-ink-700 flex items-center justify-center text-ink-400 dark:text-ink-500">

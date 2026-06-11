@@ -1,5 +1,5 @@
 import type { Listing } from "./types";
-import { searchVinted } from "./vinted";
+import { searchVinted, vintedColorIdsFor } from "./vinted";
 import { searchJofogas } from "./jofogas";
 import { searchEbay } from "./ebay";
 
@@ -85,7 +85,7 @@ type ScoredListing = {
   colorMatched: boolean;
 };
 
-const PER_SOURCE_LIMIT = 6;
+const PER_SOURCE_LIMIT = 9;
 
 function balanceBySource(listings: Listing[]): Listing[] {
   const buckets = new Map<string, Listing[]>();
@@ -118,7 +118,8 @@ function scoreListing(
   listing: Listing,
   brandTokens: string[],
   modelTokens: string[],
-  colorTokens: string[]
+  colorTokens: string[],
+  colorConfirmedUrls: Set<string>
 ): ScoredListing {
   const title = normalize(listing.title);
   const brandMatched =
@@ -126,10 +127,14 @@ function scoreListing(
       ? true
       : brandTokens.some((b) => titleContains(title, b));
   const modelMatchCount = modelTokens.filter((t) => titleContains(title, t)).length;
+  // Colour can be confirmed two ways: the title mentions it, OR the listing
+  // came from Vinted's structured colour filter (the seller tagged the
+  // colour even though the title doesn't say it).
   const colorMatched =
     colorTokens.length === 0
       ? true
-      : colorTokens.some((c) => titleContains(title, c));
+      : colorConfirmedUrls.has(listing.url) ||
+        colorTokens.some((c) => titleContains(title, c));
 
   let score = 0;
   if (brandTokens.length > 0 && brandMatched) score += 3;
@@ -161,10 +166,32 @@ export async function searchAllMarketplaces(
     tasks.push(searchJofogas(q, 12));
     tasks.push(searchEbay(q, 12));
   }
-  const results = await Promise.allSettled(tasks);
+
+  // Extra Vinted query filtered on the seller-tagged colour: catches the
+  // right-colour listings whose titles never mention a colour at all
+  // ("Adidas Handball Spezial 42"). These count as colour-confirmed in
+  // scoring even without a colour word in the title.
+  const colorIds = vintedColorIdsFor(colorTokens);
+  const colorTaskPromise: Promise<Listing[]> =
+    colorIds.length > 0 && cleaned[0]
+      ? searchVinted(cleaned[0], 16, colorIds).catch(() => [])
+      : Promise.resolve([]);
+
+  const [results, colorResults] = await Promise.all([
+    Promise.allSettled(tasks),
+    colorTaskPromise,
+  ]);
 
   const seen = new Set<string>();
   const all: Listing[] = [];
+  const colorConfirmedUrls = new Set<string>();
+  // Colour-confirmed results go in first so they win the URL dedupe.
+  for (const l of colorResults) {
+    colorConfirmedUrls.add(l.url);
+    if (seen.has(l.url)) continue;
+    seen.add(l.url);
+    all.push(l);
+  }
   for (const r of results) {
     if (r.status !== "fulfilled") continue;
     for (const l of r.value) {
@@ -182,7 +209,7 @@ export async function searchAllMarketplaces(
   }
 
   const scored = all.map((l) =>
-    scoreListing(l, brandTokens, modelTokens, colorTokens)
+    scoreListing(l, brandTokens, modelTokens, colorTokens, colorConfirmedUrls)
   );
 
   // Tier 1: brand-match (any brand token) AND at least one model token match.

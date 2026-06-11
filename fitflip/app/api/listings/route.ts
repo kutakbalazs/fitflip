@@ -129,7 +129,11 @@ export async function POST(req: NextRequest) {
             color: colorHint || undefined,
             itemType: itemType || undefined,
           },
-          { strict }
+          // Haiku: same verification prompt, ~75% cheaper — needed now that
+          // up to ~27 candidates reach verification (was 18). Accuracy
+          // matches Sonnet on this compare-thumbnails task (validated on
+          // the watcher cron, which has used Haiku from the start).
+          { strict, model: "claude-haiku-4-5" }
         );
         finalListings = kept;
         similar = dropped;
