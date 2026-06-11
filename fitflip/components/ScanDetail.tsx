@@ -136,7 +136,9 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
       data.hypeScore >= 7 &&
       data.brand
     ) {
+      setStoryLoading(true);
       fetchStory(l).then((s) => {
+        setStoryLoading(false);
         if (s) setStoryText(s);
         else setStoryUnavailable(true);
       });

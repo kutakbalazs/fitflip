@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
       description: typeof fields.description === "string" ? fields.description.slice(0, 2000) : null,
       selling_tip: typeof fields.selling_tip === "string" ? fields.selling_tip.slice(0, 1000) : null,
       hype_label: typeof fields.hype_label === "string" ? fields.hype_label.slice(0, 100) : null,
+      story: typeof fields.story === "string" ? fields.story.slice(0, 5000) : null,
       defects: Array.isArray(fields.defects)
         ? fields.defects.filter((d: unknown): d is string => typeof d === "string").slice(0, 12)
         : [],
@@ -45,7 +46,7 @@ ${JSON.stringify(safe)}`;
     const client = new Anthropic({ apiKey });
     const response = await client.messages.create({
       model: "claude-haiku-4-5",
-      max_tokens: 1000,
+      max_tokens: 2500,
       temperature: 0,
       messages: [{ role: "user", content: prompt }],
     });

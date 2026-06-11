@@ -52,9 +52,10 @@ type TranslatableFields = {
   selling_tip: string | null;
   hype_label: string | null;
   defects: string[] | null;
+  story: string | null;
 };
 
-function pickTranslatable(r: AnalysisResult): TranslatableFields {
+function pickTranslatable(r: AnalysisResult, storyOverride: string | null): TranslatableFields {
   return {
     condition: r.condition,
     era: r.era,
@@ -62,6 +63,7 @@ function pickTranslatable(r: AnalysisResult): TranslatableFields {
     selling_tip: r.selling_tip,
     hype_label: r.hype_label,
     defects: r.defects,
+    story: storyOverride ?? r.story,
   };
 }
 
@@ -281,8 +283,12 @@ export default function HomePage() {
     if (result.story && result.story.trim().length > 0) return; // already stored
     if (!(typeof result.hype_score === "number" && result.hype_score >= 7 && result.brand)) return;
     let cancelled = false;
+    // Visible loading state from the moment the result shows — the user can
+    // see the story is already being written before they ever tap.
+    setStoryLoading(true);
     fetchStory(result.scan_id, lang).then((s) => {
       if (cancelled) return;
+      setStoryLoading(false);
       if (s) setStoryText(s);
       else setStoryUnavailable(true);
     });
@@ -296,14 +302,18 @@ export default function HomePage() {
   // in, translate the displayed AI text (cached per language, view-only).
   useEffect(() => {
     if (!result || !resultLang || lang === resultLang) return;
+    const applyFields = (f: TranslatableFields) => {
+      setResult((r) => (r ? { ...r, ...f } : r));
+      if (f.story) setStoryText(f.story);
+      setResultLang(lang);
+    };
     const cached = translationCacheRef.current[lang];
     if (cached) {
-      setResult((r) => (r ? { ...r, ...cached } : r));
-      setResultLang(lang);
+      applyFields(cached);
       return;
     }
     let cancelled = false;
-    const original = pickTranslatable(result);
+    const original = pickTranslatable(result, storyText);
     fetch("/api/translate-scan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -315,8 +325,7 @@ export default function HomePage() {
         // Keep the original language version retrievable too.
         translationCacheRef.current[resultLang] = original;
         translationCacheRef.current[lang] = d.fields as TranslatableFields;
-        setResult((r) => (r ? { ...r, ...(d.fields as TranslatableFields) } : r));
-        setResultLang(lang);
+        applyFields(d.fields as TranslatableFields);
       })
       .catch(() => {});
     return () => {

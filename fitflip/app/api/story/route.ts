@@ -70,7 +70,9 @@ Return ONLY this JSON, nothing else: {"story": "..." | null}`;
 
     const client = new Anthropic({ apiKey });
     const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      // Haiku: ~3x faster than Sonnet (story ready before most users tap the
+      // button) and plenty good for 2-3 paragraphs of documented lore.
+      model: "claude-haiku-4-5",
       max_tokens: 800,
       messages: [{ role: "user", content: prompt }],
     });
