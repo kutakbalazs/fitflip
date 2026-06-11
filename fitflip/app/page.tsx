@@ -528,6 +528,13 @@ export default function HomePage() {
     Array.from(files).forEach((f) => processFile(f));
   };
 
+  // The listings search must re-run only when the SEARCH INPUTS change
+  // (new scan, refinement changing brand/model) — not when the result object
+  // is merely re-created, e.g. by the view-only language translation.
+  const listingsSearchKey = result
+    ? [result.scan_id, result.brand, result.model, result.color, result.search_query].join("|")
+    : null;
+
   useEffect(() => {
     if (!result) {
       setListings(null);
@@ -726,10 +733,11 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-    // `images` intentionally omitted: the search must only re-run when a new
-    // RESULT arrives, not when the user adds/removes photos mid-flow.
+    // `images` intentionally omitted (only a new RESULT re-runs the search)
+    // and `result` itself is keyed via listingsSearchKey above, so a mere
+    // object re-creation (e.g. language translation) can't re-trigger it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPremium, result, refinementDismissed]);
+  }, [isPremium, listingsSearchKey, refinementDismissed]);
 
   useEffect(() => {
     if (authenticated !== true) return;
