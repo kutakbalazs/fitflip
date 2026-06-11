@@ -47,12 +47,18 @@ export async function GET(req: NextRequest) {
   }
 
   const rows = (watchers ?? []) as WatcherRow[];
+  const diagnostics: unknown[] = [];
   let totalChecked = 0;
   let totalNotifications = 0;
   let totalSkipped = 0;
 
   // Bypass the 20h rate limit for manual testing: ?force=1.
-  const force = new URL(req.url).searchParams.get("force") === "1";
+  const params = new URL(req.url).searchParams;
+  // Dry-run diagnostics: runs the full pipeline but writes NOTHING (no
+  // notifications, no baseline/last_checked updates) and returns per-watcher
+  // stage counts — for debugging why a watcher isn't producing matches.
+  const dry = params.get("dry") === "1";
+  const force = dry || params.get("force") === "1";
 
   // Cache fetched scan images so multiple watchers on the same scan don't
   // hit storage twice.
@@ -74,8 +80,9 @@ export async function GET(req: NextRequest) {
 
     totalChecked++;
     try {
-      const newCount = await processWatcher(admin, watcher, imageCache);
+      const { newCount, diag } = await processWatcher(admin, watcher, imageCache, dry);
       if (newCount > 0) totalNotifications++;
+      if (dry) diagnostics.push(diag);
     } catch (err) {
       console.warn(`[cron] watcher ${watcher.id} failed:`, err);
     }
@@ -86,18 +93,37 @@ export async function GET(req: NextRequest) {
     watchersChecked: totalChecked,
     watchersSkipped: totalSkipped,
     notificationsCreated: totalNotifications,
+    ...(dry ? { dry: true, diagnostics } : {}),
   });
 }
+
+type WatcherDiag = {
+  watcher: string;
+  stages: Record<string, number>;
+  samples: string[];
+  sizesSeen?: string[];
+};
 
 async function processWatcher(
   admin: ReturnType<typeof createAdminClient>,
   w: WatcherRow,
-  imageCache: Map<string, { data: string; mediaType: "image/jpeg" } | null>
-): Promise<number> {
+  imageCache: Map<string, { data: string; mediaType: "image/jpeg" } | null>,
+  dry = false
+): Promise<{ newCount: number; diag: WatcherDiag }> {
+  const diag: WatcherDiag = {
+    watcher: `${w.search_brand ?? "?"} ${w.search_model ?? ""} (cél: ${w.target_price_huf} Ft, méret: ${w.size_filter ?? "-"})`,
+    stages: {},
+    samples: [],
+  };
+  const markChecked = async () => {
+    if (!dry) {
+      await admin.from("price_watchers").update({ last_checked_at: new Date().toISOString() }).eq("id", w.id);
+    }
+  };
   if (!w.search_queries || w.search_queries.length === 0) {
     // Cannot run a search without queries.
-    await admin.from("price_watchers").update({ last_checked_at: new Date().toISOString() }).eq("id", w.id);
-    return 0;
+    await markChecked();
+    return { newCount: 0, diag };
   }
 
   const { listings: raw } = await searchAllMarketplaces(
@@ -111,16 +137,17 @@ async function processWatcher(
     w.search_item_type ?? "",
     w.search_model_tokens ?? []
   );
+  diag.stages.raw = raw.length;
+  diag.stages.typeFiltered = typeFiltered.length;
 
   // Only listings (a) under target price, (b) not in baseline.
   const baseline = new Set(w.baseline_urls ?? []);
-  let candidates: Listing[] = typeFiltered.filter(
-    (l) =>
-      typeof l.priceHuf === "number" &&
-      l.priceHuf > 0 &&
-      l.priceHuf <= w.target_price_huf &&
-      !baseline.has(l.url)
+  const priced = typeFiltered.filter(
+    (l) => typeof l.priceHuf === "number" && l.priceHuf > 0 && l.priceHuf <= w.target_price_huf
   );
+  diag.stages.underTargetPrice = priced.length;
+  let candidates: Listing[] = priced.filter((l) => !baseline.has(l.url));
+  diag.stages.notInBaseline = candidates.length;
 
   // Tightening for watcher cron: require at least one brand or model token
   // to appear as a whole word in the listing title. Cheap, deterministic
@@ -142,6 +169,7 @@ async function processWatcher(
     };
     candidates = candidates.filter((l) => titleHasAnyToken(l.title));
   }
+  diag.stages.afterTokenGate = candidates.length;
 
   // Optional size filter: only listings whose title contains the user's
   // size tokens. If the filter strips everything, drop out — better an
@@ -149,13 +177,19 @@ async function processWatcher(
   if (w.size_filter && w.size_filter.trim().length > 0) {
     const tokens = extractSizeTokens(w.size_filter);
     if (tokens.length > 0) {
-      candidates = candidates.filter((l) => listingMatchesSize(l.title, tokens));
+      // Diagnostics: what sizes were on offer before the filter?
+      diag.sizesSeen = candidates.map((l) => l.sizeLabel ?? "?").slice(0, 20);
+      candidates = candidates.filter((l) => listingMatchesSize(l, tokens));
     }
   }
+  diag.stages.afterSizeFilter = candidates.length;
+  diag.samples = candidates.slice(0, 8).map(
+    (l) => `[${l.source}] ${l.title.slice(0, 60)} | méret: ${l.sizeLabel ?? "?"} | ${l.priceLabel}`
+  );
 
   if (candidates.length === 0) {
-    await admin.from("price_watchers").update({ last_checked_at: new Date().toISOString() }).eq("id", w.id);
-    return 0;
+    await markChecked();
+    return { newCount: 0, diag };
   }
 
   // Visually verify the candidates against the original scan image.
@@ -189,9 +223,21 @@ async function processWatcher(
     }
   }
 
+  diag.stages.visuallyVerified = verified.length;
+  // Keep the pre-verify samples too so it's visible WHAT the verifier saw.
+  diag.samples = [
+    ...diag.samples.map((x) => `JELÖLT: ${x}`),
+    ...verified.slice(0, 5).map((l) => `ELFOGADVA: [${l.source}] ${l.title.slice(0, 60)}`),
+  ];
+
   if (verified.length === 0) {
-    await admin.from("price_watchers").update({ last_checked_at: new Date().toISOString() }).eq("id", w.id);
-    return 0;
+    await markChecked();
+    return { newCount: 0, diag };
+  }
+
+  if (dry) {
+    // Diagnostics only — no notification, no baseline mutation.
+    return { newCount: verified.length, diag };
   }
 
   // Insert notification.
@@ -215,7 +261,7 @@ async function processWatcher(
     })
     .eq("id", w.id);
 
-  return verified.length;
+  return { newCount: verified.length, diag };
 }
 
 async function fetchScanImage(

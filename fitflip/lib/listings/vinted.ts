@@ -187,6 +187,7 @@ export async function searchVinted(
         imageUrl: item.photo?.url ?? null,
         location: null,
         condition: item.status ?? null,
+        sizeLabel: item.size_title ?? null,
       };
     });
   } catch (err) {

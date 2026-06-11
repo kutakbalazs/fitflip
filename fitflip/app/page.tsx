@@ -954,7 +954,7 @@ export default function HomePage() {
     if (!listings) return null;
     const withMatch = listings.map((l) => ({
       listing: l,
-      match: sizeTokens.length > 0 && listingMatchesSize(l.title, sizeTokens),
+      match: sizeTokens.length > 0 && listingMatchesSize(l, sizeTokens),
     }));
     if (sizeTokens.length > 0) {
       withMatch.sort((a, b) => Number(b.match) - Number(a.match));

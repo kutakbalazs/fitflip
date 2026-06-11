@@ -160,6 +160,8 @@ export default function WatchersPage() {
         targetUnder: (p: string) => `Célár: ${p} alatt`,
         sizeLabel: (s: string) => `Méret: ${s}`,
         sinceLabel: (d: string) => `Aktív ${d} óta`,
+        lastChecked: (d: string) => `Utoljára ellenőrizve: ${d}`,
+        notCheckedYet: "Első ellenőrzés a következő napi futáskor",
         findingsCount: (n: number) => (n === 0 ? "Még nincs új találat" : `${n} új találat`),
         unsubscribe: "Leiratkozás",
         unknown: "Ismeretlen darab",
@@ -173,6 +175,8 @@ export default function WatchersPage() {
         targetUnder: (p: string) => `Target: under ${p}`,
         sizeLabel: (s: string) => `Size: ${s}`,
         sinceLabel: (d: string) => `Active since ${d}`,
+        lastChecked: (d: string) => `Last checked: ${d}`,
+        notCheckedYet: "First check at the next daily run",
         findingsCount: (n: number) => (n === 0 ? "No new findings yet" : `${n} new finding${n === 1 ? "" : "s"}`),
         unsubscribe: "Unsubscribe",
         unknown: "Unknown item",
@@ -274,6 +278,8 @@ function WatcherItem({
     sizeLabel: (s: string) => string;
     findingsCount: (n: number) => string;
     sinceLabel: (d: string) => string;
+    lastChecked: (d: string) => string;
+    notCheckedYet: string;
     unsubscribe: string;
   };
   lang: "hu" | "en";
@@ -388,6 +394,17 @@ function WatcherItem({
                   day: "numeric",
                 }),
               )}
+              {" · "}
+              {w.last_checked_at
+                ? t.lastChecked(
+                    new Date(w.last_checked_at).toLocaleString(lang === "hu" ? "hu-HU" : "en-US", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }),
+                  )
+                : t.notCheckedYet}
             </p>
           </div>
           <svg

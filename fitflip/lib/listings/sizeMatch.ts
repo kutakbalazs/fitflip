@@ -41,10 +41,17 @@ export function extractSizeTokens(raw: string): string[] {
     .filter((s) => s.length > 0 && isSizeToken(s));
 }
 
-export function listingMatchesSize(title: string, tokens: string[]): boolean {
-  if (!title || tokens.length === 0) return false;
+export function listingMatchesSize(
+  listing: { title: string; sizeLabel?: string | null },
+  tokens: string[]
+): boolean {
+  if (tokens.length === 0) return false;
+  // Sellers usually set the size in the marketplace's structured field
+  // (Vinted size_title) rather than the title — match against both. Word
+  // boundaries keep "46" from matching "46 2/3" (a different size).
+  const haystack = `${listing.title} ${listing.sizeLabel ?? ""}`;
   return tokens.some((tok) => {
     const escaped = tok.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    return new RegExp(`\\b${escaped}\\b`, "i").test(title);
+    return new RegExp(`\\b${escaped}\\b`, "i").test(haystack);
   });
 }
