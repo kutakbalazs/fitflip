@@ -1,0 +1,44 @@
+[
+  {
+    "name": "piros Converse Chuck Taylor (új, dobozzal)",
+    "image": "converse.jpg",
+    "expect": {
+      "recognized": true,
+      "brandPattern": "converse",
+      "modelPattern": "chuck taylor|all star",
+      "itemType": "sneaker",
+      "minExactListings": 1
+    }
+  },
+  {
+    "name": "adidas Stan Smith white/navy (új, címkés)",
+    "image": "stansmith.jpg",
+    "expect": {
+      "recognized": true,
+      "brandPattern": "adidas",
+      "modelPattern": "stan smith",
+      "itemType": "sneaker",
+      "minExactListings": 3
+    }
+  },
+  {
+    "name": "adidas Handball Spezial fekete",
+    "image": "spezial.jpg",
+    "expect": {
+      "recognized": true,
+      "brandPattern": "adidas",
+      "modelPattern": "spezial",
+      "itemType": "sneaker",
+      "minExactListings": 4,
+      "minTotalListings": 12
+    }
+  },
+  {
+    "name": "farmerdzseki (több darab a képen — a dzsekit kell elemeznie)",
+    "image": "denim.jpg",
+    "expect": {
+      "recognized": true,
+      "itemType": "jacket"
+    }
+  }
+]

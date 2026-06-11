@@ -20,6 +20,21 @@ type VintedSearchResponse = {
   items?: VintedItem[];
 };
 
+// The anonymous Vinted token is valid for a while — cache it module-level so
+// a scan's 6-7 parallel searches don't each refetch the homepage (saves
+// ~0.5-1s per scan). Refreshed on expiry or when a search comes back 401/403.
+let authCache: { token: string; cookieHeader: string; at: number } | null = null;
+const AUTH_TTL_MS = 10 * 60_000;
+
+async function getAuthCached(force = false): Promise<{ token: string; cookieHeader: string }> {
+  if (!force && authCache && Date.now() - authCache.at < AUTH_TTL_MS) {
+    return authCache;
+  }
+  const fresh = await getAuth();
+  if (fresh.token) authCache = { ...fresh, at: Date.now() };
+  return fresh;
+}
+
 async function getAuth(): Promise<{ token: string; cookieHeader: string }> {
   const res = await fetch("https://www.vinted.hu/", {
     headers: {
@@ -114,7 +129,7 @@ export async function searchVinted(
   colorIds?: number[]
 ): Promise<Listing[]> {
   try {
-    const { token, cookieHeader } = await getAuth();
+    const { token, cookieHeader } = await getAuthCached();
     if (!token) {
       console.warn("[vinted] no access token in homepage cookies");
       return [];
@@ -123,16 +138,24 @@ export async function searchVinted(
       colorIds && colorIds.length > 0 ? `&color_ids=${colorIds.join(",")}` : "";
     const url = `https://www.vinted.hu/api/v2/catalog/items?search_text=${encodeURIComponent(query)}&per_page=${limit}&order=relevance${colorParam}`;
 
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": UA,
-        Accept: "application/json, text/plain, */*",
-        "Accept-Language": "hu-HU,hu;q=0.9,en;q=0.8",
-        Referer: "https://www.vinted.hu/",
-        Authorization: `Bearer ${token}`,
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
-    });
+    const doFetch = (auth: { token: string; cookieHeader: string }) =>
+      fetch(url, {
+        headers: {
+          "User-Agent": UA,
+          Accept: "application/json, text/plain, */*",
+          "Accept-Language": "hu-HU,hu;q=0.9,en;q=0.8",
+          Referer: "https://www.vinted.hu/",
+          Authorization: `Bearer ${auth.token}`,
+          ...(auth.cookieHeader ? { Cookie: auth.cookieHeader } : {}),
+        },
+      });
+
+    let res = await doFetch({ token, cookieHeader });
+    // Cached token expired mid-window — refresh once and retry.
+    if (res.status === 401 || res.status === 403) {
+      const fresh = await getAuthCached(true);
+      if (fresh.token) res = await doFetch(fresh);
+    }
 
     if (!res.ok) {
       console.warn("[vinted] non-OK status:", res.status);

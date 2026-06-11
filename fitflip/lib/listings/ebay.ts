@@ -114,14 +114,19 @@ export async function searchEbay(query: string, limit = 12): Promise<Listing[]> 
       const rawUrl = item.itemWebUrl ?? "https://www.ebay.de/";
       const stableUrl = rawUrl.split("?")[0];
 
+      // eBay image URLs are unsigned size variants (s-l64 … s-l1600). 400px
+      // is plenty for both the UI thumbnail and visual verification, and
+      // it's much cheaper to fetch + send to the vision model.
+      const rawImage = item.image?.imageUrl ?? item.thumbnailImages?.[0]?.imageUrl ?? null;
+      const imageUrl = rawImage ? rawImage.replace(/s-l\d+\./, "s-l400.") : null;
+
       return {
         source: "ebay",
         title: item.title ?? "eBay listing",
         priceHuf,
         priceLabel,
         url: stableUrl,
-        imageUrl:
-          item.image?.imageUrl ?? item.thumbnailImages?.[0]?.imageUrl ?? null,
+        imageUrl,
         location: item.itemLocation?.country ?? null,
         condition: item.condition ?? null,
       };

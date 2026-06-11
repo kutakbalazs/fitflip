@@ -98,6 +98,9 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
   const newScanInputRef = useRef<HTMLInputElement>(null);
   const [lang, setLang] = useState<Lang>("hu");
   const [showStory, setShowStory] = useState(false);
+  const [storyText, setStoryText] = useState<string | null>(null);
+  const [storyLoading, setStoryLoading] = useState(false);
+  const [storyUnavailable, setStoryUnavailable] = useState(false);
   const [listings, setListings] = useState<Listing[] | null>(null);
   const [similarListings, setSimilarListings] = useState<Listing[]>([]);
   const [showAllListings, setShowAllListings] = useState(false);
@@ -260,19 +263,59 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
             </div>
           )}
 
-          {data.story && data.story.trim().length > 0 && (
+          {!storyUnavailable &&
+            ((data.story && data.story.trim().length > 0) ||
+              storyText ||
+              (typeof data.hypeScore === "number" && data.hypeScore >= 7 && data.brand)) && (
             <button
               type="button"
-              onClick={() => { haptic("tap"); setShowStory(true); }}
-              className="w-full flex items-center justify-between gap-3 px-6 py-3.5 border-t border-ink-100 dark:border-ink-700 text-left hover:bg-ink-50 dark:hover:bg-ink-800 transition group"
+              disabled={storyLoading}
+              onClick={async () => {
+                haptic("tap");
+                const existing = storyText ?? (data.story?.trim() ? data.story : null);
+                if (existing) {
+                  setShowStory(true);
+                  return;
+                }
+                // Stories are generated lazily since the scan flow no longer
+                // produces them — first tap generates + persists server-side.
+                setStoryLoading(true);
+                try {
+                  const res = await fetch("/api/story", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ scan_id: data.id, lang }),
+                  });
+                  const d = await res.json();
+                  if (typeof d?.story === "string" && d.story.trim().length > 0) {
+                    setStoryText(d.story);
+                    setShowStory(true);
+                  } else {
+                    setStoryUnavailable(true);
+                  }
+                } catch {
+                  setStoryUnavailable(true);
+                } finally {
+                  setStoryLoading(false);
+                }
+              }}
+              className="w-full flex items-center justify-between gap-3 px-6 py-3.5 border-t border-ink-100 dark:border-ink-700 text-left hover:bg-ink-50 dark:hover:bg-ink-800 transition group disabled:opacity-60"
             >
               <span className="flex items-center gap-2.5">
                 <span className="w-7 h-7 rounded-full bg-ink-900 text-white text-sm flex items-center justify-center" aria-hidden="true">★</span>
-                <span className="text-sm font-medium">{hu ? "A darab története" : "The story of this piece"}</span>
+                <span className="text-sm font-medium">
+                  {storyLoading
+                    ? hu ? "Sztori betöltése…" : "Loading story…"
+                    : hu ? "A darab története" : "The story of this piece"}
+                </span>
               </span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-500 dark:text-ink-400 group-hover:text-ink-900 dark:group-hover:text-white transition" aria-hidden="true">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
+              {storyLoading ? (
+                <span className="w-4 h-4 rounded-full border-2 border-ink-300 border-t-ink-900 dark:border-ink-600 dark:border-t-white animate-spin" aria-hidden="true" />
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-500 dark:text-ink-400 group-hover:text-ink-900 dark:group-hover:text-white transition" aria-hidden="true">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              )}
             </button>
           )}
         </div>
@@ -453,12 +496,12 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
         similarListings={similarListings}
       />
 
-      {data.story && (
+      {(storyText || data.story) && (
         <StoryModal
           open={showStory}
           onClose={() => setShowStory(false)}
           title={title || (hu ? "Sztori" : "Story")}
-          story={data.story}
+          story={storyText ?? data.story ?? ""}
           lang={lang}
         />
       )}

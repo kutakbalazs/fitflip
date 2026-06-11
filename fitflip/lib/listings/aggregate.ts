@@ -177,6 +177,21 @@ export async function searchAllMarketplaces(
       ? searchVinted(cleaned[0], 16, colorIds).catch(() => [])
       : Promise.resolve([]);
 
+  // eBay free-text search also matches seller-filled item aspects (colour
+  // included), so an extra "primary query + base colour" eBay task surfaces
+  // right-colour items whose titles omit the colour word.
+  const BASE_COLOR_WORDS = new Set([
+    "black", "white", "grey", "gray", "red", "blue", "navy", "green",
+    "yellow", "orange", "pink", "purple", "brown", "beige", "cream",
+    "khaki", "turquoise", "mint", "silver", "gold",
+  ]);
+  const baseColorWord = colorTokens
+    .flatMap((t) => normalize(t).split(" "))
+    .find((w) => BASE_COLOR_WORDS.has(w));
+  if (baseColorWord && cleaned[0]) {
+    tasks.push(searchEbay(`${cleaned[0]} ${baseColorWord}`, 12));
+  }
+
   const [results, colorResults] = await Promise.all([
     Promise.allSettled(tasks),
     colorTaskPromise,

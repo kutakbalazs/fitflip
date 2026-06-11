@@ -9,7 +9,12 @@ export const dynamic = "force-dynamic";
 
 const FREE_DAILY_LIMIT = 3;
 
-function buildPrompt(
+/**
+ * Per-scan dynamic context (user hint, size, multi-image note). Sent as a
+ * separate user text block so the big static rule prompt stays byte-stable
+ * and prompt-cacheable.
+ */
+function buildDynamicNote(
   lang: "hu" | "en",
   imageCount: number = 1,
   userHint?: string,
@@ -59,9 +64,21 @@ For sneakers/footwear: size affects the market price (rare sizes can be cheaper 
 - If the FIRST image contains multiple clothing/footwear items and it's unclear which the user means, pick the centered or most prominent one, and add to the description: "I saw multiple items in the photo, analyzed the most prominent one. For a more accurate match, upload a closer photo of just that item."`
       : "";
   if (lang === "hu") {
+    return `${userHintBlockHu}${userSizeBlockHu}${multiNoteHu}`.trim();
+  }
+  return `${userHintBlockEn}${userSizeBlockEn}${multiNoteEn}`.trim();
+}
+
+/**
+ * The static rule prompt (per language). Byte-identical across scans, so it
+ * is sent as a cache_control-marked system block — Anthropic caches it and
+ * subsequent scans pay ~10% for these ~4k tokens instead of full price.
+ */
+function buildPrompt(lang: "hu" | "en"): string {
+  if (lang === "hu") {
     return `Te a FitFlip vagy – egy precíziós AI azonosító divatcikkekhez (sneakerek, vintage ruhák, streetwear, designer darabok). A pontosság a legfontosabb: jobb őszintén bizonytalannak lenni, mint hibázni.
 
-NYELV: az ÖSSZES felhasználónak megjelenő szöveges válasz (condition, defects, description, story, selling_tip, hype_label, era) KIZÁRÓLAG MAGYARUL legyen. NE keverj angol szavakat.${userHintBlockHu}${userSizeBlockHu}${multiNoteHu}
+NYELV: az ÖSSZES felhasználónak megjelenő szöveges válasz (condition, defects, description, selling_tip, hype_label, era) KIZÁRÓLAG MAGYARUL legyen. NE keverj angol szavakat.
 
 ELEMZÉSI MÓDSZER (kövesd ezt a sorrendet):
 1. Megerősítés: tényleg ruházat vagy lábbeli van a képen? Ha nem, állítsd recognized:false-ra.
@@ -178,6 +195,7 @@ VÁLASZ FORMÁTUM (CSAK ezt a JSON-t add vissza, semmi mást, semmi markdown):
   "brand": "string vagy null",
   "model": "string vagy null",
   "color": "domináns szín vagy hivatalos colorway angolul, vagy null",
+  "base_colors": ["1-2 EGYSZERŰ angol alapszín KIZÁRÓLAG piaci szűréshez, ebből a listából: black | white | grey | red | blue | navy | green | yellow | orange | pink | purple | brown | beige | cream | khaki | turquoise | mint | silver | gold. Colorway-nevet (pl. 'Bred', 'Night Indigo') ide NE írj — fordítsd le alapszínre (Bred → black, red; Night Indigo → navy). Üres tömb ha nem megállapítható."],
   "visual_keywords": ["3-5 vizuális kereső-kifejezés angolul, brand nélkül"],
   "era": "string vagy null",
   "condition": "új | nagyon jó | jó | használt | rossz" vagy null,
@@ -188,7 +206,6 @@ VÁLASZ FORMÁTUM (CSAK ezt a JSON-t add vissza, semmi mást, semmi markdown):
   "estimated_value_min_huf": number vagy null (MÁR diszkontált),
   "estimated_value_max_huf": number vagy null (MÁR diszkontált),
   "description": "2-3 mondat TISZTA magyarul a darabról – mit látsz, mi az érdekes benne, ha bizonytalan vagy akkor miért. TILOS belső mezőnevek vagy hunglish: ne írd le hogy 'is_definitely_new', 'retail_price_huf', 'new-jelzők', 'TRUE/FALSE', 'condition_discount_pct'. Természetes, eladó-szövegszerű magyar mondatok legyenek, technikai zsargon nélkül.",
-  "story": "string vagy null — HA a darab kulturálisan jelentős (ikonikus colorway, híres kollaboráció, jelentős release, sneakerhead-számára aranyat-érő háttér: pl. Air Jordan 1 'Shattered Backboard', Travis Scott AJ1, Yeezy Boost 350 'Zebra', Off-White Air Presto, Supreme x Louis Vuitton, Cactus Plant Flea Market kollabok, stb.), akkor 2-3 BEKEZDÉSES magyar sztori, bekezdéseket DUPLA SORTÖRÉSSEL elválasztva (\\n\\n). Tartalom: (1) release háttér + kollab/designer; (2) kulturális relevancia, mi tette ikonikussá, sztárok/kampányok; (3) opcionálisan: érdekes detail (origin sztori, eredeti név, releaselink). Ha NEM kulturálisan jelentős (átlagos sneaker, generic vintage, ismeretlen darab), akkor null. NE találj ki sztorit, csak tényleges, kulturálisan dokumentált háttér esetén. NE szerepeltesd a sztoriban az árbecslést.",
   "hype_score": "number 1-10 vagy null — kulturális/resell hype mértéke. 10 = grail-tier (limited Travis Scott, Off-White, Dior x AJ1), 8-9 = highly sought (Mocha, Bred, Chicago), 6-7 = popular but accessible (Yeezy 350 classics, Jordan 4 White Cement), 4-5 = solid mainstream (Air Force 1, Stan Smith, Chuck Taylor), 1-3 = generic/no hype. Null ha nem azonosított vagy nem ismered.",
   "hype_label": "string vagy null — RÖVID badge CSAK hype_score ≥ 7 esetén: 'Holy Grail' (9-10), 'Heat' (7-8), 'Hyped' (7). Ritka vintage darabokra max 8-as score-nál 'Vintage Gem' is OK. Null mindenhol máshol — NE generálj 'Klasszikus', 'Common', 'Mainstream', 'Streetwear Staple' címkéket.",
   "search_query": "angol kereső kifejezés (márka + modell + colorway/évjárat)",
@@ -198,7 +215,7 @@ VÁLASZ FORMÁTUM (CSAK ezt a JSON-t add vissza, semmi mást, semmi markdown):
   }
   return `You are FitFlip – a precision AI identifier for fashion items (sneakers, vintage clothing, streetwear, designer pieces). Accuracy is paramount: it's better to be honestly uncertain than to be wrong.
 
-LANGUAGE: ALL user-facing text fields (condition, defects, description, story, selling_tip, hype_label, era) MUST be in ENGLISH. Do not mix in Hungarian or other languages.${userHintBlockEn}${userSizeBlockEn}${multiNoteEn}
+LANGUAGE: ALL user-facing text fields (condition, defects, description, selling_tip, hype_label, era) MUST be in ENGLISH. Do not mix in Hungarian or other languages.
 
 ANALYSIS METHOD (follow this order):
 1. Confirmation: does the image actually show clothing or footwear? If not, set recognized:false
@@ -315,6 +332,7 @@ RESPONSE FORMAT (return ONLY this JSON, nothing else, no markdown):
   "brand": "string or null",
   "model": "string or null",
   "color": "dominant color or official colorway in English, or null",
+  "base_colors": ["1-2 PLAIN English base colors STRICTLY for marketplace filtering, from this list: black | white | grey | red | blue | navy | green | yellow | orange | pink | purple | brown | beige | cream | khaki | turquoise | mint | silver | gold. NEVER put a colorway name here (e.g. 'Bred', 'Night Indigo') — translate it to base colors (Bred → black, red; Night Indigo → navy). Empty array if indeterminable."],
   "visual_keywords": ["3-5 visual search phrases in English, without brand"],
   "era": "string or null",
   "condition": "new | excellent | good | used | poor" or null,
@@ -325,7 +343,6 @@ RESPONSE FORMAT (return ONLY this JSON, nothing else, no markdown):
   "estimated_value_min_huf": number or null (ALREADY discounted),
   "estimated_value_max_huf": number or null (ALREADY discounted),
   "description": "2-3 sentences in clean English about the item – what you see, what's interesting, why uncertain if applicable. FORBIDDEN: internal field names like 'is_definitely_new', 'retail_price_huf', 'condition_discount_pct', 'TRUE/FALSE'. Use natural prose, no technical jargon.",
-  "story": "string or null — IF the item is culturally significant (iconic colorway, famous collab, landmark release with real backstory: e.g. Air Jordan 1 'Shattered Backboard', Travis Scott AJ1, Yeezy 350 'Zebra', Off-White Air Presto, Supreme x Louis Vuitton, Cactus Plant Flea Market collabs, etc.) provide a 2-3 PARAGRAPH English story separated by DOUBLE LINE BREAKS (\\n\\n). Content: (1) release background + collab/designer; (2) cultural relevance, what made it iconic, stars/campaigns; (3) optional: interesting detail (origin story, original name, release lore). If NOT culturally significant (generic sneaker, anonymous vintage), return null. DO NOT invent stories, only real documented context. DO NOT include price estimate in the story.",
   "hype_score": "number 1-10 or null — cultural/resell hype level. 10 = grail-tier (limited Travis Scott, Off-White, Dior x AJ1), 8-9 = highly sought (Mocha, Bred, Chicago), 6-7 = popular but accessible (Yeezy 350 classics, Jordan 4 White Cement), 4-5 = solid mainstream (Air Force 1, Stan Smith, Chuck Taylor), 1-3 = generic/no hype. Null if unidentified or unknown.",
   "hype_label": "string or null — SHORT badge ONLY if hype_score ≥ 7: 'Holy Grail' (9-10), 'Heat' (7-8), 'Hyped' (7). For rare vintage at score ≥ 7 'Vintage Gem' is also OK. Null everywhere else — DO NOT produce 'Classic', 'Common', 'Mainstream', 'Streetwear Staple' labels.",
   "search_query": "English search query (brand + model + colorway/year)",
@@ -710,16 +727,38 @@ export async function POST(req: NextRequest) {
       }
     };
 
+    const effectiveLang = lang || "hu";
+    const dynamicNote = buildDynamicNote(effectiveLang, normalizedImages.length, userHint, userSize);
+    const userText =
+      dynamicNote ||
+      (effectiveLang === "hu"
+        ? "Elemezd a képe(ke)t a rendszer-szabályok szerint."
+        : "Analyze the image(s) per the system rules.");
+
     const [response, savedImagePath] = await Promise.all([
       client.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 1500,
+        // The big static rule prompt is byte-identical per language, so it's
+        // a cache_control-marked system block: after the first scan Anthropic
+        // serves these ~4k tokens from cache (~90% cheaper, faster intake).
+        // Per-scan specifics (hint, size, multi-image note) travel in the
+        // user message so they never break the cache prefix.
+        // `as any`: cache_control isn't in SDK 0.32.1's types (GA'd later);
+        // the runtime API accepts it.
+        system: [
+          {
+            type: "text",
+            text: buildPrompt(effectiveLang),
+            cache_control: { type: "ephemeral" },
+          },
+        ] as any, // eslint-disable-line
         messages: [
           {
             role: "user",
             content: [
               ...imageBlocks,
-              { type: "text", text: buildPrompt(lang || "hu", normalizedImages.length, userHint, userSize) },
+              { type: "text", text: userText },
             ],
           },
         ],

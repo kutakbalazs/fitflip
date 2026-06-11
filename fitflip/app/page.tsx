@@ -24,6 +24,7 @@ type AnalysisResult = {
   model: string | null;
   color: string | null;
   visual_keywords: string[] | null;
+  base_colors: string[] | null;
   era: string | null;
   condition: string | null;
   is_definitely_new: boolean | null;
@@ -180,6 +181,12 @@ export default function HomePage() {
   const [showUpgradeConsent, setShowUpgradeConsent] = useState(false);
   const [upgradeConsentChecked, setUpgradeConsentChecked] = useState(false);
   const [showStory, setShowStory] = useState(false);
+  // Lazily fetched story (generated on first tap, then served from DB).
+  const [storyText, setStoryText] = useState<string | null>(null);
+  const [storyLoading, setStoryLoading] = useState(false);
+  const [storyUnavailable, setStoryUnavailable] = useState(false);
+  // Fast Haiku pre-identification shown while the full analysis runs.
+  const [quickId, setQuickId] = useState<{ brand: string | null; model: string | null; itemType: string | null } | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [listings, setListings] = useState<Listing[] | null>(null);
   // Listings the visual verifier rejected (other colorway/finish) — shown
@@ -490,7 +497,17 @@ export default function HomePage() {
       .filter(Boolean)
       .filter((w) => !STOP_WORDS.has(w.toLowerCase()))
       .slice(0, 3);
-    const colorTokens = color.split(/\s+/).filter(Boolean);
+    // Colour tokens: the colorway words PLUS the AI's plain base_colors
+    // ("Night Indigo" alone can't drive the Vinted colour filter; its base
+    // colour "navy" can).
+    const colorTokens = Array.from(
+      new Set([
+        ...color.split(/\s+/).filter(Boolean),
+        ...(Array.isArray(result.base_colors)
+          ? result.base_colors.filter((c): c is string => typeof c === "string" && c.trim().length > 0)
+          : []),
+      ])
+    );
 
     // Run multiple search variants. Different marketplaces respond very
     // differently to different phrasings — Jofogás in particular keys on
@@ -575,7 +592,13 @@ export default function HomePage() {
         model,
         color,
         itemType: result.item_type ?? "",
-        ...(originalImage ? { originalImage } : {}),
+        // The scan image is already stored server-side — pass its id instead
+        // of re-uploading ~0.5 MB of base64 (saves time on mobile uplinks).
+        ...(result.scan_id
+          ? { scanId: result.scan_id }
+          : originalImage
+            ? { originalImage }
+            : {}),
       }),
     })
       .then(async (res) => {
@@ -648,6 +671,31 @@ export default function HomePage() {
     }
     setLoading(true);
     setError(null);
+    // Lazy-story state belongs to the previous result.
+    setStoryText(null);
+    setStoryUnavailable(false);
+    // Fire-and-forget quick identification (Haiku, ~2-3s): purely cosmetic —
+    // shows "✓ adidas — Handball Spezial" under the spinner while the full
+    // analysis runs. Failures are silently ignored.
+    setQuickId(null);
+    if (!hint && images[0]) {
+      fetch("/api/quick-id", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image: images[0].data,
+          mediaType: images[0].mediaType,
+          lang,
+        }),
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (d && (d.brand || d.item_type)) {
+            setQuickId({ brand: d.brand ?? null, model: d.model ?? null, itemType: d.item_type ?? null });
+          }
+        })
+        .catch(() => {});
+    }
     try {
       const trimmedSize = sizeInput.trim();
       // Fresh scan with no explicit refinement hint: fall back to the
@@ -712,6 +760,10 @@ export default function HomePage() {
     setShowBrandInput(false);
     setBrandInput("");
     setLastSearchParams(null);
+    setStoryText(null);
+    setStoryLoading(false);
+    setStoryUnavailable(false);
+    setQuickId(null);
   };
 
   const submitRefinement = async () => {
@@ -1533,6 +1585,17 @@ export default function HomePage() {
                   <p className="font-medium">{t.analyzing}</p>
                 </div>
                 <p className="text-sm text-ink-500 dark:text-ink-400 mt-2">{t.analyzingSub}</p>
+                {quickId && (quickId.brand || quickId.model) && (
+                  <p className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300 text-xs font-medium fade-in">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    {[quickId.brand, quickId.model].filter(Boolean).join(" — ")}
+                    <span className="text-emerald-600/70 dark:text-emerald-400/70 font-normal">
+                      · {lang === "hu" ? "részletek kidolgozása…" : "working on details…"}
+                    </span>
+                  </p>
+                )}
               </div>
             ) : (
               <>
@@ -1760,26 +1823,61 @@ export default function HomePage() {
                     </div>
                   )}
 
-                  {result.story && result.story.trim().length > 0 && (
+                  {!storyUnavailable &&
+                    ((result.story && result.story.trim().length > 0) ||
+                      storyText ||
+                      (typeof result.hype_score === "number" && result.hype_score >= 7 && result.brand)) && (
                     <button
                       type="button"
-                      onClick={() => {
+                      disabled={storyLoading}
+                      onClick={async () => {
                         haptic("tap");
-                        setShowStory(true);
+                        const existing = storyText ?? (result.story?.trim() ? result.story : null);
+                        if (existing) {
+                          setShowStory(true);
+                          return;
+                        }
+                        // Story is generated on first tap (kept the scan
+                        // itself 5-8s faster), then persisted server-side.
+                        setStoryLoading(true);
+                        try {
+                          const res = await fetch("/api/story", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ scan_id: result.scan_id, lang }),
+                          });
+                          const d = await res.json();
+                          if (typeof d?.story === "string" && d.story.trim().length > 0) {
+                            setStoryText(d.story);
+                            setShowStory(true);
+                          } else {
+                            setStoryUnavailable(true);
+                          }
+                        } catch {
+                          setStoryUnavailable(true);
+                        } finally {
+                          setStoryLoading(false);
+                        }
                       }}
-                      className="w-full flex items-center justify-between gap-3 px-6 py-3.5 border-t border-ink-100 dark:border-ink-700 text-left hover:bg-ink-50 dark:hover:bg-ink-800 transition group"
+                      className="w-full flex items-center justify-between gap-3 px-6 py-3.5 border-t border-ink-100 dark:border-ink-700 text-left hover:bg-ink-50 dark:hover:bg-ink-800 transition group disabled:opacity-60"
                     >
                       <span className="flex items-center gap-2.5">
                         <span className="w-7 h-7 rounded-full bg-ink-900 text-white text-sm flex items-center justify-center" aria-hidden="true">
                           ★
                         </span>
                         <span className="text-sm font-medium">
-                          {lang === "hu" ? "A darab története" : "The story of this piece"}
+                          {storyLoading
+                            ? lang === "hu" ? "Sztori betöltése…" : "Loading story…"
+                            : lang === "hu" ? "A darab története" : "The story of this piece"}
                         </span>
                       </span>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-500 dark:text-ink-400 group-hover:text-ink-900 dark:hover:text-white transition" aria-hidden="true">
-                        <polyline points="9 18 15 12 9 6" />
-                      </svg>
+                      {storyLoading ? (
+                        <span className="w-4 h-4 rounded-full border-2 border-ink-300 border-t-ink-900 dark:border-ink-600 dark:border-t-white animate-spin" aria-hidden="true" />
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-500 dark:text-ink-400 group-hover:text-ink-900 dark:hover:text-white transition" aria-hidden="true">
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                      )}
                     </button>
                   )}
 
@@ -2128,12 +2226,12 @@ export default function HomePage() {
         similarListings={similarListings}
       />
 
-      {result?.story && (
+      {result && (storyText || result.story) && (
         <StoryModal
           open={showStory}
           onClose={() => setShowStory(false)}
           title={`${result.brand ?? ""}${result.model ? ` — ${result.model}` : ""}`.trim() || (lang === "hu" ? "Sztori" : "Story")}
-          story={result.story}
+          story={storyText ?? result.story ?? ""}
           lang={lang}
         />
       )}

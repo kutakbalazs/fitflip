@@ -110,19 +110,38 @@ export async function POST(req: NextRequest) {
     // strict mode disables the "keep top 3 anyway" fallback.
     const strict = !brandHint || isStrictFilterType(itemType);
 
-    // If we have the user's image, ask the model to look at every listing
-    // thumbnail and split them: confirmed same-product matches vs rejected
-    // ones. Rejections are still text-relevant (same model, different
-    // colorway etc.), so they're returned separately as "similar" — shown
-    // to the user clearly labelled, never mixed with exact matches.
+    // Title-based auto-exact: when a listing's title spells out the brand,
+    // the model (majority of tokens) AND every scanned colour word ("Adidas
+    // Handball Spezial Black White Gum"), it IS the same product — no need
+    // to burn vision tokens on it, and the verifier can't false-negative it.
+    const wordIn = (title: string, word: string) =>
+      title.toLowerCase().includes(word.toLowerCase());
+    const modelThreshold = Math.max(1, Math.ceil(modelTokens.length / 2));
+    const isTitleExact = (l: Listing): boolean => {
+      if (!brandHint || modelTokens.length === 0 || colorTokens.length === 0) return false;
+      if (isSimilarOnlyType(itemType)) return false;
+      const brandOk = brandTokens.some((b) => wordIn(l.title, b));
+      const modelOk = modelTokens.filter((m) => wordIn(l.title, m)).length >= modelThreshold;
+      const colorOk = colorTokens.every((c) => titleHasColor(l.title, [c]));
+      return brandOk && modelOk && colorOk;
+    };
+    const autoExact = listings.filter(isTitleExact);
+    const autoExactUrls = new Set(autoExact.map((l) => l.url));
+    const toVerify = listings.filter((l) => !autoExactUrls.has(l.url));
+
+    // If we have the user's image, ask the model to look at every remaining
+    // listing thumbnail and split them: confirmed same-product matches vs
+    // rejected ones. Rejections are still text-relevant (same model,
+    // different colorway etc.), so they're returned separately as "similar"
+    // — shown to the user clearly labelled, never mixed with exact matches.
     let finalListings = listings;
     let similar: Listing[] = [];
     let visuallyVerified = false;
-    if (originalImage && listings.length > 0) {
+    if (originalImage && toVerify.length > 0) {
       try {
         const { kept, dropped } = await verifyListingsAgainstImage(
           originalImage,
-          listings,
+          toVerify,
           {
             brand: brandHint || undefined,
             model: modelHint || undefined,
@@ -135,12 +154,16 @@ export async function POST(req: NextRequest) {
           // the watcher cron, which has used Haiku from the start).
           { strict, model: "claude-haiku-4-5" }
         );
-        finalListings = kept;
+        finalListings = [...autoExact, ...kept];
         similar = dropped;
         visuallyVerified = true;
       } catch (err) {
         console.warn("[/api/listings] verification failed, returning unfiltered:", err);
       }
+    } else if (originalImage && toVerify.length === 0 && autoExact.length > 0) {
+      // Everything matched on title alone — nothing left to verify.
+      finalListings = autoExact;
+      visuallyVerified = true;
     }
 
     // In strict mode we also cap the final result: 6 high-confidence is much
