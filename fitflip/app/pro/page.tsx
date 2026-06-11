@@ -28,6 +28,7 @@ export default function ProPage() {
   const [consentChecked, setConsentChecked] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [plan, setPlan] = useState<"monthly" | "yearly">("yearly");
 
   useEffect(() => {
     setLang(readLang());
@@ -76,7 +77,7 @@ export default function ProPage() {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ withdrawalConsent: true }),
+        body: JSON.stringify({ withdrawalConsent: true, plan }),
       });
       const data = await res.json();
       if (!res.ok || !data?.url) {
@@ -193,18 +194,56 @@ export default function ProPage() {
           <PerkCard icon="🏷️" title={t.perk4Title} body={t.perk4Body} />
         </div>
 
-        {/* CTA card */}
-        <div className="rounded-3xl border-2 border-ink-900 dark:border-amber-400 p-6 text-center mb-6">
-          <p className="text-xs uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-2">
+        {/* CTA card — monthly/yearly plan picker */}
+        <div className="rounded-3xl border-2 border-ink-900 dark:border-amber-400 p-6 mb-6">
+          <p className="text-xs uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-4 text-center">
             {t.ctaCardLabel}
           </p>
-          <p className="text-3xl font-display mb-1">
-            {t.ctaCardPrice}
-            <span className="text-sm font-normal text-ink-500 dark:text-ink-400">
-              {" "}{t.ctaCardPeriod}
-            </span>
-          </p>
-          <p className="text-xs text-ink-500 dark:text-ink-400 mb-5">{t.ctaCardCancel}</p>
+
+          {/* Yearly */}
+          <button
+            type="button"
+            onClick={() => setPlan("yearly")}
+            className={`w-full text-left rounded-2xl border-2 p-4 mb-3 transition ${
+              plan === "yearly"
+                ? "border-ink-900 dark:border-amber-400 bg-ink-50 dark:bg-ink-800"
+                : "border-ink-100 dark:border-ink-700 hover:border-ink-300"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="font-semibold text-sm">{t.planYearly}</p>
+                <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">{t.planYearlySub}</p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-xl font-display">24 990 Ft</p>
+                <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold">
+                  {t.planYearlyBadge}
+                </span>
+              </div>
+            </div>
+          </button>
+
+          {/* Monthly */}
+          <button
+            type="button"
+            onClick={() => setPlan("monthly")}
+            className={`w-full text-left rounded-2xl border-2 p-4 mb-4 transition ${
+              plan === "monthly"
+                ? "border-ink-900 dark:border-amber-400 bg-ink-50 dark:bg-ink-800"
+                : "border-ink-100 dark:border-ink-700 hover:border-ink-300"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="font-semibold text-sm">{t.planMonthly}</p>
+                <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">{t.planMonthlySub}</p>
+              </div>
+              <p className="text-xl font-display shrink-0">2 490 Ft</p>
+            </div>
+          </button>
+
+          <p className="text-xs text-ink-500 dark:text-ink-400 mb-4 text-center">{t.ctaCardCancel}</p>
           <button
             type="button"
             onClick={goCta}
@@ -375,7 +414,7 @@ const HU = {
   feature: "Funkció",
   free: "Ingyenes",
   cmp1: "Napi scan",
-  cmp1Free: "5",
+  cmp1Free: "3",
   cmp1Pro: "Korlátlan",
   cmp2: "Árfigyelők",
   cmp2Pro: "5 darab",
@@ -398,8 +437,11 @@ const HU = {
     "Az árfigyelő segít beszerzéskor; a hype-pontszám és a sztori segít eladáskor a leírást megírni. Több ezer Ft különbség.",
 
   ctaCardLabel: "FitFlip Pro előfizetés",
-  ctaCardPrice: "1 990 Ft",
-  ctaCardPeriod: "/ hónap",
+  planYearly: "Éves",
+  planYearlySub: "Csak 2 083 Ft / hónap",
+  planYearlyBadge: "−16% · ~2 hónap ingyen",
+  planMonthly: "Havi",
+  planMonthlySub: "A legrugalmasabb",
   ctaCardCancel: "Bármikor lemondható, automatikus megújulás.",
   ctaSignedIn: "Előfizetek most",
   ctaSignedOut: "Regisztrálok és előfizetek",
@@ -429,7 +471,7 @@ const EN: Strings = {
   feature: "Feature",
   free: "Free",
   cmp1: "Daily scans",
-  cmp1Free: "5",
+  cmp1Free: "3",
   cmp1Pro: "Unlimited",
   cmp2: "Price watchers",
   cmp2Pro: "5 items",
@@ -452,8 +494,11 @@ const EN: Strings = {
     "Watchers help when buying; the hype score and story help you write better descriptions when selling. Thousands of HUF in difference.",
 
   ctaCardLabel: "FitFlip Pro subscription",
-  ctaCardPrice: "1 990 HUF",
-  ctaCardPeriod: "/ month",
+  planYearly: "Yearly",
+  planYearlySub: "Just 2,083 HUF / month",
+  planYearlyBadge: "−16% · ~2 months free",
+  planMonthly: "Monthly",
+  planMonthlySub: "Most flexible",
   ctaCardCancel: "Cancel anytime, auto-renewal.",
   ctaSignedIn: "Subscribe now",
   ctaSignedOut: "Sign up and subscribe",

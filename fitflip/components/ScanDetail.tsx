@@ -108,8 +108,40 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
+  // Shared in-flight story request (prefetch + button tap join the same
+  // promise, so the story is never generated twice).
+  const storyFetchRef = useRef<Promise<string | null> | null>(null);
+  const fetchStory = (language: Lang): Promise<string | null> => {
+    if (!storyFetchRef.current) {
+      storyFetchRef.current = fetch("/api/story", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scan_id: data.id, lang: language }),
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => (typeof d?.story === "string" && d.story.trim().length > 0 ? d.story : null))
+        .catch(() => null);
+    }
+    return storyFetchRef.current;
+  };
+
   useEffect(() => {
-    setLang(readLang());
+    const l = readLang();
+    setLang(l);
+    // Background prefetch: hyped item without a stored story → start
+    // generating right away so the button opens (nearly) instantly.
+    if (
+      !(data.story && data.story.trim().length > 0) &&
+      typeof data.hypeScore === "number" &&
+      data.hypeScore >= 7 &&
+      data.brand
+    ) {
+      fetchStory(l).then((s) => {
+        if (s) setStoryText(s);
+        else setStoryUnavailable(true);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const hu = lang === "hu";
@@ -277,26 +309,15 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
                   setShowStory(true);
                   return;
                 }
-                // Stories are generated lazily since the scan flow no longer
-                // produces them — first tap generates + persists server-side.
+                // Joins the in-flight background prefetch (or starts one).
                 setStoryLoading(true);
-                try {
-                  const res = await fetch("/api/story", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ scan_id: data.id, lang }),
-                  });
-                  const d = await res.json();
-                  if (typeof d?.story === "string" && d.story.trim().length > 0) {
-                    setStoryText(d.story);
-                    setShowStory(true);
-                  } else {
-                    setStoryUnavailable(true);
-                  }
-                } catch {
+                const s = await fetchStory(lang);
+                setStoryLoading(false);
+                if (s) {
+                  setStoryText(s);
+                  setShowStory(true);
+                } else {
                   setStoryUnavailable(true);
-                } finally {
-                  setStoryLoading(false);
                 }
               }}
               className="w-full flex items-center justify-between gap-3 px-6 py-3.5 border-t border-ink-100 dark:border-ink-700 text-left hover:bg-ink-50 dark:hover:bg-ink-800 transition group disabled:opacity-60"

@@ -14,6 +14,7 @@ import AllListingsOverlay from "@/components/AllListingsOverlay";
 import { haptic } from "@/lib/haptics";
 import { createClient } from "@/lib/supabase/client";
 import { takePendingScanFile } from "@/lib/pendingScan";
+import { writeLang } from "@/lib/lang";
 import { fallbackName } from "@/lib/itemTypeNames";
 
 type AnalysisResult = {
@@ -43,6 +44,26 @@ type AnalysisResult = {
   scan_id: string | null;
   scansLeft: number;
 };
+
+type TranslatableFields = {
+  condition: string | null;
+  era: string | null;
+  description: string | null;
+  selling_tip: string | null;
+  hype_label: string | null;
+  defects: string[] | null;
+};
+
+function pickTranslatable(r: AnalysisResult): TranslatableFields {
+  return {
+    condition: r.condition,
+    era: r.era,
+    description: r.description,
+    selling_tip: r.selling_tip,
+    hype_label: r.hype_label,
+    defects: r.defects,
+  };
+}
 
 type SearchParams = {
   brand: string;
@@ -211,6 +232,11 @@ export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Daily scan streak ("🔥 X napos sorozat") — gamification/retention.
   const [streak, setStreak] = useState(0);
+  // Language the current result's AI text is in (the scan-time language).
+  // Switching UI language afterwards translates the shown AI fields via
+  // /api/translate-scan; both language versions are cached per scan.
+  const [resultLang, setResultLang] = useState<Lang | null>(null);
+  const translationCacheRef = useRef<Partial<Record<Lang, TranslatableFields>>>({});
   // Dashboard stats for the mobile home (total identified value + count).
   const [stats, setStats] = useState<{
     count: number;
@@ -228,6 +254,76 @@ export default function HomePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  // Shared in-flight story request: the post-result background prefetch and
+  // a user tap on the story button reuse the SAME promise, so the story is
+  // never generated (and paid for) twice.
+  const storyFetchRef = useRef<Promise<string | null> | null>(null);
+
+  const fetchStory = useCallback((scanId: string, language: Lang): Promise<string | null> => {
+    if (!storyFetchRef.current) {
+      storyFetchRef.current = fetch("/api/story", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scan_id: scanId, lang: language }),
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => (typeof d?.story === "string" && d.story.trim().length > 0 ? d.story : null))
+        .catch(() => null);
+    }
+    return storyFetchRef.current;
+  }, []);
+
+  // Background story prefetch: as soon as a hyped result is on screen, start
+  // generating the story so the button opens (nearly) instantly when tapped.
+  useEffect(() => {
+    if (!result || !result.recognized || !result.scan_id) return;
+    if (storyText || storyUnavailable) return;
+    if (result.story && result.story.trim().length > 0) return; // already stored
+    if (!(typeof result.hype_score === "number" && result.hype_score >= 7 && result.brand)) return;
+    let cancelled = false;
+    fetchStory(result.scan_id, lang).then((s) => {
+      if (cancelled) return;
+      if (s) setStoryText(s);
+      else setStoryUnavailable(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result, fetchStory]);
+
+  // When the UI language differs from the language the result was generated
+  // in, translate the displayed AI text (cached per language, view-only).
+  useEffect(() => {
+    if (!result || !resultLang || lang === resultLang) return;
+    const cached = translationCacheRef.current[lang];
+    if (cached) {
+      setResult((r) => (r ? { ...r, ...cached } : r));
+      setResultLang(lang);
+      return;
+    }
+    let cancelled = false;
+    const original = pickTranslatable(result);
+    fetch("/api/translate-scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target_lang: lang, fields: original }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled || !d?.fields) return;
+        // Keep the original language version retrievable too.
+        translationCacheRef.current[resultLang] = original;
+        translationCacheRef.current[lang] = d.fields as TranslatableFields;
+        setResult((r) => (r ? { ...r, ...(d.fields as TranslatableFields) } : r));
+        setResultLang(lang);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang]);
 
   const t = translations[lang];
 
@@ -322,12 +418,7 @@ export default function HomePage() {
 
   const switchLang = (newLang: Lang) => {
     setLang(newLang);
-    try {
-      localStorage.setItem("ff-lang", newLang);
-      localStorage.setItem("ff_lang", newLang);
-    } catch {
-      /* ignore */
-    }
+    writeLang(newLang);
   };
 
   const processFile = useCallback(
@@ -674,6 +765,7 @@ export default function HomePage() {
     // Lazy-story state belongs to the previous result.
     setStoryText(null);
     setStoryUnavailable(false);
+    storyFetchRef.current = null;
     // Fire-and-forget quick identification (Haiku, ~2-3s): purely cosmetic —
     // shows "✓ adidas — Handball Spezial" under the spinner while the full
     // analysis runs. Failures are silently ignored.
@@ -731,6 +823,8 @@ export default function HomePage() {
         return;
       }
       setResult(data);
+      setResultLang(lang);
+      translationCacheRef.current = {};
       haptic("success");
       if (typeof data.scansLeft === "number") {
         setScansLeft(data.scansLeft);
@@ -763,7 +857,10 @@ export default function HomePage() {
     setStoryText(null);
     setStoryLoading(false);
     setStoryUnavailable(false);
+    storyFetchRef.current = null;
     setQuickId(null);
+    setResultLang(null);
+    translationCacheRef.current = {};
   };
 
   const submitRefinement = async () => {
@@ -793,6 +890,8 @@ export default function HomePage() {
         return;
       }
       setResult(data);
+      setResultLang(lang);
+      translationCacheRef.current = {};
       // If the AI is now confident the listings panel will fetch on its own.
       // Keep refinementDismissed = false so the user can refine again if the
       // hint didn't help.
@@ -1837,26 +1936,17 @@ export default function HomePage() {
                           setShowStory(true);
                           return;
                         }
-                        // Story is generated on first tap (kept the scan
-                        // itself 5-8s faster), then persisted server-side.
+                        if (!result.scan_id) return;
+                        // Joins the in-flight background prefetch (or starts
+                        // one) — never generates twice.
                         setStoryLoading(true);
-                        try {
-                          const res = await fetch("/api/story", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ scan_id: result.scan_id, lang }),
-                          });
-                          const d = await res.json();
-                          if (typeof d?.story === "string" && d.story.trim().length > 0) {
-                            setStoryText(d.story);
-                            setShowStory(true);
-                          } else {
-                            setStoryUnavailable(true);
-                          }
-                        } catch {
+                        const s = await fetchStory(result.scan_id, lang);
+                        setStoryLoading(false);
+                        if (s) {
+                          setStoryText(s);
+                          setShowStory(true);
+                        } else {
                           setStoryUnavailable(true);
-                        } finally {
-                          setStoryLoading(false);
                         }
                       }}
                       className="w-full flex items-center justify-between gap-3 px-6 py-3.5 border-t border-ink-100 dark:border-ink-700 text-left hover:bg-ink-50 dark:hover:bg-ink-800 transition group disabled:opacity-60"

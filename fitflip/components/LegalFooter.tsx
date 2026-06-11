@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { readLang } from "@/lib/lang";
+import { readLang, onLangChange } from "@/lib/lang";
 
 type Props = {
   className?: string;
@@ -13,6 +13,7 @@ export default function LegalFooter({ className = "" }: Props) {
 
   useEffect(() => {
     setLang(readLang());
+    return onLangChange(setLang);
   }, []);
 
   return (

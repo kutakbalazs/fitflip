@@ -18,9 +18,14 @@ export async function POST(req: NextRequest) {
     }
     const consentAt = new Date().toISOString();
 
-    const priceId = process.env.STRIPE_PRICE_ID;
+    // Plan: monthly (default) or yearly.
+    const plan: "monthly" | "yearly" = body?.plan === "yearly" ? "yearly" : "monthly";
+    const priceId =
+      plan === "yearly"
+        ? process.env.STRIPE_PRICE_ID_YEARLY
+        : process.env.STRIPE_PRICE_ID;
     if (!priceId) {
-      return NextResponse.json({ error: "STRIPE_PRICE_ID not set" }, { status: 500 });
+      return NextResponse.json({ error: "price id not set for plan " + plan }, { status: 500 });
     }
 
     const { data: profile } = await supabase
@@ -50,12 +55,14 @@ export async function POST(req: NextRequest) {
       billing_address_collection: "required",
       metadata: {
         user_id: user.id,
+        plan,
         withdrawal_consent_at: consentAt,
         withdrawal_consent_basis: "HU 45/2014 (II.26.) Korm. rendelet 29. § (1) m)",
       },
       subscription_data: {
         metadata: {
           user_id: user.id,
+          plan,
           withdrawal_consent_at: consentAt,
         },
       },

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { readLang } from "@/lib/lang";
+import { readLang, onLangChange } from "@/lib/lang";
 
 const STORAGE_KEY = "ff-cookie-consent";
 
@@ -31,6 +31,7 @@ export default function CookieBanner() {
       /* ignore */
     }
     setLang(readLang());
+    return onLangChange(setLang);
   }, []);
 
   const dismiss = (choice: "all" | "necessary") => {

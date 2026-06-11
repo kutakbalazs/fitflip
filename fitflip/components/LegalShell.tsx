@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { writeLang } from "@/lib/lang";
 
 export type LegalLang = "hu" | "en";
 
@@ -28,12 +29,7 @@ export default function LegalShell({ titleHu, titleEn, effectiveDate, children }
 
   const setAndPersist = (l: LegalLang) => {
     setLang(l);
-    try {
-      localStorage.setItem("ff-lang", l);
-      localStorage.setItem("ff_lang", l);
-    } catch {
-      /* ignore */
-    }
+    writeLang(l);
   };
 
   return (

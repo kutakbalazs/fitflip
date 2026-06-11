@@ -23,4 +23,20 @@ export function writeLang(l: Lang): void {
   } catch {
     /* ignore */
   }
+  // Notify mounted components (footer, cookie banner, …) so the whole page
+  // switches language live, not only after a reload.
+  try {
+    window.dispatchEvent(new CustomEvent("ff-lang-changed", { detail: { lang: l } }));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Subscribe to live language changes; returns the unsubscribe function. */
+export function onLangChange(cb: (l: Lang) => void): () => void {
+  const handler = (e: Event) => {
+    cb((e as CustomEvent).detail?.lang === "en" ? "en" : "hu");
+  };
+  window.addEventListener("ff-lang-changed", handler);
+  return () => window.removeEventListener("ff-lang-changed", handler);
 }
