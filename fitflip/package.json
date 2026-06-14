@@ -6,10 +6,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "cap:sync": "cap sync",
+    "cap:ios": "cap sync ios && cap open ios",
+    "cap:android": "cap sync android && cap open android"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/core": "^8.4.0",
+    "@capacitor/ios": "^8.4.0",
+    "@capacitor/network": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.1",
     "@ducanh2912/next-pwa": "^10.2.9",
     "@stripe/stripe-js": "^9.4.0",
     "@supabase/ssr": "^0.10.3",
@@ -21,6 +29,7 @@
     "stripe": "^22.1.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.4.0",
     "@types/node": "^20.16.10",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.0",
