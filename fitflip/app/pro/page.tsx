@@ -117,7 +117,7 @@ export default function ProPage() {
 
   return (
     <div className="min-h-[100dvh] bg-white dark:bg-ink-950 text-ink-900 dark:text-ink-50">
-      <header className="flex items-center justify-between px-5 pt-4 pb-2">
+      <header className="flex items-center justify-between px-5 pb-2 safe-pt-4">
         <Link
           href="/"
           className="text-xs text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white flex items-center gap-1.5"

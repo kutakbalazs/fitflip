@@ -17,6 +17,16 @@ html.dark {
   color-scheme: dark;
 }
 
+/* Native (Capacitor) safe areas: keep top bars clear of the status bar /
+   dynamic island. In a browser these insets resolve to 0px, so the max()
+   falls back to the original padding — a no-op on the web. */
+.safe-pt-5 {
+  padding-top: max(1.25rem, env(safe-area-inset-top));
+}
+.safe-pt-4 {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }

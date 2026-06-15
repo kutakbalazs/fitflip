@@ -42,7 +42,7 @@ export default function WelcomePage() {
   return (
     <div className="min-h-[100dvh] bg-white dark:bg-ink-950 text-ink-900 dark:text-ink-50 flex flex-col">
       {/* Top bar: language + skip */}
-      <header className="flex items-center justify-between px-5 pt-4 pb-2 shrink-0">
+      <header className="flex items-center justify-between px-5 pb-2 safe-pt-4 shrink-0">
         <div className="flex items-center text-xs">
           <button
             type="button"
