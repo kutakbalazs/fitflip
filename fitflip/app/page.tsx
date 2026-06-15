@@ -16,6 +16,7 @@ import { createClient } from "@/lib/supabase/client";
 import { takePendingScanFile } from "@/lib/pendingScan";
 import { writeLang } from "@/lib/lang";
 import { fallbackName } from "@/lib/itemTypeNames";
+import { hypeBadgeLabel } from "@/lib/hype";
 
 type AnalysisResult = {
   recognized: boolean;
@@ -1801,7 +1802,7 @@ export default function HomePage() {
                 {result.hype_label && typeof result.hype_score === "number" && result.hype_score >= 7 && (
                   <div className={`absolute top-2 right-2 px-2.5 py-1 rounded-full text-[11px] font-semibold shadow-sm backdrop-blur-sm ${hypeBadgeStyle(result.hype_score)}`}>
                     {result.hype_score >= 9 && <span className="mr-1">🔥</span>}
-                    {result.hype_label}
+                    {hypeBadgeLabel(result.hype_score, lang)}
                   </div>
                 )}
               </div>

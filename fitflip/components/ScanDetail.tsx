@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { readLang, type Lang } from "@/lib/lang";
+import { hypeBadgeLabel } from "@/lib/hype";
 import { haptic } from "@/lib/haptics";
 import { setPendingScanFile } from "@/lib/pendingScan";
 import StoryModal from "@/components/StoryModal";
@@ -231,7 +232,7 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
             {data.hypeLabel && typeof data.hypeScore === "number" && data.hypeScore >= 7 && (
               <div className={`absolute top-2 right-2 px-2.5 py-1 rounded-full text-[11px] font-semibold shadow-sm backdrop-blur-sm ${hypeBadgeStyle(data.hypeScore)}`}>
                 {data.hypeScore >= 9 && <span className="mr-1">🔥</span>}
-                {data.hypeLabel}
+                {hypeBadgeLabel(data.hypeScore, lang)}
               </div>
             )}
           </div>
