@@ -4,6 +4,7 @@ import CookieBanner from "@/components/CookieBanner";
 import OnboardingGate from "@/components/OnboardingGate";
 import ScanFab from "@/components/ScanFab";
 import PullToRefresh from "@/components/PullToRefresh";
+import IapInit from "@/components/IapInit";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { themeInitScript } from "@/lib/theme";
 
@@ -63,6 +64,7 @@ export default function RootLayout({
           <OnboardingGate />
           <ScanFab />
           <CookieBanner />
+          <IapInit />
         </ThemeProvider>
       </body>
     </html>

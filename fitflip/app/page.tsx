@@ -17,6 +17,8 @@ import { takePendingScanFile } from "@/lib/pendingScan";
 import { writeLang } from "@/lib/lang";
 import { fallbackName } from "@/lib/itemTypeNames";
 import { hypeBadgeLabel } from "@/lib/hype";
+import { isNativePlatform } from "@/lib/native";
+import { managementUrl } from "@/lib/iap";
 
 type AnalysisResult = {
   recognized: boolean;
@@ -1099,6 +1101,13 @@ export default function HomePage() {
   })();
 
   const openUpgradeConsent = () => {
+    // Native app: digital purchases must go through the App Store / Play
+    // Billing, never Stripe. Send the user to /pro, which has the native
+    // purchase flow (plan picker + Apple/Google sheet + restore).
+    if (isNativePlatform()) {
+      window.location.assign("/pro");
+      return;
+    }
     setUpgradeConsentChecked(false);
     setShowUpgradeConsent(true);
   };
@@ -1127,6 +1136,13 @@ export default function HomePage() {
 
   const openPortal = async () => {
     if (portalLoading) return;
+    // Native app: subscriptions are managed by the App Store / Play, not the
+    // Stripe billing portal. Open the store's own management screen.
+    if (isNativePlatform()) {
+      const url = await managementUrl().catch(() => null);
+      window.open(url ?? "https://apps.apple.com/account/subscriptions", "_blank");
+      return;
+    }
     setPortalLoading(true);
     setBanner(null);
     try {
