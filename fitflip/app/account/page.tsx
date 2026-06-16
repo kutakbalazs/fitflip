@@ -37,7 +37,7 @@ export default function AccountPage() {
           emailLabel: "Bejelentkezve mint",
           dangerTitle: "Fiók törlése",
           dangerDesc:
-            "A fiókod, az összes scan-előzményed és a feltöltött képeid véglegesen törlésre kerülnek. Aktív előfizetésedet automatikusan lemondjuk. Számviteli bizonylatokat a jogszabályi megőrzési ideig (8 év) megőrizzük.",
+            "A fiókod, az összes scan-előzményed és a feltöltött képeid véglegesen törlésre kerülnek. A Stripe-on keresztüli előfizetésedet lemondjuk; az App Store / Google Play előfizetést a fiók törlése NEM szünteti meg — azt a készülék előfizetés-beállításaiban külön kell lemondanod. Számviteli bizonylatokat a jogszabályi megőrzési ideig (8 év) megőrizzük.",
           deleteCta: "Fiók törlése…",
           confirmTitle: "Biztos, hogy törlöd a fiókodat?",
           confirmSub:
@@ -54,7 +54,7 @@ export default function AccountPage() {
           emailLabel: "Signed in as",
           dangerTitle: "Delete account",
           dangerDesc:
-            "Your account, all scan history and uploaded photos will be permanently deleted. Any active subscription will be cancelled automatically. Accounting records will be retained for the statutory period (8 years).",
+            "Your account, all scan history and uploaded photos will be permanently deleted. Any subscription purchased via Stripe will be cancelled; App Store / Google Play subscriptions are NOT cancelled by deleting your account — you must cancel those separately in your device's subscription settings. Accounting records will be retained for the statutory period (8 years).",
           deleteCta: "Delete account…",
           confirmTitle: "Are you sure you want to delete your account?",
           confirmSub: "This cannot be undone. To confirm, type your account email below.",
@@ -96,7 +96,7 @@ export default function AccountPage() {
 
   return (
     <main className="min-h-dvh flex flex-col bg-white dark:bg-ink-950">
-      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-700">
+      <header className="px-6 pb-5 safe-pt-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-700">
         <Link href="/" className="flex items-baseline gap-2">
           <span className="text-xl font-display tracking-tight">FitFlip</span>
           <span className="text-xs text-ink-500 dark:text-ink-400 hidden sm:inline">.app</span>

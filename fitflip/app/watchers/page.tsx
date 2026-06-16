@@ -184,7 +184,7 @@ export default function WatchersPage() {
 
   return (
     <main className="min-h-dvh flex flex-col bg-white dark:bg-ink-950">
-      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-700">
+      <header className="px-6 pb-5 safe-pt-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-700">
         <Link href="/" className="flex items-baseline gap-2">
           <span className="text-xl font-display tracking-tight">FitFlip</span>
           <span className="text-xs text-ink-500 dark:text-ink-400 hidden sm:inline">.app</span>
