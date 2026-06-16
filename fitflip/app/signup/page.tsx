@@ -6,7 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { translations, type Lang } from "@/lib/translations";
 import { signInWithApple } from "@/lib/appleSignIn";
-import { isNativePlatform } from "@/lib/native";
+import { isNativePlatform, nativePlatform } from "@/lib/native";
 import LegalFooter from "@/components/LegalFooter";
 
 // Only allow same-origin relative paths to avoid open-redirect.
@@ -37,14 +37,14 @@ function SignupPageInner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmSent, setConfirmSent] = useState(false);
-  // Apple Sign In is shown only inside the native app (App Store 4.8). Set
+  // Apple Sign In is shown only inside the native iOS app (App Store 4.8). Set
   // after mount to avoid a hydration mismatch.
   const [native, setNative] = useState(false);
 
   const t = translations[lang];
 
   useEffect(() => {
-    setNative(isNativePlatform());
+    setNative(nativePlatform() === "ios");
     const stored = (localStorage.getItem("ff-lang") ?? localStorage.getItem("ff_lang"));
     if (stored === "hu" || stored === "en") setLang(stored);
     supabase.auth.getUser().then(({ data }) => {
