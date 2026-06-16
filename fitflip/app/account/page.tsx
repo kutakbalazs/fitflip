@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { readLang } from "@/lib/lang";
+import { isNativePlatform } from "@/lib/native";
+import { managementUrl } from "@/lib/iap";
 import LegalFooter from "@/components/LegalFooter";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -17,6 +19,8 @@ export default function AccountPage() {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
 
   useEffect(() => {
     setLang(readLang());
@@ -27,7 +31,42 @@ export default function AccountPage() {
       }
       setEmail(data.user.email ?? null);
     });
+    // Premium state from the server (same source as the paywall) to decide
+    // whether to show the subscription-management card.
+    fetch("/api/analyze")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.isPremium) setIsPremium(true);
+      })
+      .catch(() => {});
   }, [router, supabase]);
+
+  // Opens the subscription-management screen: the App Store / Play store's own
+  // management page in the native app (where the user can cancel — Apple/Google
+  // don't allow apps to cancel directly), or the Stripe billing portal on web.
+  const openPortal = async () => {
+    if (portalLoading) return;
+    if (isNativePlatform()) {
+      const url = await managementUrl().catch(() => null);
+      window.open(url ?? "https://apps.apple.com/account/subscriptions", "_blank");
+      return;
+    }
+    setPortalLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/stripe/portal", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      setError(t.unknownError);
+      setPortalLoading(false);
+    } catch {
+      setError(t.unknownError);
+      setPortalLoading(false);
+    }
+  };
 
   const t =
     lang === "hu"
@@ -35,6 +74,10 @@ export default function AccountPage() {
           title: "Fiók",
           back: "← Vissza",
           emailLabel: "Bejelentkezve mint",
+          manageSubTitle: "FitFlip Pro előfizetés",
+          manageSubDesc:
+            "Aktív előfizetésed van. Itt kezelheted vagy mondhatod le bármikor.",
+          manageSubCta: "Előfizetés kezelése / lemondása",
           dangerTitle: "Fiók törlése",
           dangerDesc:
             "A fiókod, az összes scan-előzményed és a feltöltött képeid véglegesen törlésre kerülnek. A Stripe-on keresztüli előfizetésedet lemondjuk; az App Store / Google Play előfizetést a fiók törlése NEM szünteti meg — azt a készülék előfizetés-beállításaiban külön kell lemondanod. Számviteli bizonylatokat a jogszabályi megőrzési ideig (8 év) megőrizzük.",
@@ -52,6 +95,10 @@ export default function AccountPage() {
           title: "Account",
           back: "← Back",
           emailLabel: "Signed in as",
+          manageSubTitle: "FitFlip Pro subscription",
+          manageSubDesc:
+            "You have an active subscription. Manage or cancel it anytime here.",
+          manageSubCta: "Manage / cancel subscription",
           dangerTitle: "Delete account",
           dangerDesc:
             "Your account, all scan history and uploaded photos will be permanently deleted. Any subscription purchased via Stripe will be cancelled; App Store / Google Play subscriptions are NOT cancelled by deleting your account — you must cancel those separately in your device's subscription settings. Accounting records will be retained for the statutory period (8 years).",
@@ -113,6 +160,21 @@ export default function AccountPage() {
           <div className="mb-8 p-4 rounded-2xl bg-ink-50 dark:bg-ink-800 border border-ink-100 dark:border-ink-700">
             <p className="text-xs text-ink-500 dark:text-ink-400 uppercase tracking-wider mb-1">{t.emailLabel}</p>
             <p className="text-sm font-medium">{email}</p>
+          </div>
+        )}
+
+        {isPremium && (
+          <div className="mb-8 p-4 rounded-2xl bg-ink-50 dark:bg-ink-800 border border-ink-100 dark:border-ink-700">
+            <p className="text-sm font-semibold mb-1">{t.manageSubTitle}</p>
+            <p className="text-xs text-ink-500 dark:text-ink-400 mb-3 leading-relaxed">{t.manageSubDesc}</p>
+            <button
+              type="button"
+              onClick={openPortal}
+              disabled={portalLoading}
+              className="px-4 py-2 rounded-full bg-ink-900 text-white dark:bg-white dark:text-ink-900 text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
+            >
+              {portalLoading ? "…" : t.manageSubCta}
+            </button>
           </div>
         )}
 
