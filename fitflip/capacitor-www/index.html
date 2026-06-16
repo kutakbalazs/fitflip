@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="hu">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>FitFlip</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #0a0a0a; }
+    </style>
+  </head>
+  <body>
+    <!--
+      With server.url set, the native shell loads https://fitflip.app directly
+      and this file is not normally shown. It exists only because Capacitor
+      requires an index.html in webDir; as a safety net it forwards to the app.
+    -->
+    <script>
+      window.location.replace("https://fitflip.app");
+    </script>
+  </body>
+</html>

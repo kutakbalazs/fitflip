@@ -16,6 +16,9 @@ import { createClient } from "@/lib/supabase/client";
 import { takePendingScanFile } from "@/lib/pendingScan";
 import { writeLang } from "@/lib/lang";
 import { fallbackName } from "@/lib/itemTypeNames";
+import { hypeBadgeLabel } from "@/lib/hype";
+import { isNativePlatform } from "@/lib/native";
+import { managementUrl } from "@/lib/iap";
 
 type AnalysisResult = {
   recognized: boolean;
@@ -1098,6 +1101,13 @@ export default function HomePage() {
   })();
 
   const openUpgradeConsent = () => {
+    // Native app: digital purchases must go through the App Store / Play
+    // Billing, never Stripe. Send the user to /pro, which has the native
+    // purchase flow (plan picker + Apple/Google sheet + restore).
+    if (isNativePlatform()) {
+      window.location.assign("/pro");
+      return;
+    }
     setUpgradeConsentChecked(false);
     setShowUpgradeConsent(true);
   };
@@ -1126,6 +1136,13 @@ export default function HomePage() {
 
   const openPortal = async () => {
     if (portalLoading) return;
+    // Native app: subscriptions are managed by the App Store / Play, not the
+    // Stripe billing portal. Open the store's own management screen.
+    if (isNativePlatform()) {
+      const url = await managementUrl().catch(() => null);
+      window.open(url ?? "https://apps.apple.com/account/subscriptions", "_blank");
+      return;
+    }
     setPortalLoading(true);
     setBanner(null);
     try {
@@ -1153,7 +1170,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-dvh flex flex-col">
-      <header className="px-6 py-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-700">
+      <header className="px-6 pb-5 safe-pt-5 flex items-center justify-between border-b border-ink-100 dark:border-ink-700">
         <button
           type="button"
           onClick={reset}
@@ -1801,7 +1818,7 @@ export default function HomePage() {
                 {result.hype_label && typeof result.hype_score === "number" && result.hype_score >= 7 && (
                   <div className={`absolute top-2 right-2 px-2.5 py-1 rounded-full text-[11px] font-semibold shadow-sm backdrop-blur-sm ${hypeBadgeStyle(result.hype_score)}`}>
                     {result.hype_score >= 9 && <span className="mr-1">🔥</span>}
-                    {result.hype_label}
+                    {hypeBadgeLabel(result.hype_score, lang)}
                   </div>
                 )}
               </div>

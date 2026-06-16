@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { readLang, writeLang, type Lang } from "@/lib/lang";
+import { isNativePlatform } from "@/lib/native";
+import { getPlans, purchasePro, restorePro, type IapPlanInfo } from "@/lib/iap";
 
 type AuthState =
   | { status: "loading" }
@@ -29,9 +31,20 @@ export default function ProPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [plan, setPlan] = useState<"monthly" | "yearly">("yearly");
+  // Native in-app purchase state. `native` gates the whole IAP path; on the web
+  // it stays false and the Stripe flow is used unchanged.
+  const [native] = useState(() => isNativePlatform());
+  const [storePlans, setStorePlans] = useState<IapPlanInfo[]>([]);
+  const [restoreLoading, setRestoreLoading] = useState(false);
 
   useEffect(() => {
     setLang(readLang());
+    // Pull store-localized prices for the native purchase buttons.
+    if (isNativePlatform()) {
+      getPlans()
+        .then(setStorePlans)
+        .catch(() => setStorePlans([]));
+    }
     // Premium state comes from the server (/api/analyze GET) rather than a
     // direct client-side profiles read — the latter depends on RLS select
     // policies and could misreport a premium user as free (risking a
@@ -63,10 +76,72 @@ export default function ProPage() {
       router.push("/account");
       return;
     }
-    // free → open consent modal
+    // Native app: go straight to the Apple/Google purchase sheet — the store's
+    // own flow is the authoritative confirmation, so we skip the web consent
+    // modal (which exists for the Stripe/EU-withdrawal path).
+    if (native) {
+      startNativePurchase();
+      return;
+    }
+    // Web free user → open consent modal → Stripe Checkout.
     setConsentChecked(false);
     setCheckoutError(null);
     setConsentOpen(true);
+  };
+
+  const startNativePurchase = async () => {
+    setCheckoutLoading(true);
+    setCheckoutError(null);
+    try {
+      const ok = await purchasePro(plan);
+      if (!ok) {
+        setCheckoutError(
+          lang === "hu"
+            ? "A vásárlás nem fejeződött be. Próbáld újra."
+            : "The purchase didn't complete. Please try again."
+        );
+        setCheckoutLoading(false);
+        return;
+      }
+      // Verify + flip is_premium server-side, then reflect it in the UI.
+      await fetch("/api/iap/activate", { method: "POST" }).catch(() => {});
+      setAuth({ status: "premium" });
+      setCheckoutLoading(false);
+    } catch (err) {
+      const cancelled = err instanceof Error && err.message === "cancelled";
+      if (!cancelled) {
+        setCheckoutError(
+          lang === "hu"
+            ? "A vásárlás nem sikerült. Próbáld újra."
+            : "Purchase failed. Please try again."
+        );
+      }
+      setCheckoutLoading(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    setRestoreLoading(true);
+    setCheckoutError(null);
+    try {
+      const ok = await restorePro();
+      await fetch("/api/iap/activate", { method: "POST" }).catch(() => {});
+      if (ok) {
+        setAuth({ status: "premium" });
+      } else {
+        setCheckoutError(
+          lang === "hu"
+            ? "Nem találtunk visszaállítható előfizetést."
+            : "No purchases found to restore."
+        );
+      }
+    } catch {
+      setCheckoutError(
+        lang === "hu" ? "A visszaállítás nem sikerült." : "Restore failed."
+      );
+    } finally {
+      setRestoreLoading(false);
+    }
   };
 
   const startCheckout = async () => {
@@ -102,6 +177,13 @@ export default function ProPage() {
 
   const t = lang === "hu" ? HU : EN;
 
+  // Native shows the store-localized price; web (and native before offerings
+  // load) shows the canonical HUF price.
+  const yearlyPrice =
+    storePlans.find((p) => p.plan === "yearly")?.priceString ?? "24 990 Ft";
+  const monthlyPrice =
+    storePlans.find((p) => p.plan === "monthly")?.priceString ?? "2 490 Ft";
+
   const ctaLabel = (() => {
     switch (auth.status) {
       case "loading":
@@ -117,7 +199,7 @@ export default function ProPage() {
 
   return (
     <div className="min-h-[100dvh] bg-white dark:bg-ink-950 text-ink-900 dark:text-ink-50">
-      <header className="flex items-center justify-between px-5 pt-4 pb-2">
+      <header className="flex items-center justify-between px-5 pb-2 safe-pt-4">
         <Link
           href="/"
           className="text-xs text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white flex items-center gap-1.5"
@@ -216,7 +298,7 @@ export default function ProPage() {
                 <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">{t.planYearlySub}</p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-xl font-display">24 990 Ft</p>
+                <p className="text-xl font-display">{yearlyPrice}</p>
                 <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold">
                   {t.planYearlyBadge}
                 </span>
@@ -239,7 +321,7 @@ export default function ProPage() {
                 <p className="font-semibold text-sm">{t.planMonthly}</p>
                 <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">{t.planMonthlySub}</p>
               </div>
-              <p className="text-xl font-display shrink-0">2 490 Ft</p>
+              <p className="text-xl font-display shrink-0">{monthlyPrice}</p>
             </div>
           </button>
 
@@ -247,11 +329,27 @@ export default function ProPage() {
           <button
             type="button"
             onClick={goCta}
-            disabled={auth.status === "loading"}
+            disabled={auth.status === "loading" || checkoutLoading}
             className="w-full px-6 py-3.5 rounded-full bg-ink-900 dark:bg-amber-400 text-white dark:text-ink-950 font-medium hover:opacity-90 transition text-sm disabled:opacity-50"
           >
-            {ctaLabel}
+            {checkoutLoading ? "…" : ctaLabel}
           </button>
+
+          {/* Native-only: purchase errors + Apple/Google-required restore. */}
+          {native && checkoutError && (
+            <p className="text-xs text-red-600 mt-3 text-center">{checkoutError}</p>
+          )}
+          {native && auth.status !== "premium" && (
+            <button
+              type="button"
+              onClick={handleRestore}
+              disabled={restoreLoading || checkoutLoading}
+              className="w-full mt-3 text-xs text-ink-500 dark:text-ink-400 underline underline-offset-2 hover:text-ink-900 dark:hover:text-white disabled:opacity-50"
+            >
+              {restoreLoading ? "…" : t.restore}
+            </button>
+          )}
+
           {auth.status === "anon" && (
             <p className="text-[11px] text-ink-500 dark:text-ink-400 mt-3">
               {t.ctaAlreadyAccount}{" "}
@@ -448,6 +546,7 @@ const HU = {
   ctaPremium: "Előfizetés kezelése",
   ctaAlreadyAccount: "Már van fiókod?",
   ctaLogin: "Bejelentkezés",
+  restore: "Korábbi vásárlás visszaállítása",
 
   faq1Q: "Mikor lép életbe a Pro?",
   faq1A:
@@ -505,6 +604,7 @@ const EN: Strings = {
   ctaPremium: "Manage subscription",
   ctaAlreadyAccount: "Already have an account?",
   ctaLogin: "Sign in",
+  restore: "Restore previous purchase",
 
   faq1Q: "When does Pro activate?",
   faq1A:
