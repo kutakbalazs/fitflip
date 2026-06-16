@@ -8,7 +8,9 @@ const config: CapacitorConfig = {
   // when the remote site can't be reached), not the app itself.
   webDir: "capacitor-www",
   server: {
-    url: "https://fitflip.app",
+    // Canonical host — the apex (fitflip.app) 307-redirects here, so point
+    // straight at www to avoid a redirect hop on every cold start.
+    url: "https://www.fitflip.app",
     // HTTPS only — never allow cleartext.
     cleartext: false,
     // Keep navigation inside our own domain; external links (Stripe, etc.)
