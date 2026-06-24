@@ -86,7 +86,7 @@ export default function AllListingsOverlay({
     <div className="fixed inset-0 z-50 bg-white dark:bg-ink-950 overflow-y-auto overscroll-contain">
       {/* Sticky header with title + close */}
       <div className="sticky top-0 z-10 bg-white/95 dark:bg-ink-950/95 backdrop-blur-sm border-b border-ink-100 dark:border-ink-700">
-        <div className="max-w-2xl mx-auto px-5 py-4 flex items-center justify-between gap-3">
+        <div className="max-w-2xl mx-auto px-5 pb-4 safe-pt-4 flex items-center justify-between gap-3">
           <h2 className="text-lg font-display tracking-tight">
             {hu ? `Összes hirdetés (${total})` : `All listings (${total})`}
           </h2>

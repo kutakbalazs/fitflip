@@ -9,6 +9,7 @@ import type { Listing } from "@/lib/listings/types";
 import StoryModal from "@/components/StoryModal";
 
 const STORAGE_KEY = "ff-onboarded";
+const STEP_KEY = "ff-onboarding-step";
 const TOTAL_SLIDES = 4;
 
 export default function WelcomePage() {
@@ -18,7 +19,25 @@ export default function WelcomePage() {
 
   useEffect(() => {
     setLang(readLang());
+    // Restore the slide the user was on (e.g. after visiting /pro and coming
+    // back) so they don't get bounced to the first slide.
+    try {
+      const saved = sessionStorage.getItem(STEP_KEY);
+      const n = saved ? parseInt(saved, 10) : 0;
+      if (n >= 0 && n < TOTAL_SLIDES) setStep(n);
+    } catch {
+      /* ignore */
+    }
   }, []);
+
+  // Persist the current slide for the same restore-on-return behaviour.
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STEP_KEY, String(step));
+    } catch {
+      /* ignore */
+    }
+  }, [step]);
 
   const switchLang = (l: Lang) => {
     setLang(l);
@@ -28,6 +47,7 @@ export default function WelcomePage() {
   const finish = (destination: "scan" | "signup" = "scan") => {
     try {
       localStorage.setItem(STORAGE_KEY, "1");
+      sessionStorage.removeItem(STEP_KEY);
     } catch {
       /* ignore */
     }
@@ -555,7 +575,7 @@ const HU = {
   perk3Title: "Részletes elemzés",
   perk3Body: "Sztori, kor, hype-pontszám és eladási tipp minden darabhoz.",
   proFooter:
-    "Az ingyenes verzió is mindent tud — később bármikor előfizethetsz a profilodban.",
+    "Ingyenesen napi 3 azonosítás jár; a Pro korlátlan scant és árfigyelőket ad. Bármikor előfizethetsz a profilodban.",
   proLearnMore: "Pro részletek megtekintése",
 };
 
@@ -598,6 +618,6 @@ const EN: Strings = {
   perk3Title: "Detailed analysis",
   perk3Body: "Story, era, hype score, and selling tip for every piece.",
   proFooter:
-    "The free tier does everything too — you can subscribe anytime from your profile.",
+    "The free tier gives 3 identifications a day; Pro adds unlimited scans and price watchers. Subscribe anytime from your profile.",
   proLearnMore: "View Pro details",
 };

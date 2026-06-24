@@ -21,9 +21,10 @@ const config: CapacitorConfig = {
     errorPath: "offline.html",
   },
   ios: {
-    // Let the web content extend under the status bar / home indicator and
-    // manage safe areas itself.
-    contentInset: "always",
+    // Let the web content extend edge-to-edge under the status bar / home
+    // indicator and manage safe areas itself via CSS env(safe-area-inset-*).
+    // "never" avoids a double inset (native + CSS) that pushed headers too low.
+    contentInset: "never",
   },
   plugins: {
     SplashScreen: {

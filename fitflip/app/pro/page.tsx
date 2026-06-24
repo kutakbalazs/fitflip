@@ -136,8 +136,13 @@ export default function ProPage() {
         );
       }
     } catch {
+      // No active store subscription / nothing to restore (or the store
+      // returned an error) — show the calm "nothing found" message rather
+      // than a scary failure.
       setCheckoutError(
-        lang === "hu" ? "A visszaállítás nem sikerült." : "Restore failed."
+        lang === "hu"
+          ? "Nem találtunk visszaállítható előfizetést."
+          : "No purchases found to restore."
       );
     } finally {
       setRestoreLoading(false);

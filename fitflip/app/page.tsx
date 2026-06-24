@@ -1854,7 +1854,13 @@ export default function HomePage() {
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <h2 className="text-xl font-medium">
-                          {result.brand} {result.model && <span className="text-ink-500 dark:text-ink-400">— {result.model}</span>}
+                          {result.brand?.trim() ? (
+                            <>
+                              {result.brand} {result.model && <span className="text-ink-500 dark:text-ink-400">— {result.model}</span>}
+                            </>
+                          ) : (
+                            fallbackName(result.item_type ?? null, result.color ?? null, lang)
+                          )}
                         </h2>
                         {result.era && (
                           <p className="text-sm text-ink-500 dark:text-ink-400 mt-1">{result.era}</p>
