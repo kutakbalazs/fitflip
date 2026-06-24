@@ -7,7 +7,7 @@ import { haptic } from "@/lib/haptics";
 import { setPendingScanFile } from "@/lib/pendingScan";
 
 // Routes where the floating scan button should NOT appear.
-const HIDDEN_PATHS = ["/", "/account", "/welcome", "/pro", "/login", "/signup", "/forgot-password", "/reset-password", "/auth"];
+const HIDDEN_PATHS = ["/", "/account", "/welcome", "/pro", "/login", "/signup", "/forgot-password", "/reset-password", "/auth", "/terms", "/privacy", "/cookies"];
 
 /**
  * Fixed bottom-centre "scan" button shown on every page except the home
