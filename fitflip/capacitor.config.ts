@@ -28,11 +28,11 @@ const config: CapacitorConfig = {
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 1200,
-      backgroundColor: "#000000",
+      // Dark backdrop under the native animated SwiftUI splash (AppDelegate)
+      // while the remote app loads. Matches the splash background (#0A0C11).
+      launchShowDuration: 2000,
+      backgroundColor: "#0A0C11",
       showSpinner: false,
-      // Splash hides as soon as the web view reports it's ready, so the
-      // ~1s cold-load is covered by the logo, not a blank screen.
       launchAutoHide: true,
     },
   },
