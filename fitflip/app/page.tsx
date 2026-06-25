@@ -1253,6 +1253,17 @@ export default function HomePage() {
                 >
                   {lang === "hu" ? "Fiók" : "Account"}
                 </Link>
+                {!isPremium && (
+                  <Link
+                    href="/pro"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-ink-900 text-white dark:bg-amber-400 dark:text-ink-950 text-sm font-medium hover:opacity-90 transition"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M12 1l2.39 7.16L22 10l-6.4 4.24L18 22l-6-4.24L6 22l2.4-7.76L2 10l7.61-1.84L12 1z" />
+                    </svg>
+                    {t.subscribeMenu}
+                  </Link>
+                )}
                 {isPremium && (
                   <button
                     onClick={openPortal}
@@ -1330,6 +1341,23 @@ export default function HomePage() {
                     >
                       {lang === "hu" ? "Fiók" : "Account"}
                     </Link>
+                    {!isPremium && (
+                      <Link
+                        href="/pro"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-3 hover:bg-ink-50 dark:hover:bg-ink-800 transition border-t border-ink-100 dark:border-ink-700"
+                      >
+                        <span className="shrink-0 w-7 h-7 rounded-full bg-ink-900 dark:bg-amber-400 text-white dark:text-ink-950 flex items-center justify-center">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M12 1l2.39 7.16L22 10l-6.4 4.24L18 22l-6-4.24L6 22l2.4-7.76L2 10l7.61-1.84L12 1z" />
+                          </svg>
+                        </span>
+                        <span>
+                          <span className="block text-sm font-medium text-ink-900 dark:text-ink-50">{t.subscribeMenu}</span>
+                          <span className="block text-xs text-ink-500 dark:text-ink-400">{t.subscribeMenuSub}</span>
+                        </span>
+                      </Link>
+                    )}
                     {isPremium && (
                       <button
                         type="button"
