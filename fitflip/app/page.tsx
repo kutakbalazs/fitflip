@@ -84,11 +84,12 @@ type SearchParams = {
 const MAX_IMAGES = 6;
 
 function hypeBadgeStyle(score: number): string {
-  // Score-tiered palette, FitFlip-stílus: monokróm ink alapok meleg accentekkel.
-  if (score >= 9) return "bg-ink-900 text-white";
-  if (score >= 7) return "bg-amber-100 text-amber-900 dark:text-amber-200";
-  if (score >= 5) return "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-900 dark:text-emerald-200";
-  return "bg-white dark:bg-ink-950 text-ink-700 dark:text-ink-200 border border-ink-200 dark:border-ink-700";
+  // Score-tiered palette. Dark mode uses solid fills so the badge stays
+  // high-contrast and legible against the dark page (no light-on-light).
+  if (score >= 9) return "bg-ink-900 text-white dark:bg-white dark:text-ink-900";
+  if (score >= 7) return "bg-amber-100 text-amber-900 dark:bg-amber-400 dark:text-amber-950";
+  if (score >= 5) return "bg-emerald-100 text-emerald-900 dark:bg-emerald-400 dark:text-emerald-950";
+  return "bg-white dark:bg-ink-800 text-ink-700 dark:text-ink-100 border border-ink-200 dark:border-ink-600";
 }
 
 // Inline preview of a few "similar" listings (rejected by the visual

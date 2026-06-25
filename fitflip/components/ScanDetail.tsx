@@ -89,9 +89,9 @@ function SimilarSection({ items, hu }: { items: Listing[]; hu: boolean }) {
 }
 
 function hypeBadgeStyle(score: number): string {
-  if (score >= 9) return "bg-ink-900 text-white";
-  if (score >= 7) return "bg-amber-100 text-amber-900 dark:text-amber-200";
-  return "bg-white dark:bg-ink-950 text-ink-700 dark:text-ink-200 border border-ink-200 dark:border-ink-700";
+  if (score >= 9) return "bg-ink-900 text-white dark:bg-white dark:text-ink-900";
+  if (score >= 7) return "bg-amber-100 text-amber-900 dark:bg-amber-400 dark:text-amber-950";
+  return "bg-white dark:bg-ink-800 text-ink-700 dark:text-ink-100 border border-ink-200 dark:border-ink-600";
 }
 
 export default function ScanDetail({ data }: { data: ScanDetailData }) {

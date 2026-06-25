@@ -196,12 +196,30 @@ export function filterListingsByItemType<T extends { title: string }>(
   const strongModelTokens = modelTokens
     .map((tok) => tok.trim().toLowerCase())
     .filter((tok) => tok.length >= 4);
+  // Keywords that name a DIFFERENT garment/accessory type. Used to reject
+  // cross-type matches that only slip through via a shared brand/model token
+  // (e.g. a "Kith ... Hoodie" listing matching a t-shirt scan via "kith").
+  // Whole-word matched (space-padded) to avoid substring noise like "hat" in
+  // "Manhattan".
+  const conflictKeywords: string[] = [];
+  for (const [otherType, kws] of Object.entries(ITEM_TYPE_KEYWORDS)) {
+    if (otherType === type) continue;
+    for (const kw of kws) {
+      const k = kw.trim().toLowerCase();
+      if (k.length >= 3 && !keywords.some((tk) => tk.trim().toLowerCase() === k)) {
+        conflictKeywords.push(k);
+      }
+    }
+  }
   const filtered = listings.filter((l) => {
     const t = ` ${l.title.toLowerCase()} `;
-    return (
-      keywords.some((kw) => t.includes(kw.toLowerCase())) ||
-      strongModelTokens.some((mt) => t.includes(mt))
-    );
+    const matchesTarget = keywords.some((kw) => t.includes(kw.toLowerCase()));
+    if (matchesTarget) return true;
+    const matchesModel = strongModelTokens.some((mt) => t.includes(mt));
+    if (!matchesModel) return false;
+    // Matched only via a model token — drop it if the title clearly names a
+    // different garment type.
+    return !conflictKeywords.some((ck) => t.includes(` ${ck} `));
   });
   // For strict (non-apparel accessory) types, never fall back — return the
   // empty set so the caller shows "no matches" instead of random clothing.
