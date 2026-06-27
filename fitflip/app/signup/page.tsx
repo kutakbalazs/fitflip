@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { translations, type Lang } from "@/lib/translations";
 import { signInWithApple } from "@/lib/appleSignIn";
+import { signInWithGoogle } from "@/lib/googleSignIn";
 import { isNativePlatform, nativePlatform } from "@/lib/native";
 import LegalFooter from "@/components/LegalFooter";
 
@@ -90,13 +91,12 @@ function SignupPageInner() {
 
   const handleGoogle = async () => {
     setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-      },
-    });
-    if (error) setError(t.signupError);
+    const { ok, error } = await signInWithGoogle(supabase, next);
+    if (!ok) {
+      if (error !== "cancelled") setError(t.signupError);
+      return;
+    }
+    if (isNativePlatform()) router.replace(next);
   };
 
   const handleApple = async () => {

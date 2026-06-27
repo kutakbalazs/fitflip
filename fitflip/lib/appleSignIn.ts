@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isNativePlatform, nativePlatform } from "./native";
+import { ensureSocialLoginInit } from "./socialLogin";
 
 // Sign in with Apple. Required by App Store guideline 4.8 because the app also
 // offers Google sign-in. Shown only inside the native iOS app.
@@ -8,8 +9,6 @@ import { isNativePlatform, nativePlatform } from "./native";
 //   - Web / Android: Supabase OAuth redirect (fallback).
 
 export type AppleSignInResult = { ok: boolean; error?: "cancelled" | string };
-
-let appleInitialized = false;
 
 export async function signInWithApple(
   supabase: SupabaseClient,
@@ -28,12 +27,8 @@ export async function signInWithApple(
 
   // --- iOS native: native Apple sheet + signInWithIdToken ---
   try {
+    await ensureSocialLoginInit();
     const { SocialLogin } = await import("@capgo/capacitor-social-login");
-    if (!appleInitialized) {
-      // Empty redirectUrl on iOS keeps the flow fully native (no redirect).
-      await SocialLogin.initialize({ apple: { clientId: "app.fitflip", redirectUrl: "" } });
-      appleInitialized = true;
-    }
     const res = await SocialLogin.login({
       provider: "apple",
       options: { scopes: ["email", "name"] },

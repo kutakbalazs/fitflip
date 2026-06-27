@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { translations, type Lang } from "@/lib/translations";
 import { signInWithApple } from "@/lib/appleSignIn";
+import { signInWithGoogle } from "@/lib/googleSignIn";
 import { isNativePlatform, nativePlatform } from "@/lib/native";
 import { biometricAvailable, hasBiometricCredentials, saveBiometricCredentials, biometricLogin } from "@/lib/biometric";
 import LegalFooter from "@/components/LegalFooter";
@@ -102,13 +103,13 @@ function LoginPageInner() {
 
   const handleGoogle = async () => {
     setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-      },
-    });
-    if (error) setError(t.loginError);
+    const { ok, error } = await signInWithGoogle(supabase, next);
+    if (!ok) {
+      if (error !== "cancelled") setError(t.loginError);
+      return;
+    }
+    // Native completes in-place (token exchange); web redirects away on its own.
+    if (isNativePlatform()) router.replace(next);
   };
 
   const handleApple = async () => {
