@@ -24,23 +24,15 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient();
 
-  // generateLink returns the user (id + metadata) by email without sending an
-  // email — we use it purely to look the user up and refresh their language.
+  // Refresh the stored language via a side-effect-free SQL function. NOTE: we
+  // must NOT use admin.generateLink here — it stamps recovery_sent_at, which
+  // would make the resetPasswordForEmail call below hit the per-email rate
+  // limit and silently send nothing. The RPC only touches user metadata.
   try {
-    const { data, error } = await admin.auth.admin.generateLink({
-      type: "recovery",
-      email,
-    });
-    if (!error && data.user) {
-      const meta = (data.user.user_metadata ?? {}) as Record<string, unknown>;
-      if (meta.lang !== normalizedLang) {
-        await admin.auth.admin.updateUserById(data.user.id, {
-          user_metadata: { ...meta, lang: normalizedLang },
-        });
-      }
-    }
+    await admin.rpc("set_user_lang", { p_email: email, p_lang: normalizedLang });
   } catch {
-    // Ignore lookup/update failures — still send the reset below.
+    // Function may not exist yet / email unknown — still send the reset below
+    // (in the previously stored language).
   }
 
   // Send the actual recovery email (Supabase renders our edited template with
