@@ -2,12 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { translations, type Lang } from "@/lib/translations";
 import LegalFooter from "@/components/LegalFooter";
 
 export default function ForgotPasswordPage() {
-  const supabase = createClient();
   const [lang, setLang] = useState<Lang>("hu");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,15 +23,19 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
-    });
-    setLoading(false);
-    if (error) {
-      console.error("[forgot-password] error:", error);
-      setError(`${t.loginError} (${error.message})`);
-      return;
+    // Go through our own endpoint so the stored language can be refreshed to
+    // the current app language before Supabase renders the recovery email.
+    // Always treated as success (no email-enumeration leak).
+    try {
+      await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, lang }),
+      });
+    } catch (err) {
+      console.error("[forgot-password] error:", err);
     }
+    setLoading(false);
     setSent(true);
   };
 
