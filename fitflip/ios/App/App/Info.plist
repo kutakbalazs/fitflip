@@ -53,5 +53,7 @@
 	<string>A FitFlipnek fotó-hozzáférésre van szüksége, hogy kiválaszthasd az azonosítani kívánt darab képét.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>A FitFlip elmentheti a készített képeket a fotókönyvtáradba.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>A FitFlip a Face ID-t a gyors, biztonságos visszajelentkezéshez használja.</string>
 </dict>
 </plist>
