@@ -94,7 +94,7 @@ export default function HistoryList({ items }: { items: HistoryScan[] }) {
             <p className="text-sm text-ink-500 dark:text-ink-400 mb-5">{t.emptySub}</p>
             <Link
               href="/"
-              className="inline-block px-6 py-2.5 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition"
+              className="inline-block px-6 py-2.5 rounded-full bg-ink-900 dark:bg-ink-700 text-white text-sm font-medium hover:bg-ink-700 transition"
             >
               {t.newScan}
             </Link>

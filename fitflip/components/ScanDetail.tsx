@@ -326,7 +326,7 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
               className="w-full flex items-center justify-between gap-3 px-6 py-3.5 border-t border-ink-100 dark:border-ink-700 text-left hover:bg-ink-50 dark:hover:bg-ink-800 transition group disabled:opacity-60"
             >
               <span className="flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-full bg-ink-900 text-white text-sm flex items-center justify-center" aria-hidden="true">★</span>
+                <span className="w-7 h-7 rounded-full bg-ink-900 dark:bg-ink-700 text-white text-sm flex items-center justify-center" aria-hidden="true">★</span>
                 <span className="text-sm font-medium">
                   {storyLoading
                     ? hu ? "Sztori betöltése…" : "Loading story…"

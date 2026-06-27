@@ -44,14 +44,14 @@ export default function LegalShell({ titleHu, titleEn, effectiveDate, children }
             <button
               type="button"
               onClick={() => setAndPersist("hu")}
-              className={`px-2 py-1 rounded ${lang === "hu" ? "bg-ink-900 text-white" : "text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white"}`}
+              className={`px-2 py-1 rounded ${lang === "hu" ? "bg-ink-900 dark:bg-ink-700 text-white" : "text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white"}`}
             >
               HU
             </button>
             <button
               type="button"
               onClick={() => setAndPersist("en")}
-              className={`px-2 py-1 rounded ${lang === "en" ? "bg-ink-900 text-white" : "text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white"}`}
+              className={`px-2 py-1 rounded ${lang === "en" ? "bg-ink-900 dark:bg-ink-700 text-white" : "text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white"}`}
             >
               EN
             </button>

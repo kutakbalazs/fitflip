@@ -83,7 +83,7 @@ export default function CookieBanner() {
           <button
             type="button"
             onClick={() => dismiss("all")}
-            className="px-3 py-1.5 rounded-full bg-ink-900 text-white text-xs font-medium hover:bg-ink-700 transition"
+            className="px-3 py-1.5 rounded-full bg-ink-900 dark:bg-ink-700 text-white text-xs font-medium hover:bg-ink-700 transition"
           >
             {t.accept}
           </button>

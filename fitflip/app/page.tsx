@@ -1189,7 +1189,7 @@ export default function HomePage() {
             <button
               onClick={() => switchLang("hu")}
               className={`px-2 py-1 rounded transition ${
-                lang === "hu" ? "bg-ink-900 text-white" : "text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white"
+                lang === "hu" ? "bg-ink-900 dark:bg-ink-700 text-white" : "text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white"
               }`}
               aria-label="Magyar"
             >
@@ -1198,7 +1198,7 @@ export default function HomePage() {
             <button
               onClick={() => switchLang("en")}
               className={`px-2 py-1 rounded transition ${
-                lang === "en" ? "bg-ink-900 text-white" : "text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white"
+                lang === "en" ? "bg-ink-900 dark:bg-ink-700 text-white" : "text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white"
               }`}
               aria-label="English"
             >
@@ -1217,7 +1217,7 @@ export default function HomePage() {
             <>
               {isPremium && (
                 <span
-                  className="group inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full bg-ink-900 text-white tracking-wide cursor-default"
+                  className="group inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full bg-ink-900 dark:bg-ink-700 text-white tracking-wide cursor-default"
                   title={t.premiumActive}
                 >
                   <svg
@@ -1418,7 +1418,7 @@ export default function HomePage() {
           {authenticated === false && (
             <Link
               href="/login"
-              className="px-3 py-1.5 rounded-full bg-ink-900 text-white text-sm hover:bg-ink-700 transition"
+              className="px-3 py-1.5 rounded-full bg-ink-900 dark:bg-ink-700 text-white text-sm hover:bg-ink-700 transition"
             >
               {t.login}
             </Link>
@@ -1460,7 +1460,7 @@ export default function HomePage() {
                 <p className="text-ink-500 dark:text-ink-400 text-sm mb-5">{t.loginRequiredSub}</p>
                 <Link
                   href="/login"
-                  className="inline-block px-6 py-2.5 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition"
+                  className="inline-block px-6 py-2.5 rounded-full bg-ink-900 dark:bg-ink-700 text-white text-sm font-medium hover:bg-ink-700 transition"
                 >
                   {t.login}
                 </Link>
@@ -1472,7 +1472,7 @@ export default function HomePage() {
                 <button
                   onClick={openUpgradeConsent}
                   disabled={checkoutLoading}
-                  className="px-6 py-2.5 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-full bg-ink-900 dark:bg-ink-700 text-white text-sm font-medium hover:bg-ink-700 transition disabled:opacity-50"
                 >
                   {checkoutLoading ? "…" : t.upgradeButton}
                 </button>
@@ -1871,7 +1871,7 @@ export default function HomePage() {
                 <p className="font-medium mb-2">{t.notRecognized}</p>
                 <button
                   onClick={reset}
-                  className="mt-4 px-6 py-2 rounded-full bg-ink-900 text-white text-sm hover:bg-ink-700 transition"
+                  className="mt-4 px-6 py-2 rounded-full bg-ink-900 dark:bg-ink-700 text-white text-sm hover:bg-ink-700 transition"
                 >
                   {t.newScan}
                 </button>
@@ -2021,7 +2021,7 @@ export default function HomePage() {
                       className="w-full flex items-center justify-between gap-3 px-6 py-3.5 border-t border-ink-100 dark:border-ink-700 text-left hover:bg-ink-50 dark:hover:bg-ink-800 transition group disabled:opacity-60"
                     >
                       <span className="flex items-center gap-2.5">
-                        <span className="w-7 h-7 rounded-full bg-ink-900 text-white text-sm flex items-center justify-center" aria-hidden="true">
+                        <span className="w-7 h-7 rounded-full bg-ink-900 dark:bg-ink-700 text-white text-sm flex items-center justify-center" aria-hidden="true">
                           ★
                         </span>
                         <span className="text-sm font-medium">
@@ -2098,7 +2098,7 @@ export default function HomePage() {
                             type="button"
                             onClick={submitRefinement}
                             disabled={refinementLoading || refinementText.trim().length === 0}
-                            className="px-4 py-2 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="px-4 py-2 rounded-full bg-ink-900 dark:bg-ink-700 text-white text-sm font-medium hover:bg-ink-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             {refinementLoading ? "…" : t.refineSubmit}
                           </button>
@@ -2276,7 +2276,7 @@ export default function HomePage() {
                 <div className="mt-6 text-center">
                   <button
                     onClick={reset}
-                    className="px-6 py-3 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition"
+                    className="px-6 py-3 rounded-full bg-ink-900 dark:bg-ink-700 text-white text-sm font-medium hover:bg-ink-700 transition"
                   >
                     {t.newScan}
                   </button>
@@ -2364,7 +2364,7 @@ export default function HomePage() {
                 type="button"
                 onClick={startCheckout}
                 disabled={!upgradeConsentChecked || checkoutLoading}
-                className="px-4 py-2 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded-full bg-ink-900 dark:bg-ink-700 text-white text-sm font-medium hover:bg-ink-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {checkoutLoading
                   ? "…"

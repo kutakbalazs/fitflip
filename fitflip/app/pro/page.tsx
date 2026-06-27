@@ -219,14 +219,14 @@ export default function ProPage() {
           <button
             type="button"
             onClick={() => switchLang("hu")}
-            className={`px-2 py-1 rounded ${lang === "hu" ? "bg-ink-900 text-white" : "text-ink-500 dark:text-ink-400"}`}
+            className={`px-2 py-1 rounded ${lang === "hu" ? "bg-ink-900 dark:bg-ink-700 text-white" : "text-ink-500 dark:text-ink-400"}`}
           >
             HU
           </button>
           <button
             type="button"
             onClick={() => switchLang("en")}
-            className={`px-2 py-1 rounded ${lang === "en" ? "bg-ink-900 text-white" : "text-ink-500 dark:text-ink-400"}`}
+            className={`px-2 py-1 rounded ${lang === "en" ? "bg-ink-900 dark:bg-ink-700 text-white" : "text-ink-500 dark:text-ink-400"}`}
           >
             EN
           </button>
@@ -446,7 +446,7 @@ export default function ProPage() {
                 type="button"
                 onClick={startCheckout}
                 disabled={!consentChecked || checkoutLoading}
-                className="px-4 py-2 rounded-full bg-ink-900 text-white text-sm font-medium hover:bg-ink-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded-full bg-ink-900 dark:bg-ink-700 text-white text-sm font-medium hover:bg-ink-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {checkoutLoading
                   ? "…"
