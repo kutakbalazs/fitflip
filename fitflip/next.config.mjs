@@ -12,6 +12,16 @@ const nextConfig = {
     NEXT_PUBLIC_APP_VERSION: pkg.version,
     NEXT_PUBLIC_GIT_SHA: (process.env.VERCEL_GIT_COMMIT_SHA || "").slice(0, 7),
   },
+  async headers() {
+    return [
+      {
+        // Apple fetches this to validate Universal Links; it must be served
+        // as JSON over HTTPS without a redirect.
+        source: "/.well-known/apple-app-site-association",
+        headers: [{ key: "Content-Type", value: "application/json" }],
+      },
+    ];
+  },
 };
 
 const withPWA = withPWAInit({

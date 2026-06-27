@@ -8,7 +8,6 @@ import { translations, type Lang } from "@/lib/translations";
 import { signInWithApple } from "@/lib/appleSignIn";
 import { signInWithGoogle } from "@/lib/googleSignIn";
 import { isNativePlatform, nativePlatform } from "@/lib/native";
-import { biometricAvailable, hasBiometricCredentials, saveBiometricCredentials, biometricLogin } from "@/lib/biometric";
 import LegalFooter from "@/components/LegalFooter";
 
 // Only allow same-origin relative paths to avoid open-redirect.
@@ -42,9 +41,6 @@ function LoginPageInner() {
   // by App Store guideline 4.8 and the native sheet is available). Set after
   // mount to avoid a hydration mismatch.
   const [native, setNative] = useState(false);
-  // Whether to offer Face ID / Touch ID re-login (native + biometric available
-  // + previously stored credentials).
-  const [bioReady, setBioReady] = useState(false);
 
   const t = translations[lang];
 
@@ -55,9 +51,6 @@ function LoginPageInner() {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) router.replace(next);
     });
-    Promise.all([biometricAvailable(), hasBiometricCredentials()]).then(
-      ([avail, has]) => setBioReady(avail && has)
-    );
   }, [router, supabase, next]);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -76,26 +69,6 @@ function LoginPageInner() {
       } else {
         setError(`${t.loginError} (${error.message})`);
       }
-      return;
-    }
-    // Stash credentials so the user can unlock with Face ID next time.
-    await saveBiometricCredentials(email, password);
-    router.replace(next);
-  };
-
-  const handleBiometric = async () => {
-    setError(null);
-    const creds = await biometricLogin(
-      lang === "hu" ? "Bejelentkezés a FitFlipbe" : "Sign in to FitFlip"
-    );
-    if (!creds) return; // cancelled / failed
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword(creds);
-    setLoading(false);
-    if (error) {
-      // Stored password no longer valid (e.g. changed) — fall back to manual.
-      setBioReady(false);
-      setError(t.loginInvalidCredentials);
       return;
     }
     router.replace(next);
@@ -140,24 +113,6 @@ function LoginPageInner() {
           <p className="text-ink-500 dark:text-ink-400 text-sm text-center mb-8">
             {t.loginRequiredSub}
           </p>
-
-          {bioReady && (
-            <button
-              onClick={handleBiometric}
-              className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-full bg-ink-900 text-white dark:bg-white dark:text-ink-900 hover:opacity-90 transition text-sm font-medium mb-3"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M2 8V6a4 4 0 0 1 4-4h2" />
-                <path d="M22 8V6a4 4 0 0 0-4-4h-2" />
-                <path d="M2 16v2a4 4 0 0 0 4 4h2" />
-                <path d="M22 16v2a4 4 0 0 1-4 4h-2" />
-                <path d="M9 9.5a1 1 0 0 1 2 0V11" />
-                <path d="M13 9.5a1 1 0 0 1 2 0v3" />
-                <path d="M9 13c0 1.5.5 3 3 3s3-1.5 3-3" />
-              </svg>
-              {t.loginWithBiometric}
-            </button>
-          )}
 
           {native && (
             <button
