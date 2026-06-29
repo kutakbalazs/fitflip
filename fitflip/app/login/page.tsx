@@ -184,7 +184,11 @@ function LoginPageInner() {
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="w-full px-6 py-3 rounded-full bg-ink-900 dark:bg-ink-700 text-white font-medium hover:bg-ink-700 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`w-full px-6 py-3 rounded-full text-white font-medium transition text-sm disabled:cursor-not-allowed ${
+                email && password
+                  ? "bg-ink-900 dark:bg-ink-700 hover:bg-ink-700"
+                  : "bg-ink-400 dark:bg-ink-700"
+              }`}
             >
               {loading ? "…" : t.loginSubmit}
             </button>
