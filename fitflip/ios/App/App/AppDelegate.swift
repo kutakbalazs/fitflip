@@ -140,13 +140,18 @@ struct FitFlipSplashView: View {
 
             GeometryReader { geo in
                 let w = geo.size.width
+                let h = geo.size.height
                 LinearGradient(
                     colors: [.clear, .white.opacity(0.32), .clear],
                     startPoint: .leading, endPoint: .trailing
                 )
-                .frame(width: w * 0.5)
+                // Overscan the height and centre it so the 12° tilt still
+                // covers the tile top-to-bottom (the rounded tile clips the
+                // overflow); a tile-height band would pull in at the corners
+                // and leave the bottom of the streak short.
+                .frame(width: w * 0.5, height: h * 1.6)
                 .rotationEffect(.degrees(12))
-                .offset(x: -w * 1.1 + sweep * (w * 2.2))
+                .offset(x: -w * 1.1 + sweep * (w * 2.2), y: -h * 0.3)
             }
         }
         .frame(width: iconSize, height: iconSize)
