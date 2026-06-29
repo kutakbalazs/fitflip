@@ -24,6 +24,15 @@ export default async function ScanDetailPage({
 
   if (!scan) notFound();
 
+  // Needed so the price-watcher widget can show the create option (vs the
+  // premium upsell) when a scan is reopened from history.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_premium")
+    .eq("id", user.id)
+    .maybeSingle();
+  const isPremium = profile?.is_premium === true;
+
   let imageUrl: string | null = null;
   if (scan.image_path) {
     const admin = createAdminClient();
@@ -57,5 +66,5 @@ export default async function ScanDetailPage({
     imageUrl,
   };
 
-  return <ScanDetail data={data} />;
+  return <ScanDetail data={data} isPremium={isPremium} />;
 }

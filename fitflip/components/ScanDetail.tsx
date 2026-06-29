@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { readLang, type Lang } from "@/lib/lang";
@@ -10,6 +10,7 @@ import { setPendingScanFile } from "@/lib/pendingScan";
 import StoryModal from "@/components/StoryModal";
 import AllListingsOverlay from "@/components/AllListingsOverlay";
 import type { Listing } from "@/lib/listings/types";
+import WatcherWidget from "@/components/WatcherWidget";
 
 export type ScanDetailData = {
   id: string;
@@ -94,7 +95,7 @@ function hypeBadgeStyle(score: number): string {
   return "bg-white dark:bg-ink-800 text-ink-700 dark:text-ink-100 border border-ink-200 dark:border-ink-600";
 }
 
-export default function ScanDetail({ data }: { data: ScanDetailData }) {
+export default function ScanDetail({ data, isPremium }: { data: ScanDetailData; isPremium: boolean }) {
   const router = useRouter();
   const newScanInputRef = useRef<HTMLInputElement>(null);
   const [lang, setLang] = useState<Lang>("hu");
@@ -150,51 +151,44 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
   const hu = lang === "hu";
   const title = `${data.brand ?? ""}${data.model ? ` — ${data.model}` : ""}`.trim();
 
+  // Search params derived from the stored scan — shared by the listings search
+  // AND the price-watcher widget (same query-variant strategy as a fresh scan,
+  // so different marketplaces each get a phrasing they respond to).
+  const searchParams = useMemo(() => {
+    const brand = data.brand?.trim() ?? "";
+    const model = data.model?.trim() ?? "";
+    const color = data.color?.trim() ?? "";
+    const sq = data.searchQuery?.trim() ?? "";
+    const brandTokens = brand ? brand.split(/\s+/).filter(Boolean) : [];
+    const modelTokens = model ? model.split(/\s+/).filter(Boolean) : [];
+    const colorTokens = color ? color.split(/\s+/).filter(Boolean) : [];
+    const lastBrand = brandTokens[brandTokens.length - 1] ?? "";
+    const firstModel = modelTokens[0] ?? "";
+    const firstColor = colorTokens[0] ?? "";
+    const lastColor = colorTokens[colorTokens.length - 1] ?? "";
+    const queries: string[] = [];
+    const push = (q: string) => {
+      const t = q.trim();
+      if (t && !queries.includes(t)) queries.push(t);
+    };
+    if (brand) push(`${brand} ${model}`.trim());
+    if (sq) push(sq);
+    if (lastBrand && firstModel) push(`${lastBrand} ${firstModel}`);
+    if (lastBrand && firstModel && firstColor) push(`${lastBrand} ${firstModel} ${firstColor}`);
+    if (lastBrand && lastColor) push(`${lastBrand} ${lastColor}`);
+    if (queries.length === 0 && model) push(model);
+    return { brand, model, color, itemType: data.itemType ?? "", queries, brandTokens, modelTokens, colorTokens };
+  }, [data.brand, data.model, data.color, data.searchQuery, data.itemType]);
+
   const runSearch = async () => {
     setLoading(true);
     setSearched(true);
     haptic("tap");
     try {
-      const brand = data.brand?.trim() ?? "";
-      const model = data.model?.trim() ?? "";
-      const color = data.color?.trim() ?? "";
-      const sq = data.searchQuery?.trim() ?? "";
-      const brandTokens = brand ? brand.split(/\s+/).filter(Boolean) : [];
-      const modelTokens = model ? model.split(/\s+/).filter(Boolean) : [];
-      const colorTokens = color ? color.split(/\s+/).filter(Boolean) : [];
-
-      // Same query-variant strategy as the fresh-scan flow: different
-      // marketplaces respond to different phrasings, so cast a wide net.
-      const lastBrand = brandTokens[brandTokens.length - 1] ?? "";
-      const firstModel = modelTokens[0] ?? "";
-      const firstColor = colorTokens[0] ?? "";
-      const lastColor = colorTokens[colorTokens.length - 1] ?? "";
-      const queries: string[] = [];
-      const push = (q: string) => {
-        const t = q.trim();
-        if (t && !queries.includes(t)) queries.push(t);
-      };
-      if (brand) push(`${brand} ${model}`.trim());
-      if (sq) push(sq);
-      if (lastBrand && firstModel) push(`${lastBrand} ${firstModel}`);
-      if (lastBrand && firstModel && firstColor) push(`${lastBrand} ${firstModel} ${firstColor}`);
-      if (lastBrand && lastColor) push(`${lastBrand} ${lastColor}`);
-      if (queries.length === 0 && model) push(model);
-
       const res = await fetch("/api/listings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          queries,
-          brandTokens,
-          modelTokens,
-          colorTokens,
-          brand,
-          model,
-          color,
-          itemType: data.itemType ?? "",
-          scanId: data.id,
-        }),
+        body: JSON.stringify({ ...searchParams, scanId: data.id }),
       });
       const json = await res.json();
       setListings(Array.isArray(json?.listings) ? json.listings : []);
@@ -473,6 +467,18 @@ export default function ScanDetail({ data }: { data: ScanDetailData }) {
             </>
           )}
         </div>
+
+        {data.recognized && searchParams.queries.length > 0 && (
+          <WatcherWidget
+            scanId={data.id}
+            isPremium={isPremium}
+            lang={lang}
+            suggestedPriceHuf={data.estimatedValueMinHuf ?? 50000}
+            maxPriceHuf={Math.round((data.estimatedValueMaxHuf ?? 100000) * 1.5)}
+            baselineUrls={(listings ?? []).map((l) => l.url)}
+            search={searchParams}
+          />
+        )}
 
         {data.sellingTip && (
           <div className="mt-4 border border-ink-100 dark:border-ink-700 rounded-2xl p-6 bg-ink-50 dark:bg-ink-800">
