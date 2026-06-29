@@ -8,6 +8,22 @@ import { nativeGoogleAvailable, ensureSocialLoginInit } from "./socialLogin";
 
 export type GoogleSignInResult = { ok: boolean; error?: "cancelled" | string };
 
+// Random hex string for the OIDC nonce.
+function randomNonce(bytes = 32): string {
+  const arr = new Uint8Array(bytes);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// SHA-256 hex digest. Google echoes the nonce we send into the id_token
+// unchanged, while Supabase compares SHA-256(passed nonce) to the token's
+// nonce — so we send the HASH to Google and the RAW value to Supabase.
+async function sha256Hex(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 export async function signInWithGoogle(
   supabase: SupabaseClient,
   next: string
@@ -17,9 +33,14 @@ export async function signInWithGoogle(
     try {
       await ensureSocialLoginInit();
       const { SocialLogin } = await import("@capgo/capacitor-social-login");
+      // capgo always puts a nonce in the id_token; Supabase then requires the
+      // matching raw nonce, otherwise it rejects with "Passed nonce and nonce
+      // in id_token should either both exist or not."
+      const rawNonce = randomNonce();
+      const hashedNonce = await sha256Hex(rawNonce);
       const res = await SocialLogin.login({
         provider: "google",
-        options: { scopes: ["email", "profile"] },
+        options: { scopes: ["email", "profile"], nonce: hashedNonce },
       });
       const idToken =
         res.provider === "google" && "idToken" in res.result
@@ -29,6 +50,7 @@ export async function signInWithGoogle(
       const { error } = await supabase.auth.signInWithIdToken({
         provider: "google",
         token: idToken,
+        nonce: rawNonce,
       });
       return error ? { ok: false, error: error.message } : { ok: true };
     } catch (err: unknown) {
