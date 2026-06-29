@@ -40,7 +40,10 @@ export async function signInWithGoogle(
       const hashedNonce = await sha256Hex(rawNonce);
       const res = await SocialLogin.login({
         provider: "google",
-        options: { scopes: ["email", "profile"], nonce: hashedNonce },
+        // forcePrompt skips capgo's restorePreviousSignIn path — otherwise a
+        // cached token (with a stale/empty nonce) is returned instead of a
+        // fresh sign-in carrying our nonce, which fails Supabase's check.
+        options: { scopes: ["email", "profile"], nonce: hashedNonce, forcePrompt: true },
       });
       const idToken =
         res.provider === "google" && "idToken" in res.result
