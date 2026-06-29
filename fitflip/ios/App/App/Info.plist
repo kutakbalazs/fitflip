@@ -55,5 +55,16 @@
 	<string>A FitFlip elmentheti a készített képeket a fotókönyvtáradba.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>A FitFlip a Face ID-t a gyors, biztonságos visszajelentkezéshez használja.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- Reversed Google iOS OAuth client id — required for the
+				     native Google sign-in sheet (capgo SocialLogin). -->
+				<string>com.googleusercontent.apps.722254662471-ar90a3avbi60epdaqm60ec2kci7uvdr3</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
