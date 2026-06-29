@@ -78,7 +78,7 @@ function LoginPageInner() {
     setError(null);
     const { ok, error } = await signInWithGoogle(supabase, next);
     if (!ok) {
-      if (error !== "cancelled") setError(`${t.loginError} [DEBUG: ${error}]`);
+      if (error !== "cancelled") setError(t.loginError);
       return;
     }
     // Native completes in-place (token exchange); web redirects away on its own.
