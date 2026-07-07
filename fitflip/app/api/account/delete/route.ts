@@ -48,20 +48,27 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2. Delete all scan images from storage.
+    // 2. Delete all scan images from storage. Paginate: list() returns at
+    //    most 1000 files per call, so loop until the folder is empty.
     try {
-      const { data: files } = await admin.storage
-        .from("scan-images")
-        .list(user.id, { limit: 1000 });
-      if (files && files.length > 0) {
+      for (;;) {
+        const { data: files } = await admin.storage
+          .from("scan-images")
+          .list(user.id, { limit: 1000 });
+        if (!files || files.length === 0) break;
         const paths = files.map((f) => `${user.id}/${f.name}`);
         await admin.storage.from("scan-images").remove(paths);
+        if (files.length < 1000) break;
       }
     } catch (err) {
       console.warn("[/api/account/delete] storage cleanup failed:", err);
     }
 
-    // 3. Delete scans rows.
+    // 3. Delete every user-owned row. Watchers, notifications and feedback
+    //    must go too — /delete-account promises full deletion (GDPR).
+    await admin.from("watcher_notifications").delete().eq("user_id", user.id);
+    await admin.from("price_watchers").delete().eq("user_id", user.id);
+    await admin.from("feedback").delete().eq("user_id", user.id);
     await admin.from("scans").delete().eq("user_id", user.id);
 
     // 4. Delete profile row.

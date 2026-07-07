@@ -7,11 +7,18 @@ import { createClient } from "@/lib/supabase/server";
 // lives on our own domain — which lets iOS Universal Links open it inside the
 // native app (and log the user in there) rather than bouncing to the browser.
 // Web behaves identically.
+// Only allow same-origin relative paths to avoid open-redirect.
+function safeNext(raw: string | null): string {
+  if (!raw) return "/";
+  if (!raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\")) return "/";
+  return raw;
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const next = searchParams.get("next") ?? "/";
+  const next = safeNext(searchParams.get("next"));
 
   if (tokenHash && type) {
     const supabase = createClient();

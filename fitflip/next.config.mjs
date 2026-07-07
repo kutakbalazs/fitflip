@@ -20,6 +20,18 @@ const nextConfig = {
         source: "/.well-known/apple-app-site-association",
         headers: [{ key: "Content-Type", value: "application/json" }],
       },
+      {
+        // Baseline security headers. Framing is denied site-wide (nothing
+        // legitimately embeds us — the Capacitor WebView loads pages
+        // top-level, which X-Frame-Options does not affect). HSTS is added
+        // by Vercel automatically.
+        source: "/(.*)",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        ],
+      },
     ];
   },
 };
