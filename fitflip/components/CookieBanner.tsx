@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { readLang, onLangChange } from "@/lib/lang";
+import { isNativePlatform } from "@/lib/native";
 
 const STORAGE_KEY = "ff-cookie-consent";
 
@@ -21,6 +22,13 @@ export default function CookieBanner() {
   const [lang, setLang] = useState<"hu" | "en">("hu");
 
   useEffect(() => {
+    // The native app never shows a cookie prompt. FitFlip sets only strictly
+    // necessary cookies (auth session, language, theme) — no analytics, no
+    // marketing, no cross-site tracking — and those need no consent. Showing a
+    // consent choice inside the app implied optional tracking cookies, which
+    // App Review read as tracking without App Tracking Transparency
+    // (guideline 5.1.2(i)). The banner stays on the web for ePrivacy hygiene.
+    if (isNativePlatform()) return;
     try {
       const consented = localStorage.getItem(STORAGE_KEY);
       if (!consented) {
