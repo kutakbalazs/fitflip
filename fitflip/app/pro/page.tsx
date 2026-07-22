@@ -110,23 +110,10 @@ export default function ProPage() {
     } catch (err) {
       const cancelled = err instanceof Error && err.message === "cancelled";
       if (!cancelled) {
-        // TEMP DIAGNOSTIC: surface the real error so we can see why the
-        // sandbox purchase fails (no_offering / no_package / StoreKit code).
-        // Revert to the generic message before launch.
-        const detail =
-          err && typeof err === "object"
-            ? `${(err as { message?: string }).message ?? ""}${
-                "code" in (err as object)
-                  ? ` [code ${(err as { code?: string | number }).code}]`
-                  : ""
-              }${
-                "underlyingErrorMessage" in (err as object)
-                  ? ` — ${(err as { underlyingErrorMessage?: string }).underlyingErrorMessage}`
-                  : ""
-              }`
-            : String(err);
         setCheckoutError(
-          (lang === "hu" ? "A vásárlás nem sikerült: " : "Purchase failed: ") + detail
+          lang === "hu"
+            ? "A vásárlás nem sikerült. Próbáld újra."
+            : "Purchase failed. Please try again."
         );
       }
       setCheckoutLoading(false);
