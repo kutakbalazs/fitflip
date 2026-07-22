@@ -24,6 +24,14 @@ const SKIP_PATHS = [
   "/forgot-password",
   "/reset-password",
   "/auth",
+  // Public legal pages reached from external links (App Store / Play Store
+  // listings, the privacy-policy URL Google crawls). These must render their
+  // own content directly — redirecting them to /welcome made Google Play see
+  // the onboarding screen at the privacy-policy URL and reject the listing.
+  "/privacy",
+  "/terms",
+  "/cookies",
+  "/delete-account",
 ];
 
 export default function OnboardingGate() {
