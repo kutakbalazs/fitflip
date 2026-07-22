@@ -330,7 +330,28 @@ export default function ProPage() {
             </div>
           </button>
 
-          <p className="text-xs text-ink-500 dark:text-ink-400 mb-4 text-center">{t.ctaCardCancel}</p>
+          <p className="text-xs text-ink-500 dark:text-ink-400 mb-3 text-center">{t.ctaCardCancel}</p>
+          {/* Required subscription disclosure links, always visible on the
+              purchase screen. App Review guideline 3.1.2(c) requires a
+              FUNCTIONAL link to the Terms of Use (EULA) and Privacy Policy
+              inside the app. In-app navigation (no target="_blank") so they
+              actually open in the Capacitor WebView, where a new tab is a
+              no-op. Title, length and price are shown in the plan cards above. */}
+          <p className="text-[11px] text-ink-500 dark:text-ink-400 mb-4 text-center">
+            <Link
+              href="/terms"
+              className="underline underline-offset-2 hover:text-ink-900 dark:hover:text-white"
+            >
+              {lang === "hu" ? "Felhasználási feltételek (EULA)" : "Terms of Use (EULA)"}
+            </Link>
+            {" · "}
+            <Link
+              href="/privacy"
+              className="underline underline-offset-2 hover:text-ink-900 dark:hover:text-white"
+            >
+              {lang === "hu" ? "Adatvédelmi nyilatkozat" : "Privacy Policy"}
+            </Link>
+          </p>
           <button
             type="button"
             onClick={goCta}
