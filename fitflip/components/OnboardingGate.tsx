@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { isNativePlatform } from "@/lib/native";
+import { hasEnteredWebApp } from "@/lib/landing";
 
 const STORAGE_KEY = "ff-onboarded";
 
@@ -42,6 +44,10 @@ export default function OnboardingGate() {
     if (!pathname) return;
     // Don't redirect from auth / onboarding routes themselves.
     if (SKIP_PATHS.some((p) => pathname.startsWith(p))) return;
+    // On the web, the marketing landing is the first touch — don't force the
+    // onboarding until the visitor has actually entered the app from it.
+    // Native apps have no landing, so they onboard as before.
+    if (!isNativePlatform() && !hasEnteredWebApp()) return;
 
     let alreadySeen = false;
     try {

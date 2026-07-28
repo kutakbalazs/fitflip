@@ -5,3 +5,8 @@ fitflip/public/sw.js
 fitflip/public/sw.js.map
 fitflip/public/workbox-*.js
 fitflip/public/workbox-*.js.map
+
+# Local design handoff / marketing artifacts (not app code)
+landing_design/
+*.zip
+FITFLIP_COWORK_BRIEF.md

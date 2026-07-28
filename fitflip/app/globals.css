@@ -52,3 +52,32 @@ html.dark {
 .ai-spin {
   animation: ai-spin 2.6s linear infinite;
 }
+
+/* ── Marketing landing (web only) ──────────────────────────────────────────
+   Everything here is SCOPED to `.landing` so it can never affect the app.
+   The link-hover / selection colours below intentionally do NOT apply
+   globally. */
+.landing a:hover {
+  color: #f59e0b;
+}
+.landing ::selection {
+  background: #f59e0b;
+  color: #0a0a0a;
+}
+/* Opt-in scrollbar hiding for the social-proof carousel. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+/* Respect reduced-motion for the landing's ambient animations. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-water-a,
+  .animate-water-b,
+  .animate-shine {
+    animation: none !important;
+  }
+}

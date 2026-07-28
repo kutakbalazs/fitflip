@@ -1,6 +1,24 @@
 import type { Metadata, Viewport } from "next";
+import { Playfair_Display, Archivo } from "next/font/google";
 import "./globals.css";
 import CookieBanner from "@/components/CookieBanner";
+
+// Marketing-landing fonts only. Exposed as CSS variables and used via the
+// `font-l-display` / `font-l-sans` Tailwind families on landing components —
+// the app's own typography (var(--font-display)/(--font-sans)) is untouched.
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["600", "700", "800", "900"],
+  style: ["normal", "italic"],
+  variable: "--font-playfair",
+  display: "swap",
+});
+const archivo = Archivo({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-archivo",
+  display: "swap",
+});
 import OnboardingGate from "@/components/OnboardingGate";
 import ScanFab from "@/components/ScanFab";
 import PullToRefresh from "@/components/PullToRefresh";
@@ -52,7 +70,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="hu" suppressHydrationWarning>
+    <html lang="hu" className={`${playfair.variable} ${archivo.variable}`} suppressHydrationWarning>
       <head>
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
