@@ -9,7 +9,6 @@ import {
   WaterBg,
   StoreBadges,
   LangToggle,
-  Photo,
   FloatingResultCard,
   LegalLinks,
 } from "./LandingBits";
@@ -188,10 +187,7 @@ export default function DesktopLanding({
           ref={proofRef}
           className="no-scrollbar mt-6 flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth"
         >
-          {/* interleave photo placeholders + quote cards */}
-          <ProofCard>
-            <Photo label={t.proof.ph[0]} className="h-full w-full" variant="b" />
-          </ProofCard>
+          {/* testimonials (photo cards added once real carousel photos land) */}
           <ProofCard className="flex flex-col justify-between bg-ink p-8 text-white">
             <p className="font-l-display text-[24px] italic leading-[1.35]">
               „{t.proof.quotes[0].text}"
@@ -200,9 +196,6 @@ export default function DesktopLanding({
               {t.proof.quotes[0].who}
             </span>
           </ProofCard>
-          <ProofCard>
-            <Photo label={t.proof.ph[1]} className="h-full w-full" variant="b" />
-          </ProofCard>
           <ProofCard className="flex flex-col justify-between border border-line bg-white p-8">
             <p className="font-l-display text-[24px] italic leading-[1.35]">
               „{t.proof.quotes[1].text}"
@@ -210,9 +203,6 @@ export default function DesktopLanding({
             <span className="text-[12px] uppercase tracking-[0.16em] text-muted">
               {t.proof.quotes[1].who}
             </span>
-          </ProofCard>
-          <ProofCard>
-            <Photo label={t.proof.ph[2]} className="h-full w-full" variant="b" />
           </ProofCard>
           <ProofCard className="flex flex-col justify-between bg-off p-8">
             <p className="font-l-display text-[24px] italic leading-[1.35]">

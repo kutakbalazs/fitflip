@@ -56,7 +56,7 @@ export default function MobileLanding({
       {/* 3 ── Hero */}
       <section className="relative isolate overflow-hidden">
         <WaterBg />
-        <div className="relative z-[1] flex flex-col gap-[22px] px-5 pb-[76px] pt-9">
+        <div className="relative z-[1] flex flex-col gap-[22px] px-5 pb-[96px] pt-9">
           <div className="flex items-center gap-2">
             <span className="h-px w-6 bg-ink" />
             <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#666]">
@@ -88,7 +88,7 @@ export default function MobileLanding({
             <FloatingResultCard
               copy={t}
               compact
-              className="absolute -bottom-[44px] left-4 w-[208px]"
+              className="absolute -bottom-[62px] left-4 w-[208px]"
             />
           </div>
         </div>
