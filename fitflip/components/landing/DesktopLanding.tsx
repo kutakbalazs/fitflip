@@ -97,7 +97,7 @@ export default function DesktopLanding({
               alt="Air Jordan 4 SB Midnight Navy"
               className="aspect-[4/5] w-full object-cover"
             />
-            <FloatingResultCard copy={t} className="absolute -left-[34px] bottom-16 w-[210px]" />
+            <FloatingResultCard copy={t} className="absolute -left-[92px] bottom-16 w-[210px]" />
           </div>
         </div>
       </section>
