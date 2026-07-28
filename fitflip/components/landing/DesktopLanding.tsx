@@ -150,23 +150,12 @@ export default function DesktopLanding({
                 <p className="text-[15px] leading-[1.6] text-[#555]">{t.features.itemDescs[i]}</p>
               </div>
             ))}
-            {/* free-tier highlight cell */}
+            {/* free-tier highlight cell — closes out a clean 2-row grid (8 cells) */}
             <div className="flex flex-col gap-3 bg-off px-8 py-9">
               <span className="font-l-display text-[40px] font-extrabold leading-none text-emerald">
                 {t.features.freeNum}
               </span>
               <p className="text-[15px] leading-[1.6] text-[#555]">{t.features.freeText}</p>
-            </div>
-            {/* always-with-you dark cell */}
-            <div className="flex flex-col gap-3 bg-ink-soft px-8 py-9 text-white">
-              <h3 className="text-[19px] font-bold">{t.features.alwaysTitle}</h3>
-              <p className="text-[15px] leading-[1.6] text-[#DADADA]">{t.features.alwaysText}</p>
-              <a
-                href="#letoltes"
-                className="mt-1 w-fit border-b border-amber pb-0.5 text-[13px] font-semibold text-amber hover:text-white"
-              >
-                {t.features.alwaysLink}
-              </a>
             </div>
           </div>
         </div>

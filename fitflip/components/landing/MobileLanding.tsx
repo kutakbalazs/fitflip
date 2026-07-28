@@ -56,7 +56,7 @@ export default function MobileLanding({
       {/* 3 ── Hero */}
       <section className="relative isolate overflow-hidden">
         <WaterBg />
-        <div className="relative z-[1] flex flex-col gap-[22px] px-5 pb-[104px] pt-9">
+        <div className="relative z-[1] flex flex-col gap-[22px] px-5 pb-[124px] pt-9">
           <div className="flex items-center gap-2">
             <span className="h-px w-6 bg-ink" />
             <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#666]">
@@ -81,11 +81,15 @@ export default function MobileLanding({
           <div className="relative mt-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/landing/hero-mobile.jpg"
+              src="/landing/hero.jpg"
               alt="Air Jordan 4 SB Midnight Navy"
-              className="aspect-square w-full object-cover"
+              className="aspect-[4/5] w-full object-cover"
             />
-            <FloatingResultCard copy={t} className="absolute -bottom-[68px] left-4 w-[240px]" />
+            <FloatingResultCard
+              copy={t}
+              compact
+              className="absolute -bottom-[92px] left-4 w-[208px]"
+            />
           </div>
         </div>
       </section>
