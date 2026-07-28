@@ -7,7 +7,6 @@ import {
   WaterBg,
   StoreBadges,
   LangToggle,
-  Photo,
   FloatingResultCard,
   LegalLinks,
 } from "./LandingBits";
@@ -80,7 +79,12 @@ export default function MobileLanding({
             {t.cta.try}
           </button>
           <div className="relative mt-2">
-            <Photo label={t.ph.heroMobile} className="aspect-square w-full" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/landing/hero-mobile.jpg"
+              alt="Air Jordan 4 SB Midnight Navy"
+              className="aspect-square w-full object-cover"
+            />
             <FloatingResultCard copy={t} className="absolute -bottom-[22px] left-3.5 right-3.5" />
           </div>
         </div>

@@ -91,7 +91,12 @@ export default function DesktopLanding({
           </div>
           {/* right */}
           <div className="relative">
-            <Photo label={t.ph.hero} className="aspect-[4/5] w-full" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/landing/hero.jpg"
+              alt="Air Jordan 4 SB Midnight Navy"
+              className="aspect-[4/5] w-full object-cover"
+            />
             <FloatingResultCard copy={t} className="absolute -left-[34px] bottom-16 w-[210px]" />
           </div>
         </div>

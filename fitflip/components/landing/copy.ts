@@ -70,11 +70,11 @@ const hu: LandingCopy = {
     qrLabel: "Olvasd be a telefonoddal",
   },
   card: {
-    model: "Air Max 90 OG",
-    meta: "1999 · jó állapot",
+    model: "Jordan 4 SB Midnight Navy",
+    meta: "2024 · új állapot",
     estLabel: "Becsült érték",
-    est: "38–52 e Ft",
-    hype: "▲ hype 78",
+    est: "82–105 e Ft",
+    hype: "▲ hype 90",
   },
   how: {
     title: "Hogyan működik",
@@ -180,11 +180,11 @@ const en: LandingCopy = {
     qrLabel: "Scan with your phone",
   },
   card: {
-    model: "Air Max 90 OG",
-    meta: "1999 · good condition",
+    model: "Jordan 4 SB Midnight Navy",
+    meta: "2024 · new",
     estLabel: "Estimated value",
-    est: "€95–130",
-    hype: "▲ hype 78",
+    est: "€220–280",
+    hype: "▲ hype 90",
   },
   how: {
     title: "How it works",
