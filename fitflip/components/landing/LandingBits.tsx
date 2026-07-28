@@ -144,28 +144,22 @@ export function FloatingResultCard({
   return (
     <div
       className={`bg-white border border-line shadow-float animate-float [will-change:transform] ${
-        compact ? "p-3" : "p-4"
+        compact ? "p-4" : "p-5"
       } ${className}`}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/landing/scan.jpg"
-        alt=""
-        className={`w-full object-cover ${compact ? "h-14" : "h-24"}`}
-      />
       <p
         className={`font-l-display font-extrabold text-ink ${
-          compact ? "mt-2 text-[15px] leading-tight" : "mt-3 text-[17px]"
+          compact ? "text-[16px] leading-tight" : "text-[19px]"
         }`}
       >
         {c.model}
       </p>
-      <p className="text-[11px] uppercase tracking-[0.1em] text-[#777]">{c.meta}</p>
-      <div className={`border-t border-line ${compact ? "mt-2 pt-2" : "mt-3 pt-3"}`}>
+      <p className="mt-0.5 text-[11px] uppercase tracking-[0.1em] text-[#777]">{c.meta}</p>
+      <div className={`border-t border-line ${compact ? "mt-3 pt-3" : "mt-4 pt-4"}`}>
         <p className="text-[10px] uppercase tracking-[0.08em] text-[#777]">{c.estLabel}</p>
         <div className="mt-1 flex items-center justify-between">
           <span
-            className={`font-l-display font-extrabold text-ink ${compact ? "text-[18px]" : "text-[20px]"}`}
+            className={`font-l-display font-extrabold text-ink ${compact ? "text-[19px]" : "text-[22px]"}`}
           >
             {c.est}
           </span>
