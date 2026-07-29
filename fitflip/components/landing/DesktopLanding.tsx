@@ -38,12 +38,14 @@ export default function DesktopLanding({
       {/* 1 ── Sticky header */}
       <header className="sticky top-0 z-40 border-b border-line bg-white/[0.92] backdrop-blur-md">
         <div className="mx-auto flex max-w-shell items-center justify-between px-14 py-5">
-          <Wordmark className="text-[28px]" />
-          <nav className="flex items-center gap-9 text-[14px] text-[#444]">
-            <a href="#hogyan">{t.nav.how}</a>
-            <a href="#funkciok">{t.nav.features}</a>
-            <a href="#pro">{t.nav.pro}</a>
-          </nav>
+          <div className="flex items-center gap-10">
+            <Wordmark className="text-[28px]" />
+            <nav className="flex items-center gap-9 text-[14px] text-[#444]">
+              <a href="#hogyan">{t.nav.how}</a>
+              <a href="#funkciok">{t.nav.features}</a>
+              <a href="#pro">{t.nav.pro}</a>
+            </nav>
+          </div>
           <div className="flex items-center gap-[18px]">
             <LangToggle lang={lang} onChange={setLang} />
             <StoreBadges heightClass="h-[38px]" />

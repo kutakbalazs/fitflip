@@ -78,16 +78,16 @@ const config: Config = {
         "float-sm": "0 16px 40px rgba(10,10,10,0.14)",
       },
       animation: {
-        float: "ff-float 9s ease-in-out infinite",
+        float: "ff-float 7s ease-in-out infinite",
         "water-a": "ff-water-a 22s ease-in-out infinite",
         "water-b": "ff-water-b 17s ease-in-out infinite",
         shine: "ff-shine 11s linear infinite",
       },
       keyframes: {
         "ff-float": {
-          "0%,100%": { transform: "translate3d(0,0,0) rotate(-0.5deg)" },
-          "33%": { transform: "translate3d(2px,-9px,0) rotate(0.4deg)" },
-          "66%": { transform: "translate3d(-2px,-4px,0) rotate(0.8deg)" },
+          "0%,100%": { transform: "translate3d(0,0,0) rotate(-1.2deg)" },
+          "33%": { transform: "translate3d(5px,-18px,0) rotate(1.2deg)" },
+          "66%": { transform: "translate3d(-5px,-9px,0) rotate(1.8deg)" },
         },
         "ff-water-a": {
           "0%,100%": { transform: "translate3d(-6%,0,0) scale(1.15)" },
