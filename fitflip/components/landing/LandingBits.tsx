@@ -61,13 +61,17 @@ export function WaterBg() {
 
 /* App Store + Google Play badges (image links to the real store URLs). */
 export function StoreBadges({ heightClass = "h-[60px]" }: { heightClass?: string }) {
+  // No target="_blank": in-app browsers (Instagram / Facebook / TikTok
+  // WebViews) silently ignore new-window requests, so the badge would do
+  // nothing there. Navigating in the same view lets the OS hand the
+  // apps.apple.com / play.google.com link off to the App Store / Play Store.
   return (
     <div className="flex flex-wrap items-center gap-4">
-      <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer" aria-label="App Store">
+      <a href={APP_STORE_URL} rel="noopener" aria-label="App Store">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/landing/badge-app-store.png" alt="Download on the App Store" className={`${heightClass} w-auto`} />
       </a>
-      <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" aria-label="Google Play">
+      <a href={PLAY_STORE_URL} rel="noopener" aria-label="Google Play">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/landing/badge-google-play.png" alt="Get it on Google Play" className={`${heightClass} w-auto`} />
       </a>
