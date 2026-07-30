@@ -102,13 +102,13 @@ export function InAppBrowserNotice({ lang }: { lang: Lang }) {
   const t =
     lang === "hu"
       ? {
-          text: "A letöltéshez nyisd meg böngészőben:",
-          how: "koppints a ⋯ menüre (jobb felül) → „Megnyitás böngészőben”.",
+          text: "A legjobb élményért nyisd meg böngészőben:",
+          how: "koppints a ⋯ menüre (jobb felül), majd „Megnyitás böngészőben”.",
           close: "Bezárás",
         }
       : {
-          text: "To download, open this page in your browser:",
-          how: "tap the ⋯ menu (top right) → “Open in browser”.",
+          text: "For the best experience, open this page in your browser:",
+          how: "tap the ⋯ menu (top right), then “Open in browser”.",
           close: "Dismiss",
         };
   return (
