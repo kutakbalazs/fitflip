@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Lang } from "@/lib/lang";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/lib/landing";
@@ -61,26 +62,22 @@ export function WaterBg() {
 
 /* App Store + Google Play badges (image links to the real store URLs). */
 export function StoreBadges({ heightClass = "h-[60px]" }: { heightClass?: string }) {
-  // No target="_blank": in-app browsers (Instagram / Facebook / TikTok
-  // WebViews) silently ignore new-window requests, so the badge would do
-  // nothing there. Navigating in the same view lets the OS hand the
-  // apps.apple.com / play.google.com link off to the App Store / Play Store.
+  // On iOS, point the App Store badge's href directly at the itms-apps:
+  // scheme. In-app browsers (Instagram/FB WebViews) load an https App Store
+  // link internally (a single tap does nothing useful — only long-press → Open
+  // works), but a direct anchor navigation to a non-http scheme is handed off
+  // to the OS, opening the App Store app on the first tap. The href is set
+  // after mount so SSR keeps the crawlable https URL. No target="_blank":
+  // in-app browsers ignore new-window requests.
+  const [appStoreHref, setAppStoreHref] = useState(APP_STORE_URL);
+  useEffect(() => {
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+      setAppStoreHref(APP_STORE_URL.replace(/^https:\/\//, "itms-apps://"));
+    }
+  }, []);
   return (
     <div className="flex flex-wrap items-center gap-4">
-      <a
-        href={APP_STORE_URL}
-        rel="noopener"
-        aria-label="App Store"
-        onClick={(e) => {
-          // On iOS, open the App Store app on a single tap even inside in-app
-          // browsers (Instagram/FB), which won't hand off an https App Store
-          // link. The itms-apps: scheme is taken by iOS at the OS level.
-          if (typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent)) {
-            e.preventDefault();
-            window.location.href = APP_STORE_URL.replace(/^https:\/\//, "itms-apps://");
-          }
-        }}
-      >
+      <a href={appStoreHref} rel="noopener" aria-label="App Store">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/landing/badge-app-store.png" alt="Download on the App Store" className={`${heightClass} w-auto`} />
       </a>
