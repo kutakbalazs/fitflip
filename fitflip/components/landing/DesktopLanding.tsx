@@ -11,6 +11,7 @@ import {
   LangToggle,
   FloatingResultCard,
   LegalLinks,
+  InAppBrowserNotice,
 } from "./LandingBits";
 
 /* Desktop marketing landing. No app functionality — the conversion is the
@@ -35,6 +36,7 @@ export default function DesktopLanding({
 
   return (
     <div className="landing min-h-dvh bg-white font-l-sans text-ink">
+      <InAppBrowserNotice lang={lang} />
       {/* 1 ── Sticky header */}
       <header className="sticky top-0 z-40 border-b border-line bg-white/[0.92] backdrop-blur-md">
         <div className="mx-auto flex max-w-shell items-center justify-between px-14 py-5">

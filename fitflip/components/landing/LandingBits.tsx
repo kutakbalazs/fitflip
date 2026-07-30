@@ -60,24 +60,15 @@ export function WaterBg() {
   );
 }
 
-/* App Store + Google Play badges (image links to the real store URLs). */
+/* App Store + Google Play badges (plain https links to the real store URLs).
+   No target="_blank" — in-app browsers ignore new-window requests. Opening the
+   App Store from inside an in-app browser (Instagram/FB) is unreliable no
+   matter the technique, so we nudge those users to a real browser via
+   InAppBrowserNotice below instead of fighting the WebView. */
 export function StoreBadges({ heightClass = "h-[60px]" }: { heightClass?: string }) {
-  // On iOS, point the App Store badge's href directly at the itms-apps:
-  // scheme. In-app browsers (Instagram/FB WebViews) load an https App Store
-  // link internally (a single tap does nothing useful — only long-press → Open
-  // works), but a direct anchor navigation to a non-http scheme is handed off
-  // to the OS, opening the App Store app on the first tap. The href is set
-  // after mount so SSR keeps the crawlable https URL. No target="_blank":
-  // in-app browsers ignore new-window requests.
-  const [appStoreHref, setAppStoreHref] = useState(APP_STORE_URL);
-  useEffect(() => {
-    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-      setAppStoreHref(APP_STORE_URL.replace(/^https:\/\//, "itms-apps://"));
-    }
-  }, []);
   return (
     <div className="flex flex-wrap items-center gap-4">
-      <a href={appStoreHref} rel="noopener" aria-label="App Store">
+      <a href={APP_STORE_URL} rel="noopener" aria-label="App Store">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/landing/badge-app-store.png" alt="Download on the App Store" className={`${heightClass} w-auto`} />
       </a>
@@ -85,6 +76,54 @@ export function StoreBadges({ heightClass = "h-[60px]" }: { heightClass?: string
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/landing/badge-google-play.png" alt="Get it on Google Play" className={`${heightClass} w-auto`} />
       </a>
+    </div>
+  );
+}
+
+// Detects the common in-app browsers (Instagram, Facebook, TikTok, etc.),
+// where App Store links can't reliably open. Real Safari/Chrome → false, so
+// nothing changes there.
+function isInAppBrowser(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  return /Instagram|FBAN|FBAV|FB_IAB|Messenger|Line\/|Snapchat|TikTok|musical_ly|BytedanceWebview|Pinterest|LinkedInApp|Twitter/i.test(
+    ua,
+  );
+}
+
+/* Thin banner shown only inside in-app browsers, nudging the user to reopen
+   the page in their real browser where the store buttons work. */
+export function InAppBrowserNotice({ lang }: { lang: Lang }) {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    setShow(isInAppBrowser());
+  }, []);
+  if (!show) return null;
+  const t =
+    lang === "hu"
+      ? {
+          text: "A letöltéshez nyisd meg böngészőben:",
+          how: "koppints a ⋯ menüre (jobb felül) → „Megnyitás böngészőben”.",
+          close: "Bezárás",
+        }
+      : {
+          text: "To download, open this page in your browser:",
+          how: "tap the ⋯ menu (top right) → “Open in browser”.",
+          close: "Dismiss",
+        };
+  return (
+    <div className="landing flex items-start gap-3 bg-amber px-5 py-3 font-l-sans text-[13px] leading-snug text-ink">
+      <span className="flex-1">
+        <strong className="font-semibold">{t.text}</strong> {t.how}
+      </span>
+      <button
+        type="button"
+        onClick={() => setShow(false)}
+        aria-label={t.close}
+        className="shrink-0 text-[18px] leading-none text-ink"
+      >
+        ×
+      </button>
     </div>
   );
 }

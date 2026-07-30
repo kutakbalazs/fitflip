@@ -9,6 +9,7 @@ import {
   LangToggle,
   FloatingResultCard,
   LegalLinks,
+  InAppBrowserNotice,
 } from "./LandingBits";
 
 /* Mobile marketing landing. Unlike desktop, the primary CTA ("Kipróbálom")
@@ -28,6 +29,7 @@ export default function MobileLanding({
 
   return (
     <div className="landing min-h-dvh overflow-x-hidden bg-white pb-24 font-l-sans text-ink">
+      <InAppBrowserNotice lang={lang} />
       {/* 1 ── Download banner */}
       <div className="flex items-center justify-between gap-3 bg-ink px-5 py-3 text-white">
         <div className="flex items-center gap-2">
