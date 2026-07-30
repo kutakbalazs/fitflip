@@ -67,7 +67,20 @@ export function StoreBadges({ heightClass = "h-[60px]" }: { heightClass?: string
   // apps.apple.com / play.google.com link off to the App Store / Play Store.
   return (
     <div className="flex flex-wrap items-center gap-4">
-      <a href={APP_STORE_URL} rel="noopener" aria-label="App Store">
+      <a
+        href={APP_STORE_URL}
+        rel="noopener"
+        aria-label="App Store"
+        onClick={(e) => {
+          // On iOS, open the App Store app on a single tap even inside in-app
+          // browsers (Instagram/FB), which won't hand off an https App Store
+          // link. The itms-apps: scheme is taken by iOS at the OS level.
+          if (typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent)) {
+            e.preventDefault();
+            window.location.href = APP_STORE_URL.replace(/^https:\/\//, "itms-apps://");
+          }
+        }}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/landing/badge-app-store.png" alt="Download on the App Store" className={`${heightClass} w-auto`} />
       </a>
