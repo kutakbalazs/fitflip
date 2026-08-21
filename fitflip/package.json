@@ -24,6 +24,7 @@
     "@capgo/capacitor-social-login": "^8.3.24",
     "@ducanh2912/next-pwa": "^10.2.9",
     "@revenuecat/purchases-capacitor": "^13.1.7",
+    "@sentry/nextjs": "^8.55.2",
     "@stripe/stripe-js": "^9.4.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.4",
