@@ -19,6 +19,7 @@ import { fallbackName } from "@/lib/itemTypeNames";
 import { hypeBadgeLabel } from "@/lib/hype";
 import { isNativePlatform } from "@/lib/native";
 import { managementUrl } from "@/lib/iap";
+import { track } from "@/lib/analytics";
 
 type AnalysisResult = {
   recognized: boolean;
@@ -783,6 +784,7 @@ export default function HomeApp() {
     }
     setLoading(true);
     setError(null);
+    track("scan_start", { images: images.length, hasHint: !!hint });
     // Lazy-story state belongs to the previous result.
     setStoryText(null);
     setStoryUnavailable(false);
@@ -840,20 +842,30 @@ export default function HomeApp() {
       const data = await res.json();
       if (!res.ok || data.error) {
         setError(t.error);
+        track("scan_failed", { reason: "api", status: res.status });
         setLoading(false);
         return;
       }
+      // `recognized: false` still counts as a completed scan — it tells us the
+      // identification quality, which is a different question from failure.
+      track("scan_success", { recognized: !!data.recognized });
       setResult(data);
       setResultLang(lang);
       translationCacheRef.current = {};
       haptic("success");
       if (typeof data.scansLeft === "number") {
         setScansLeft(data.scansLeft);
-        if (data.scansLeft <= 0) setLimitReached(true);
+        if (data.scansLeft <= 0) {
+          // Fired on the transition only (the scan that used up the last free
+          // slot), not on every app open while already limited.
+          track("limit_reached");
+          setLimitReached(true);
+        }
       }
       if (typeof data.streak === "number") setStreak(data.streak);
     } catch {
       setError(t.error);
+      track("scan_failed", { reason: "network" });
       haptic("error");
     } finally {
       setLoading(false);

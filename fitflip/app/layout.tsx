@@ -24,6 +24,8 @@ import ScanFab from "@/components/ScanFab";
 import PullToRefresh from "@/components/PullToRefresh";
 import IapInit from "@/components/IapInit";
 import DeepLinkHandler from "@/components/DeepLinkHandler";
+import LangInit from "@/components/LangInit";
+import AnalyticsInit from "@/components/AnalyticsInit";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { themeInitScript } from "@/lib/theme";
 
@@ -85,6 +87,8 @@ export default function RootLayout({
           <CookieBanner />
           <IapInit />
           <DeepLinkHandler />
+          <LangInit />
+          <AnalyticsInit />
         </ThemeProvider>
       </body>
     </html>

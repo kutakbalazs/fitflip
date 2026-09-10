@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { readLang, writeLang, type Lang } from "@/lib/lang";
 import { isNativePlatform } from "@/lib/native";
 import { getPlans, purchasePro, restorePro, type IapPlanInfo } from "@/lib/iap";
+import { track } from "@/lib/analytics";
 
 type AuthState =
   | { status: "loading" }
@@ -36,6 +37,12 @@ export default function ProPage() {
   const [native] = useState(() => isNativePlatform());
   const [storePlans, setStorePlans] = useState<IapPlanInfo[]>([]);
   const [restoreLoading, setRestoreLoading] = useState(false);
+
+  useEffect(() => {
+    // One paywall view per mount — the step between "hit the limit" and
+    // "started a purchase", which is where a pricing problem shows up.
+    track("paywall_view");
+  }, []);
 
   useEffect(() => {
     setLang(readLang());
@@ -92,6 +99,7 @@ export default function ProPage() {
   const startNativePurchase = async () => {
     setCheckoutLoading(true);
     setCheckoutError(null);
+    track("checkout_start", { plan, via: "iap" });
     try {
       const ok = await purchasePro(plan);
       if (!ok) {
@@ -105,6 +113,7 @@ export default function ProPage() {
       }
       // Verify + flip is_premium server-side, then reflect it in the UI.
       await fetch("/api/iap/activate", { method: "POST" }).catch(() => {});
+      track("purchase_success", { plan, via: "iap" });
       setAuth({ status: "premium" });
       setCheckoutLoading(false);
     } catch (err) {
@@ -153,6 +162,7 @@ export default function ProPage() {
     if (!consentChecked) return;
     setCheckoutLoading(true);
     setCheckoutError(null);
+    track("checkout_start", { plan, via: "stripe" });
     try {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",

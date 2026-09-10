@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { translations, type Lang } from "@/lib/translations";
 import { signInWithApple } from "@/lib/appleSignIn";
 import { signInWithGoogle } from "@/lib/googleSignIn";
+import { track } from "@/lib/analytics";
 import { isNativePlatform, nativePlatform } from "@/lib/native";
 import LegalFooter from "@/components/LegalFooter";
 
@@ -71,6 +72,7 @@ function LoginPageInner() {
       }
       return;
     }
+    track("login_complete", { method: "password" });
     router.replace(next);
   };
 
