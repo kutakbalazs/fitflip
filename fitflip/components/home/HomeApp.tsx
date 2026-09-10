@@ -22,6 +22,7 @@ import { managementUrl } from "@/lib/iap";
 import { track } from "@/lib/analytics";
 import { savePendingGuestScan } from "@/lib/guestPending";
 import StockxButton from "@/components/StockxButton";
+import ListingDraft from "@/components/ListingDraft";
 
 type AnalysisResult = {
   recognized: boolean;
@@ -2351,6 +2352,12 @@ export default function HomeApp() {
                       {result.selling_tip}
                     </p>
                   </div>
+                )}
+
+                {/* Guests have no scan_id (nothing was saved), so there is
+                    nothing to draft from until they have an account. */}
+                {result.scan_id && (
+                  <ListingDraft scanId={result.scan_id} hu={lang === "hu"} size={sizeInput} />
                 )}
 
                 <div className="mt-6 text-center">

@@ -13,6 +13,7 @@ import type { Listing } from "@/lib/listings/types";
 import WatcherWidget from "@/components/WatcherWidget";
 import { track } from "@/lib/analytics";
 import StockxButton from "@/components/StockxButton";
+import ListingDraft from "@/components/ListingDraft";
 
 export type ScanDetailData = {
   id: string;
@@ -491,6 +492,8 @@ export default function ScanDetail({ data, isPremium }: { data: ScanDetailData; 
             <p className="text-sm text-ink-700 dark:text-ink-200 leading-relaxed">{data.sellingTip}</p>
           </div>
         )}
+
+        {data.recognized && <ListingDraft scanId={data.id} hu={hu} />}
 
         {/* Inline "new scan" button (this page has no floating button) */}
         <input

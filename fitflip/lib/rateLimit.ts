@@ -22,6 +22,8 @@ export const API_DAILY_LIMITS = {
   "translate-scan": 100,
   /** Re-runs and refinements; each one can trigger vision verification. */
   listings: 150,
+  /** User-triggered per result, once they're ready to actually sell it. */
+  "listing-draft": 100,
 } as const;
 
 export type RateLimitedEndpoint = keyof typeof API_DAILY_LIMITS;

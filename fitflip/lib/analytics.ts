@@ -36,6 +36,8 @@ export const ANALYTICS_EVENTS = [
   "listings_view",
   "listing_click",
   "watcher_create",
+  /** The "Sell." half of the promise: they asked us to write the ad. */
+  "listing_draft_created",
   // monetisation
   "limit_reached",
   "paywall_view",
