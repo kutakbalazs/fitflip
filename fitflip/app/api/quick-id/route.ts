@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { claimApiCall } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 15;
@@ -16,6 +18,13 @@ export async function POST(req: NextRequest) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+    // Cost guard: this endpoint calls a paid model, so cap how many times one
+    // account can do that per day (see lib/rateLimit.ts for the reasoning).
+    const rate = await claimApiCall(createAdminClient(), user.id, "quick-id");
+    if (!rate.allowed) {
+      return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+    }
 
     const apiKey = process.env.ANTHROPIC_API_KEY || process.env.FITFLIP_ANTHROPIC_KEY;
     if (!apiKey) return NextResponse.json({ error: "no_api_key" }, { status: 500 });

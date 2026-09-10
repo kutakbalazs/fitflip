@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { claimApiCall } from "@/lib/rateLimit";
 import { searchAllMarketplaces, titleHasColor, titleMentionsAnyColor } from "@/lib/listings/aggregate";
 import { verifyListingsAgainstImage } from "@/lib/listings/verify";
 import { filterListingsByItemType, isStrictFilterType, isSimilarOnlyType } from "@/lib/listings/itemType";
@@ -41,6 +42,14 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    }
+
+    // Cost guard: a listings run can trigger vision verification against every
+    // candidate, making this the most expensive endpoint per call. Capped per
+    // account per day (see lib/rateLimit.ts).
+    const rate = await claimApiCall(createAdminClient(), user.id, "listings");
+    if (!rate.allowed) {
+      return NextResponse.json({ error: "rate_limited" }, { status: 429 });
     }
 
     // Listings panel is now open to free users too — limited naturally by
