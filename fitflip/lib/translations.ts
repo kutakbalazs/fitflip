@@ -78,6 +78,18 @@ export const translations = {
     logout: "Kijelentkezés",
     loginRequired: "A scaneléshez bejelentkezés szükséges",
     loginRequiredSub: "Jelentkezz be, és tartsd nyilván a scanjeidet egy helyen.",
+    // Guest (signed-out) flow
+    guestTryBanner: "Egy elemzést ingyen kipróbálhatsz belépés nélkül.",
+    guestTryBannerSub: "A mentéshez regisztrálnod kell — különben az eredmény elveszik.",
+    guestSaveTitle: "Mentsd el ezt az eredményt",
+    guestSaveSub:
+      "Ez az elemzés csak most, ebben az ablakban él. Regisztrálj, és bekerül az előzményeidbe — ráadásul kapsz napi 3 ingyenes elemzést.",
+    guestSaveCta: "Regisztrálok és elmentem",
+    guestSaveLogin: "Már van fiókom",
+    guestExhausted: "Elhasználtad az ingyenes próbát",
+    guestExhaustedSub:
+      "Regisztrálj, és azonnal kapsz napi 3 ingyenes elemzést — a scanjeid pedig megmaradnak.",
+    guestClaimed: "Elmentettük az elemzésedet az előzményeidbe.",
     loginWithGoogle: "Bejelentkezés Google-lel",
     loginWithApple: "Bejelentkezés Apple-lel",
     loginWithBiometric: "Belépés Face ID-val",
@@ -198,6 +210,18 @@ export const translations = {
     logout: "Sign out",
     loginRequired: "Sign in to start scanning",
     loginRequiredSub: "Sign in to keep all your scans in one place.",
+    // Guest (signed-out) flow
+    guestTryBanner: "Try one analysis free, no account needed.",
+    guestTryBannerSub: "To keep the result you'll need an account — otherwise it's lost.",
+    guestSaveTitle: "Save this result",
+    guestSaveSub:
+      "This analysis only lives in this window. Create an account and it moves into your history — plus you get 3 free analyses a day.",
+    guestSaveCta: "Sign up and save it",
+    guestSaveLogin: "I already have an account",
+    guestExhausted: "You've used your free try",
+    guestExhaustedSub:
+      "Create an account to get 3 free analyses every day — and to keep your scans.",
+    guestClaimed: "Your analysis has been saved to your history.",
     loginWithGoogle: "Continue with Google",
     loginWithApple: "Continue with Apple",
     loginWithBiometric: "Sign in with Face ID",

@@ -3,6 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { claimGuestScan, clientIp } from "@/lib/guestScan";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -620,21 +621,35 @@ export async function POST(req: NextRequest) {
 
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
-
     const admin = createAdminClient();
-    const profile = await getOrResetProfile(admin, user.id);
-    if (!profile) {
-      return NextResponse.json({ error: "Profile not found" }, { status: 500 });
-    }
 
-    if (scansLeftFor(profile) <= 0) {
-      return NextResponse.json(
-        { error: "limit_reached", scansLeft: 0 },
-        { status: 429 }
-      );
+    // Signed-out visitors get a small taste of the product before being asked
+    // for an account — seeing one real result is far more persuasive than a
+    // sign-up wall. Nothing is persisted for them (see the guarded blocks
+    // below): the result lives in their browser until they sign in and claim
+    // it, and simply disappears if they don't.
+    let profile: Profile | null = null;
+    if (user) {
+      profile = await getOrResetProfile(admin, user.id);
+      if (!profile) {
+        return NextResponse.json({ error: "Profile not found" }, { status: 500 });
+      }
+      if (scansLeftFor(profile) <= 0) {
+        return NextResponse.json(
+          { error: "limit_reached", scansLeft: 0 },
+          { status: 429 }
+        );
+      }
+    } else {
+      const decision = await claimGuestScan(admin, clientIp(req.headers));
+      if (!decision.allowed) {
+        // 401 (not 429) so the client shows "sign in to keep scanning" rather
+        // than "come back tomorrow" — an account is the way forward here.
+        return NextResponse.json(
+          { error: "guest_limit_reached", scansLeft: 0 },
+          { status: 401 }
+        );
+      }
     }
 
     const body = await req.json();
@@ -692,23 +707,29 @@ export async function POST(req: NextRequest) {
     // image_hash column doesn't exist yet, this fails silently and we just
     // proceed without dedup.
     let existingScan: { image_path: string | null } | null = null;
-    try {
-      const { data } = await admin
-        .from("scans")
-        .select("image_path")
-        .eq("user_id", user.id)
-        .eq("image_hash", firstImageHash)
-        .limit(1)
-        .maybeSingle();
-      existingScan = data ?? null;
-    } catch (err) {
-      console.warn("[analyze] hash lookup failed (column missing?):", err);
+    if (user) {
+      try {
+        const { data } = await admin
+          .from("scans")
+          .select("image_path")
+          .eq("user_id", user.id)
+          .eq("image_hash", firstImageHash)
+          .limit(1)
+          .maybeSingle();
+        existingScan = data ?? null;
+      } catch (err) {
+        console.warn("[analyze] hash lookup failed (column missing?):", err);
+      }
     }
 
-    const imagePathToSave = `${user.id}/${randomUUID()}.jpg`;
+    // Guests get no storage path: their image is never uploaded, so a scan
+    // they never claim leaves nothing behind to clean up.
+    const imagePathToSave = user ? `${user.id}/${randomUUID()}.jpg` : null;
 
     const uploadFirstImage = async (): Promise<string | null> => {
       if (existingScan) return existingScan.image_path;
+      // No path means a guest scan — skip storage entirely.
+      if (!imagePathToSave) return null;
       try {
         const { error: uploadError } = await admin.storage
           .from("scan-images")
@@ -846,7 +867,7 @@ export async function POST(req: NextRequest) {
           .remove([savedImagePath])
           .catch(() => {});
       }
-    } else if (existingScan) {
+    } else if (existingScan && user) {
       // Look up the existing scan's id so the watcher widget can target it.
       const { data: existingRow } = await admin
         .from("scans")
@@ -857,7 +878,10 @@ export async function POST(req: NextRequest) {
         .maybeSingle();
       scanId = existingRow?.id ?? null;
     }
-    if (recognized && !existingScan) {
+    // Guests are never written to history here. Their result is returned and
+    // held client-side; it reaches the database only if they sign in and
+    // claim it (/api/scans/claim).
+    if (recognized && !existingScan && user) {
       const insertPayload: Record<string, unknown> = {
         user_id: user.id,
         recognized: !!parsed.recognized,
@@ -925,6 +949,18 @@ export async function POST(req: NextRequest) {
       } else {
         scanId = insertedRow?.id ?? null;
       }
+    }
+
+    // Guests have no profile to bill the scan against, no streak to keep and
+    // nothing saved — they get the result and a prompt to sign in.
+    if (!user || !profile) {
+      return NextResponse.json({
+        ...parsed,
+        scan_id: null,
+        guest: true,
+        scansLeft: 0,
+        streak: 0,
+      });
     }
 
     if (!profile.is_premium) {

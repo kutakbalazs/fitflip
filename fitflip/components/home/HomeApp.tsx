@@ -20,6 +20,7 @@ import { hypeBadgeLabel } from "@/lib/hype";
 import { isNativePlatform } from "@/lib/native";
 import { managementUrl } from "@/lib/iap";
 import { track } from "@/lib/analytics";
+import { savePendingGuestScan } from "@/lib/guestPending";
 
 type AnalysisResult = {
   recognized: boolean;
@@ -199,6 +200,8 @@ export default function HomeApp() {
   const [converting, setConverting] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Signed-out visitor has already used their one free analysis.
+  const [guestExhausted, setGuestExhausted] = useState(false);
   const [scansLeft, setScansLeft] = useState<number>(0);
   const [limitReached, setLimitReached] = useState(false);
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
@@ -840,11 +843,27 @@ export default function HomeApp() {
         return;
       }
       const data = await res.json();
+      if (res.status === 401 && data.error === "guest_limit_reached") {
+        // The free try is gone — an account is the way forward, so show that
+        // rather than a generic error.
+        setGuestExhausted(true);
+        track("limit_reached", { guest: true });
+        setLoading(false);
+        return;
+      }
       if (!res.ok || data.error) {
         setError(t.error);
         track("scan_failed", { reason: "api", status: res.status });
         setLoading(false);
         return;
+      }
+      if (data.guest) {
+        // Nothing was stored server-side. Hold it in the browser so it can be
+        // moved into their history the moment they create an account.
+        savePendingGuestScan(
+          data as Record<string, unknown>,
+          images[0] ? { data: images[0].data, mediaType: images[0].mediaType } : undefined
+        );
       }
       // `recognized: false` still counts as a completed scan — it tells us the
       // identification quality, which is a different question from failure.
@@ -1466,16 +1485,24 @@ export default function HomeApp() {
               {t.tagline}
             </h1>
 
-            {authenticated === false ? (
+            {authenticated === false && guestExhausted ? (
               <div className="border border-ink-100 dark:border-ink-700 rounded-2xl p-8 bg-ink-50 dark:bg-ink-800">
-                <h2 className="text-xl font-medium mb-2">{t.loginRequired}</h2>
-                <p className="text-ink-500 dark:text-ink-400 text-sm mb-5">{t.loginRequiredSub}</p>
-                <Link
-                  href="/login"
-                  className="inline-block px-6 py-2.5 rounded-full bg-ink-900 dark:bg-ink-700 text-white text-sm font-medium hover:bg-ink-700 transition"
-                >
-                  {t.login}
-                </Link>
+                <h2 className="text-xl font-medium mb-2">{t.guestExhausted}</h2>
+                <p className="text-ink-500 dark:text-ink-400 text-sm mb-5">{t.guestExhaustedSub}</p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Link
+                    href="/signup"
+                    className="inline-block px-6 py-2.5 rounded-full bg-ink-900 dark:bg-ink-700 text-white text-sm font-medium hover:bg-ink-700 transition"
+                  >
+                    {t.guestSaveCta}
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="text-sm underline underline-offset-2 text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white"
+                  >
+                    {t.guestSaveLogin}
+                  </Link>
+                </div>
               </div>
             ) : limitReached ? (
               <div className="border border-ink-100 dark:border-ink-700 rounded-2xl p-8 bg-ink-50 dark:bg-ink-800">
@@ -1489,8 +1516,45 @@ export default function HomeApp() {
                   {checkoutLoading ? "…" : t.upgradeButton}
                 </button>
               </div>
-            ) : authenticated === true ? (
+            ) : authenticated !== null ? (
               <>
+                {/* Signed-out visitor: say up front that the try is free but
+                    the result is only kept if they make an account. Becomes a
+                    save prompt once they actually have a result in hand. */}
+                {authenticated === false && (
+                  <div className="mb-5 rounded-2xl border border-amber-300/60 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10 p-5 text-left">
+                    {result ? (
+                      <>
+                        <h2 className="text-base font-semibold mb-1">{t.guestSaveTitle}</h2>
+                        <p className="text-sm text-ink-600 dark:text-ink-300 mb-4">
+                          {t.guestSaveSub}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <Link
+                            href="/signup"
+                            className="inline-block px-5 py-2.5 rounded-full bg-ink-900 dark:bg-ink-700 text-white text-sm font-medium hover:bg-ink-700 transition"
+                          >
+                            {t.guestSaveCta}
+                          </Link>
+                          <Link
+                            href="/login"
+                            className="text-sm underline underline-offset-2 text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-white"
+                          >
+                            {t.guestSaveLogin}
+                          </Link>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-sm text-ink-700 dark:text-ink-200">
+                        <span className="font-semibold">{t.guestTryBanner}</span>{" "}
+                        <span className="text-ink-600 dark:text-ink-300">
+                          {t.guestTryBannerSub}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {/* Mobile dashboard */}
                 <div className="sm:hidden text-left">
                   {/* Top bar: tap anywhere = camera; Galéria = gallery */}
