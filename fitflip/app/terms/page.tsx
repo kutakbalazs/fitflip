@@ -47,15 +47,15 @@ function ContentHu() {
       <h2 className="text-lg font-semibold mt-8 mb-2">5. Csomagok és árak</h2>
       <p>
         <strong>Ingyenes csomag:</strong> napi 3 scan, alapfunkciók.<br />
-        <strong>Prémium csomag:</strong> 1 490 Ft / hó (bruttó, ÁFA-mentes alanyi mentesség alapján), korlátlan scan és élő hirdetéskeresés (Vinted, Jófogás, eBay).
+        <strong>Prémium csomag:</strong> 2 490 Ft / hó vagy 24 990 Ft / év (bruttó, ÁFA-mentes alanyi mentesség alapján), korlátlan scan és élő hirdetéskeresés (Vinted, Jófogás, eBay). A mindenkori aktuális árat minden esetben a vásárlás helye (App Store, Google Play, illetve a webes fizetési felület) mutatja.
       </p>
       <p>
-        A prémium előfizetés automatikusan megújul havonta a Felhasználó által regisztrált fizetési módon, amíg a Felhasználó le nem mondja azt. A fizetést a Stripe Payments Europe Ltd. (Ír Köztársaság) bonyolítja le; bankkártya-adatokat a Szolgáltató nem kezel.
+        A prémium előfizetés a választott időszaknak megfelelően (havonta, illetve évente) automatikusan megújul a Felhasználó által regisztrált fizetési módon, amíg a Felhasználó le nem mondja azt. A fizetést a vásárlás helyétől függően a Stripe Payments Europe Ltd. (Ír Köztársaság), az Apple (App Store) vagy a Google (Google Play) bonyolítja le; bankkártya-adatokat a Szolgáltató egyik esetben sem kezel.
       </p>
 
       <h2 className="text-lg font-semibold mt-8 mb-2">6. Felmondás és lemondás</h2>
       <p>
-        A Felhasználó az előfizetését bármikor lemondhatja a fiókján belül elérhető „Előfizetés kezelése" felületen keresztül. A lemondás az aktuális számlázási ciklus végén lép hatályba; visszatérítés a már fizetett időszakra nem jár.
+        A Felhasználó az előfizetését bármikor lemondhatja. A webes fizetési felületen kötött előfizetés a fiókon belül elérhető „Előfizetés kezelése" felületen mondható le. Az App Store-on, illetve a Google Play-en keresztül kötött előfizetést az adott áruház saját előfizetés-kezelő felületén kell lemondani (Apple: Beállítások → Apple-fiók → Előfizetések; Google Play: Play áruház → Előfizetések) — ezekre a Szolgáltatónak nincs ráhatása. A lemondás az aktuális számlázási ciklus végén lép hatályba; visszatérítés a már fizetett időszakra nem jár.
       </p>
 
       <h2 className="text-lg font-semibold mt-8 mb-2">7. Elállási jog (14 nap)</h2>
@@ -153,15 +153,15 @@ function ContentEn() {
       <h2 className="text-lg font-semibold mt-8 mb-2">5. Plans and prices</h2>
       <p>
         <strong>Free plan:</strong> 3 scans per day, basic features.<br />
-        <strong>Premium plan:</strong> HUF 1,490 / month (gross; the Provider applies the Hungarian small-business VAT exemption), unlimited scans and live listings (Vinted, Jófogás, eBay).
+        <strong>Premium plan:</strong> HUF 2,490 / month or HUF 24,990 / year (gross; the Provider applies the Hungarian small-business VAT exemption), unlimited scans and live listings (Vinted, Jófogás, eBay). The current price is always shown at the point of purchase (App Store, Google Play, or the web checkout).
       </p>
       <p>
-        The Premium subscription renews automatically each month via the user&apos;s registered payment method until cancelled. Payments are processed by Stripe Payments Europe Ltd. (Ireland); the Provider does not store card data.
+        The Premium subscription renews automatically for the selected period (monthly or annually) via the user&apos;s registered payment method until cancelled. Depending on where the purchase was made, payments are processed by Stripe Payments Europe Ltd. (Ireland), Apple (App Store) or Google (Google Play); in no case does the Provider store card data.
       </p>
 
       <h2 className="text-lg font-semibold mt-8 mb-2">6. Cancellation</h2>
       <p>
-        You may cancel your subscription at any time via the &quot;Manage subscription&quot; portal in your account. Cancellation takes effect at the end of the current billing cycle; no refunds are provided for unused time within an already-paid period.
+        You may cancel your subscription at any time. Subscriptions purchased through the web checkout can be cancelled via the &quot;Manage subscription&quot; portal in your account. Subscriptions purchased through the App Store or Google Play must be cancelled in that store&apos;s own subscription settings (Apple: Settings → Apple Account → Subscriptions; Google Play: Play Store → Subscriptions), which the Provider cannot do on the user&apos;s behalf. Cancellation takes effect at the end of the current billing cycle; no refunds are provided for unused time within an already-paid period.
       </p>
 
       <h2 className="text-lg font-semibold mt-8 mb-2">7. Right of withdrawal (14 days)</h2>

@@ -30,7 +30,7 @@ import { themeInitScript } from "@/lib/theme";
 export const metadata: Metadata = {
   title: "FitFlip – Snap. Identify. Sell.",
   description:
-    "AI-alapú azonosító sneakerekhez, vintage ruhákhoz és streetwear darabokhoz. Fotózd le, és tudd meg mi az, mit ér, és hol add el.",
+    "Azonosító sneakerekhez, vintage ruhákhoz és streetwear darabokhoz. Fotózd le, és tudd meg mi az, mit ér, és hol add el.",
   applicationName: "FitFlip",
   manifest: "/manifest.webmanifest",
   icons: {

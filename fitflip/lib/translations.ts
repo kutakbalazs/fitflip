@@ -23,7 +23,10 @@ export const translations = {
     scansLeftFull: "{n} ingyenes scan ma",
     limitReached: "Mai ingyenes elemzéseidet felhasználtad",
     limitReachedSub: "Holnap újra kapsz 3 ingyenes scant, vagy lépj prémiumba a korlátlan használatért.",
-    upgradeButton: "Prémium – 1 490 Ft/hó",
+    // No price here: the button only opens the paywall, which shows the real
+    // store-provided price. A hard-coded price drifts out of sync (it was
+    // stale at 1 490 while the actual price was 2 490).
+    upgradeButton: "Prémium előfizetés",
     upgradeSuccess: "Sikeres előfizetés! Mostantól korlátlan a használat.",
     upgradeCancelled: "Az előfizetést megszakítottad.",
     premiumActive: "Prémium aktív",
@@ -143,7 +146,7 @@ export const translations = {
     scansLeftFull: "{n} free scans today",
     limitReached: "You've used today's free scans",
     limitReachedSub: "Tomorrow you'll get 3 more free scans, or upgrade to premium for unlimited use.",
-    upgradeButton: "Go Premium – 1,490 HUF/mo",
+    upgradeButton: "Go Premium",
     upgradeSuccess: "Subscription successful! You now have unlimited use.",
     upgradeCancelled: "You cancelled the upgrade.",
     premiumActive: "Premium active",
