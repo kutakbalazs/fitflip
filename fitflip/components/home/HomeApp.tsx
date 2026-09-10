@@ -23,6 +23,7 @@ import { track } from "@/lib/analytics";
 import { savePendingGuestScan } from "@/lib/guestPending";
 import StockxButton from "@/components/StockxButton";
 import ListingDraft from "@/components/ListingDraft";
+import { sourceLabel } from "@/lib/listings/sourceLabel";
 
 type AnalysisResult = {
   recognized: boolean;
@@ -128,13 +129,7 @@ function SimilarPreview({ items, lang }: { items: Listing[]; lang: Lang }) {
                 <p className="text-sm font-medium line-clamp-2">{l.title}</p>
                 <p className="text-sm text-ink-900 dark:text-ink-50 mt-1">{l.priceLabel}</p>
                 <p className="text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400 mt-1">
-                  {l.source === "vinted"
-                    ? "Vinted"
-                    : l.source === "jofogas"
-                      ? "Jófogás"
-                      : l.source === "ebay"
-                        ? "eBay"
-                        : (l.source as string)}
+                  {sourceLabel(l.source)}
                   {l.location ? ` · ${l.location}` : ""}
                 </p>
               </div>
@@ -2268,13 +2263,7 @@ export default function HomeApp() {
                                 <p className="text-sm text-ink-900 dark:text-ink-50 mt-1">{l.priceLabel}</p>
                                 <div className="flex items-center gap-2 mt-1 flex-wrap">
                                   <p className="text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400">
-                                    {l.source === "vinted"
-                                      ? "Vinted"
-                                      : l.source === "jofogas"
-                                        ? "Jófogás"
-                                        : l.source === "ebay"
-                                          ? "eBay"
-                                          : (l.source as string)}
+                                    {sourceLabel(l.source)}
                                     {l.location ? ` · ${l.location}` : ""}
                                   </p>
                                   {matched && (

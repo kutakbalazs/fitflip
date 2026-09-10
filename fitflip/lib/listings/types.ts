@@ -1,4 +1,4 @@
-export type ListingSource = "vinted" | "jofogas" | "ebay";
+export type ListingSource = "vinted" | "jofogas" | "ebay" | "etsy";
 
 export type Listing = {
   source: ListingSource;

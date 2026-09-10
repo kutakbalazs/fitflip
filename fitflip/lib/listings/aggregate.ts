@@ -2,6 +2,7 @@ import type { Listing } from "./types";
 import { searchVinted, vintedColorIdsFor } from "./vinted";
 import { searchJofogas } from "./jofogas";
 import { searchEbay, EBAY_MARKETPLACES } from "./ebay";
+import { searchEtsy } from "./etsy";
 
 const HU_COLOR_ALIASES: Record<string, string[]> = {
   black: ["black", "fekete"],
@@ -204,6 +205,14 @@ export async function searchAllMarketplaces(
       if (marketplace === "EBAY_DE") continue; // already covered above
       tasks.push(searchEbay(cleaned[0], 12, marketplace));
     }
+  }
+
+  // Etsy: strong on genuine vintage clothing, which the other sources cover
+  // thinly, and no use at all for sneakers. Primary query only — its quota is
+  // 5 requests/second, and each search costs two calls (search + a batch
+  // image fetch), so firing it at every query would trip the limit.
+  if (cleaned[0]) {
+    tasks.push(searchEtsy(cleaned[0], 12));
   }
 
   // Extra Vinted query filtered on the seller-tagged colour: catches the

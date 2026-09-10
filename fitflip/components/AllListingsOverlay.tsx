@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import type { Listing } from "@/lib/listings/types";
 import { track } from "@/lib/analytics";
+import { sourceLabel } from "@/lib/listings/sourceLabel";
 
 type Props = {
   open: boolean;
@@ -13,13 +14,6 @@ type Props = {
   /** Same search, rejected by visual verification (other colorway etc.). */
   similarListings: Listing[];
 };
-
-function sourceLabel(source: string): string {
-  if (source === "vinted") return "Vinted";
-  if (source === "jofogas") return "Jófogás";
-  if (source === "ebay") return "eBay";
-  return source;
-}
 
 /**
  * Full-screen "all listings" view: a single-column list of every found

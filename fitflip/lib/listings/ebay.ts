@@ -36,14 +36,14 @@ type EbaySearchResponse = {
 // Very rough static FX rates (Aug 2026). eBay returns prices in marketplace
 // currency (EUR for EBAY_DE); we just need them in HUF for the UI. Refreshed
 // occasionally; small inaccuracies don't matter here.
-const FX_TO_HUF: Record<string, number> = {
+export const FX_TO_HUF: Record<string, number> = {
   EUR: 405,
   USD: 365,
   GBP: 470,
   HUF: 1,
 };
 
-function toHuf(amount: number, currency: string): number | null {
+export function toHuf(amount: number, currency: string): number | null {
   const rate = FX_TO_HUF[currency.toUpperCase()];
   if (!rate) return null;
   return Math.round(amount * rate);

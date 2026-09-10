@@ -14,6 +14,7 @@ import WatcherWidget from "@/components/WatcherWidget";
 import { track } from "@/lib/analytics";
 import StockxButton from "@/components/StockxButton";
 import ListingDraft from "@/components/ListingDraft";
+import { sourceLabel } from "@/lib/listings/sourceLabel";
 
 export type ScanDetailData = {
   id: string;
@@ -76,13 +77,7 @@ function SimilarSection({ items, hu }: { items: Listing[]; hu: boolean }) {
                 <p className="text-sm font-medium line-clamp-2">{l.title}</p>
                 <p className="text-sm text-ink-900 dark:text-ink-50 mt-1">{l.priceLabel}</p>
                 <p className="text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400 mt-1">
-                  {l.source === "vinted"
-                    ? "Vinted"
-                    : l.source === "jofogas"
-                      ? "Jófogás"
-                      : l.source === "ebay"
-                        ? "eBay"
-                        : (l.source as string)}
+                  {sourceLabel(l.source)}
                 </p>
               </div>
             </a>
@@ -414,7 +409,7 @@ export default function ScanDetail({ data, isPremium }: { data: ScanDetailData; 
                         <p className="text-sm font-medium line-clamp-2">{l.title}</p>
                         <p className="text-sm text-ink-900 dark:text-ink-50 mt-1">{l.priceLabel}</p>
                         <p className="text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400 mt-1">
-                          {l.source === "vinted" ? "Vinted" : l.source === "jofogas" ? "Jófogás" : l.source === "ebay" ? "eBay" : (l.source as string)}
+                          {sourceLabel(l.source)}
                         </p>
                       </div>
                     </a>
