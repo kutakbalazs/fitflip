@@ -12,6 +12,7 @@ import AllListingsOverlay from "@/components/AllListingsOverlay";
 import type { Listing } from "@/lib/listings/types";
 import WatcherWidget from "@/components/WatcherWidget";
 import { track } from "@/lib/analytics";
+import StockxButton from "@/components/StockxButton";
 
 export type ScanDetailData = {
   id: string;
@@ -396,6 +397,7 @@ export default function ScanDetail({ data, isPremium }: { data: ScanDetailData; 
                   </p>
                 </div>
               )}
+              <StockxButton hypeScore={data.hypeScore} brand={data.brand} model={data.model} hu={hu} />
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {listings.slice(0, 6).map((l, idx) => (
                   <li key={`${l.source}-${idx}`} className="border border-ink-100 dark:border-ink-700 rounded-2xl overflow-hidden bg-white dark:bg-ink-950 hover:border-ink-300 transition">

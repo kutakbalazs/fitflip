@@ -21,6 +21,7 @@ import { isNativePlatform } from "@/lib/native";
 import { managementUrl } from "@/lib/iap";
 import { track } from "@/lib/analytics";
 import { savePendingGuestScan } from "@/lib/guestPending";
+import StockxButton from "@/components/StockxButton";
 
 type AnalysisResult = {
   recognized: boolean;
@@ -2244,6 +2245,7 @@ export default function HomeApp() {
                             </div>
                           );
                         })()}
+                        <StockxButton hypeScore={result.hype_score} brand={result.brand} model={result.model} hu={lang === "hu"} />
                         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {displayedListings.slice(0, 6).map(({ listing: l, match: matched }, idx) => (
                           <li key={`${l.source}-${idx}`} className={`border rounded-2xl overflow-hidden bg-white dark:bg-ink-950 hover:border-ink-300 transition ${matched ? "border-emerald-300 dark:border-emerald-800 ring-1 ring-emerald-200" : "border-ink-100 dark:border-ink-700"}`}>

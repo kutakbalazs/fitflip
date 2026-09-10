@@ -90,6 +90,9 @@ export const translations = {
     guestExhaustedSub:
       "Regisztrálj, és azonnal kapsz napi 3 ingyenes elemzést — a scanjeid pedig megmaradnak.",
     guestClaimed: "Elmentettük az elemzésedet az előzményeidbe.",
+    // StockX: only shown for hyped pieces (see lib/stockx.ts)
+    stockxCta: "Megtekintés StockX-en",
+    stockxHint: "Nemzetközi piac, méret szerinti árakkal",
     loginWithGoogle: "Bejelentkezés Google-lel",
     loginWithApple: "Bejelentkezés Apple-lel",
     loginWithBiometric: "Belépés Face ID-val",
@@ -222,6 +225,8 @@ export const translations = {
     guestExhaustedSub:
       "Create an account to get 3 free analyses every day — and to keep your scans.",
     guestClaimed: "Your analysis has been saved to your history.",
+    stockxCta: "View on StockX",
+    stockxHint: "Global market, with per-size prices",
     loginWithGoogle: "Continue with Google",
     loginWithApple: "Continue with Apple",
     loginWithBiometric: "Sign in with Face ID",
