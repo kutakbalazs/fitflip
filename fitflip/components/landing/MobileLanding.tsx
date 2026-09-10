@@ -163,7 +163,7 @@ export default function MobileLanding({
       </footer>
 
       {/* 9 ── Sticky bottom CTA */}
-      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-line bg-white/[0.95] px-5 pb-[18px] pt-3 backdrop-blur-md">
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-line bg-white/[0.95] px-5 safe-pb-5 pt-3 backdrop-blur-md">
         <button
           type="button"
           onClick={onEnter}

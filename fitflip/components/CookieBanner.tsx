@@ -72,7 +72,7 @@ export default function CookieBanner() {
         };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 px-4 pb-4 pointer-events-none">
+    <div className="fixed inset-x-0 bottom-0 z-50 px-4 safe-pb-4 pointer-events-none">
       <div className="pointer-events-auto max-w-3xl mx-auto bg-white dark:bg-ink-950 border border-ink-200 dark:border-ink-700 rounded-2xl shadow-lg p-4 flex flex-col sm:flex-row sm:items-center gap-3">
         <p className="text-xs text-ink-700 dark:text-ink-200 leading-relaxed flex-1">
           {t.text}{" "}

@@ -27,6 +27,23 @@ html.dark {
   padding-top: max(1rem, env(safe-area-inset-top));
 }
 
+/* Bottom safe area. Android 15 draws apps edge-to-edge whether they ask for
+   it or not, so anything pinned to the bottom can end up under the gesture
+   bar. Only `padding-top` was handled before, which left the cookie banner,
+   the landing CTA and the scan button exposed. On the web and on older
+   Android the inset resolves to 0px, so these stay no-ops there. */
+.safe-pb-4 {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.safe-pb-5 {
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+}
+/* For elements positioned with a `bottom-N` offset rather than padding —
+   lifts them clear of the gesture bar without changing their spacing. */
+.safe-mb {
+  margin-bottom: env(safe-area-inset-bottom);
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
