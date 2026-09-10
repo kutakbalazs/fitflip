@@ -11,6 +11,7 @@ import StoryModal from "@/components/StoryModal";
 import AllListingsOverlay from "@/components/AllListingsOverlay";
 import type { Listing } from "@/lib/listings/types";
 import WatcherWidget from "@/components/WatcherWidget";
+import { track } from "@/lib/analytics";
 
 export type ScanDetailData = {
   id: string;
@@ -56,7 +57,8 @@ function SimilarSection({ items, hu }: { items: Listing[]; hu: boolean }) {
             key={`sim-${l.source}-${idx}`}
             className="border border-ink-100 dark:border-ink-700 rounded-2xl overflow-hidden bg-white dark:bg-ink-950 hover:border-ink-300 transition"
           >
-            <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex gap-3 p-3">
+            <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex gap-3 p-3"
+              onClick={() => track("listing_click", { source: l.source })}>
               {l.imageUrl ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
@@ -397,7 +399,8 @@ export default function ScanDetail({ data, isPremium }: { data: ScanDetailData; 
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {listings.slice(0, 6).map((l, idx) => (
                   <li key={`${l.source}-${idx}`} className="border border-ink-100 dark:border-ink-700 rounded-2xl overflow-hidden bg-white dark:bg-ink-950 hover:border-ink-300 transition">
-                    <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex gap-3 p-3">
+                    <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex gap-3 p-3"
+              onClick={() => track("listing_click", { source: l.source })}>
                       {l.imageUrl ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img src={l.imageUrl} alt={l.title} loading="lazy" className="w-20 h-20 rounded-lg object-cover bg-ink-50 dark:bg-ink-800 shrink-0" />

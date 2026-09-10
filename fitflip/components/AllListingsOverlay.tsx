@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import type { Listing } from "@/lib/listings/types";
+import { track } from "@/lib/analytics";
 
 type Props = {
   open: boolean;
@@ -58,7 +59,8 @@ export default function AllListingsOverlay({
 
   const Card = ({ l }: { l: Listing }) => (
     <li className="border border-ink-100 dark:border-ink-700 rounded-2xl overflow-hidden bg-white dark:bg-ink-950 hover:border-ink-300 transition">
-      <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex gap-3 p-3">
+      <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex gap-3 p-3"
+              onClick={() => track("listing_click", { source: l.source })}>
         {l.imageUrl ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img

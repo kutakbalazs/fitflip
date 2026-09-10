@@ -2,7 +2,18 @@ import type { Listing } from "./types";
 
 const TOKEN_URL = "https://api.ebay.com/identity/v1/oauth2/token";
 const SEARCH_URL = "https://api.ebay.com/buy/browse/v1/item_summary/search";
-const MARKETPLACE = "EBAY_DE"; // EU-based, no customs for HU buyers
+/**
+ * eBay marketplaces we search. All are inside the EU customs union, so a
+ * Hungarian buyer pays no duty — which is why the UK and US sites are
+ * deliberately absent despite having more stock.
+ *
+ * Each site has its own inventory (sellers list locally), so querying several
+ * genuinely widens the pool rather than returning the same items again.
+ */
+export const EBAY_MARKETPLACES = ["EBAY_DE", "EBAY_IT", "EBAY_FR"] as const;
+export type EbayMarketplace = (typeof EBAY_MARKETPLACES)[number];
+
+const DEFAULT_MARKETPLACE: EbayMarketplace = "EBAY_DE";
 const SCOPE = "https://api.ebay.com/oauth/api_scope";
 
 type EbayPrice = { value?: string; currency?: string };
@@ -68,7 +79,11 @@ async function getAppToken(): Promise<string | null> {
   }
 }
 
-export async function searchEbay(query: string, limit = 12): Promise<Listing[]> {
+export async function searchEbay(
+  query: string,
+  limit = 12,
+  marketplace: EbayMarketplace = DEFAULT_MARKETPLACE
+): Promise<Listing[]> {
   try {
     const token = await getAppToken();
     if (!token) {
@@ -85,12 +100,12 @@ export async function searchEbay(query: string, limit = 12): Promise<Listing[]> 
     const res = await fetch(url.toString(), {
       headers: {
         Authorization: `Bearer ${token}`,
-        "X-EBAY-C-MARKETPLACE-ID": MARKETPLACE,
+        "X-EBAY-C-MARKETPLACE-ID": marketplace,
         "X-EBAY-C-ENDUSERCTX": "contextualLocation=country=HU",
       },
     });
     if (!res.ok) {
-      console.warn("[ebay] search failed:", res.status);
+      console.warn(`[ebay] search failed (${marketplace}):`, res.status);
       return [];
     }
     const data = (await res.json()) as EbaySearchResponse;
@@ -132,7 +147,7 @@ export async function searchEbay(query: string, limit = 12): Promise<Listing[]> 
       };
     });
   } catch (err) {
-    console.warn("[ebay] search threw:", err);
+    console.warn(`[ebay] search threw (${marketplace}):`, err);
     return [];
   }
 }

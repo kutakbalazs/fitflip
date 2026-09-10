@@ -1,7 +1,7 @@
 import type { Listing } from "./types";
 import { searchVinted, vintedColorIdsFor } from "./vinted";
 import { searchJofogas } from "./jofogas";
-import { searchEbay } from "./ebay";
+import { searchEbay, EBAY_MARKETPLACES } from "./ebay";
 
 const HU_COLOR_ALIASES: Record<string, string[]> = {
   black: ["black", "fekete"],
@@ -85,16 +85,18 @@ type ScoredListing = {
   colorMatched: boolean;
 };
 
-const PER_SOURCE_LIMIT = 9;
-
-function balanceBySource(listings: Listing[]): Listing[] {
+/**
+ * Round-robin across marketplaces, preserving each source's own order.
+ *
+ * Only ever applied to listings that are equally relevant, so it spreads
+ * sources around without pushing a better match down the list.
+ */
+function interleaveBySource(listings: Listing[]): Listing[] {
   const buckets = new Map<string, Listing[]>();
   for (const l of listings) {
     const arr = buckets.get(l.source) ?? [];
-    if (arr.length < PER_SOURCE_LIMIT) {
-      arr.push(l);
-      buckets.set(l.source, arr);
-    }
+    arr.push(l);
+    buckets.set(l.source, arr);
   }
   const interleaved: Listing[] = [];
   const sources = Array.from(buckets.keys());
@@ -112,6 +114,32 @@ function balanceBySource(listings: Listing[]): Listing[] {
     i += 1;
   }
   return interleaved;
+}
+
+/**
+ * Relevance first, marketplace second.
+ *
+ * This used to interleave sources across the whole result set, which meant
+ * the six listings the UI actually shows were roughly "one per marketplace"
+ * regardless of how well any of them matched — a weak listing could outrank
+ * a near-perfect one purely so its source got a slot. That gets worse as
+ * sources are added, not better.
+ *
+ * Now a stronger match always comes first no matter where it came from, and
+ * sources are rotated only between listings with an identical score, where
+ * spreading them costs nothing.
+ */
+function rankByRelevance(scored: ScoredListing[]): Listing[] {
+  const sorted = [...scored].sort((a, b) => b.score - a.score);
+  const out: Listing[] = [];
+  let i = 0;
+  while (i < sorted.length) {
+    let j = i;
+    while (j < sorted.length && sorted[j].score === sorted[i].score) j += 1;
+    out.push(...interleaveBySource(sorted.slice(i, j).map((s) => s.listing)));
+    i = j;
+  }
+  return out;
 }
 
 function scoreListing(
@@ -167,6 +195,17 @@ export async function searchAllMarketplaces(
     tasks.push(searchEbay(q, 12));
   }
 
+  // The Italian and French eBay sites carry stock the German one doesn't, so
+  // searching them widens the price sample the estimate is built from. Only
+  // the primary query goes wide: running every query against every site would
+  // triple the eBay call volume for a thin extra slice of relevance.
+  if (cleaned[0]) {
+    for (const marketplace of EBAY_MARKETPLACES) {
+      if (marketplace === "EBAY_DE") continue; // already covered above
+      tasks.push(searchEbay(cleaned[0], 12, marketplace));
+    }
+  }
+
   // Extra Vinted query filtered on the seller-tagged colour: catches the
   // right-colour listings whose titles never mention a colour at all
   // ("Adidas Handball Spezial 42"). These count as colour-confirmed in
@@ -218,9 +257,10 @@ export async function searchAllMarketplaces(
 
   if (all.length === 0) return { listings: [], exact: true };
 
-  // No filter criteria → return as-is, sorted by source balance.
+  // Nothing to rank on (no brand/model/colour) — every listing is equally
+  // relevant, so spreading sources is the only sensible ordering.
   if (brandTokens.length === 0 && modelTokens.length === 0 && colorTokens.length === 0) {
-    return { listings: balanceBySource(all), exact: true };
+    return { listings: interleaveBySource(all), exact: true };
   }
 
   const scored = all.map((l) =>
@@ -253,10 +293,6 @@ export async function searchAllMarketplaces(
 
   if (candidates.length === 0) return { listings: [], exact: true };
 
-  // Sort by score DESC (best match first). Stable sort keeps marketplace
-  // ranking as the tiebreaker.
-  candidates.sort((a, b) => b.score - a.score);
-
   // exact = the result set contains at least one listing that matched
   // every criterion the user cares about.
   //
@@ -274,6 +310,5 @@ export async function searchAllMarketplaces(
       (colorTokens.length === 0 || m.colorMatched)
   );
 
-  const balanced = balanceBySource(candidates.map((m) => m.listing));
-  return { listings: balanced, exact: anyFullMatch };
+  return { listings: rankByRelevance(candidates), exact: anyFullMatch };
 }

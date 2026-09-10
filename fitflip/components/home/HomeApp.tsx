@@ -109,7 +109,8 @@ function SimilarPreview({ items, lang }: { items: Listing[]; lang: Lang }) {
             key={`sim-${l.source}-${idx}`}
             className="border border-ink-100 dark:border-ink-700 rounded-2xl overflow-hidden bg-white dark:bg-ink-950 hover:border-ink-300 transition"
           >
-            <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex gap-3 p-3">
+            <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex gap-3 p-3"
+              onClick={() => track("listing_click", { source: l.source })}>
               {l.imageUrl ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
@@ -2246,7 +2247,8 @@ export default function HomeApp() {
                         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {displayedListings.slice(0, 6).map(({ listing: l, match: matched }, idx) => (
                           <li key={`${l.source}-${idx}`} className={`border rounded-2xl overflow-hidden bg-white dark:bg-ink-950 hover:border-ink-300 transition ${matched ? "border-emerald-300 dark:border-emerald-800 ring-1 ring-emerald-200" : "border-ink-100 dark:border-ink-700"}`}>
-                            <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex gap-3 p-3">
+                            <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex gap-3 p-3"
+              onClick={() => track("listing_click", { source: l.source })}>
                               {l.imageUrl ? (
                                 /* eslint-disable-next-line @next/next/no-img-element */
                                 <img
