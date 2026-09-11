@@ -29,6 +29,7 @@ public class FFWidgetBridge: CAPPlugin, CAPBridgedPlugin {
     @objc func setWardrobe(_ call: CAPPluginCall) {
         let totalHuf = call.getDouble("totalHuf") ?? 0
         let itemCount = call.getInt("itemCount") ?? 0
+        let streak = call.getInt("streak") ?? 0
 
         guard let defaults = UserDefaults(suiteName: Self.suiteName) else {
             // The App Group entitlement is missing. Report it rather than
@@ -42,6 +43,7 @@ public class FFWidgetBridge: CAPPlugin, CAPBridgedPlugin {
             [
                 "totalHuf": Int(totalHuf.rounded()),
                 "itemCount": itemCount,
+                "streak": streak,
                 "updatedAt": ISO8601DateFormatter().string(from: Date())
             ],
             forKey: Self.storageKey

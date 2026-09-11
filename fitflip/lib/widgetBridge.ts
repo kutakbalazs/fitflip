@@ -27,7 +27,7 @@ import { isNativePlatform, nativePlatform } from "@/lib/native";
 export const WIDGET_KEY = "ff-wardrobe";
 
 type WidgetBridgePlugin = {
-  setWardrobe(options: { totalHuf: number; itemCount: number }): Promise<void>;
+  setWardrobe(options: { totalHuf: number; itemCount: number; streak: number }): Promise<void>;
 };
 
 const FFWidgetBridge = registerPlugin<WidgetBridgePlugin>("FFWidgetBridge");
@@ -35,21 +35,24 @@ const FFWidgetBridge = registerPlugin<WidgetBridgePlugin>("FFWidgetBridge");
 export type WidgetPayload = {
   totalHuf: number;
   itemCount: number;
+  streak: number;
   updatedAt: string;
 };
 
 export async function publishWardrobeToWidget(payload: {
   totalHuf: number;
   itemCount: number;
+  streak: number;
 }): Promise<void> {
   if (!isNativePlatform()) return;
 
   const totalHuf = Math.round(payload.totalHuf);
   const itemCount = payload.itemCount;
+  const streak = payload.streak;
 
   try {
     if (nativePlatform() === "ios") {
-      await FFWidgetBridge.setWardrobe({ totalHuf, itemCount });
+      await FFWidgetBridge.setWardrobe({ totalHuf, itemCount, streak });
       return;
     }
 
@@ -57,6 +60,7 @@ export async function publishWardrobeToWidget(payload: {
     const value: WidgetPayload = {
       totalHuf,
       itemCount,
+      streak,
       updatedAt: new Date().toISOString(),
     };
     await Preferences.set({ key: WIDGET_KEY, value: JSON.stringify(value) });

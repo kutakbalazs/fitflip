@@ -24,16 +24,18 @@ private let target = URL(string: "https://www.fitflip.app/scan/new")!
 private let bgColor = Color(red: 0.039, green: 0.047, blue: 0.067)   // #0A0C11
 private let strokeColor = Color(red: 0.114, green: 0.122, blue: 0.145) // #1D1F25
 private let accent = Color(red: 0.518, green: 0.690, blue: 0.894)     // #84B0E4
+private let flame = Color(red: 0.949, green: 0.545, blue: 0.298)      // #F28B4C
 
 struct WardrobeEntry: TimelineEntry {
     let date: Date
     let totalHuf: Int
     let itemCount: Int
+    let streak: Int
 }
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> WardrobeEntry {
-        WardrobeEntry(date: Date(), totalHuf: 0, itemCount: 0)
+        WardrobeEntry(date: Date(), totalHuf: 0, itemCount: 0, streak: 0)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (WardrobeEntry) -> Void) {
@@ -52,12 +54,13 @@ struct Provider: TimelineProvider {
             let defaults = UserDefaults(suiteName: appGroup),
             let stored = defaults.dictionary(forKey: storageKey)
         else {
-            return WardrobeEntry(date: Date(), totalHuf: 0, itemCount: 0)
+            return WardrobeEntry(date: Date(), totalHuf: 0, itemCount: 0, streak: 0)
         }
         return WardrobeEntry(
             date: Date(),
             totalHuf: stored["totalHuf"] as? Int ?? 0,
-            itemCount: stored["itemCount"] as? Int ?? 0
+            itemCount: stored["itemCount"] as? Int ?? 0,
+            streak: stored["streak"] as? Int ?? 0
         )
     }
 }
@@ -113,7 +116,22 @@ struct FitFlipWidgetView: View {
                 Text(isHungarian ? "Koppints a fotózáshoz" : "Tap to take a photo")
                     .font(.system(size: 12))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .minimumScaleFactor(0.75)
+                    .foregroundColor(accent)
+
+                // Only when a streak is actually running. A flame showing 0
+                // would be a reproach, and displayStreak already returns 0
+                // once the chain is broken.
+                if entry.streak > 0 {
+                    Spacer(minLength: 4)
+                    HStack(spacing: 2) {
+                        Image(systemName: "flame.fill")
+                            .font(.system(size: 11))
+                        Text("\(entry.streak)")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .foregroundColor(flame)
+                }
             }
             .foregroundColor(accent)
         }
@@ -155,7 +173,9 @@ struct FitFlipWidget: Widget {
                 ? "Koppints a fotózáshoz. Mutatja a szekrényed értékét is."
                 : "Tap to take a photo. Also shows what your wardrobe is worth."
         )
-        .supportedFamilies([.systemSmall, .systemMedium])
+        // Small only: the medium tile had nothing more to say, it just
+        // said the same thing across more space.
+        .supportedFamilies([.systemSmall])
         .contentMarginsDisabled()
     }
 }
@@ -168,14 +188,8 @@ struct FitFlipWidget: Widget {
 #Preview("Kicsi", as: .systemSmall) {
     FitFlipWidget()
 } timeline: {
-    WardrobeEntry(date: .now, totalHuf: 340_000, itemCount: 12)
-    WardrobeEntry(date: .now, totalHuf: 0, itemCount: 0)
-}
-
-@available(iOS 17.0, *)
-#Preview("Közepes", as: .systemMedium) {
-    FitFlipWidget()
-} timeline: {
-    WardrobeEntry(date: .now, totalHuf: 1_240_000, itemCount: 38)
+    WardrobeEntry(date: .now, totalHuf: 340_000, itemCount: 12, streak: 5)
+    WardrobeEntry(date: .now, totalHuf: 340_000, itemCount: 12, streak: 0)
+    WardrobeEntry(date: .now, totalHuf: 0, itemCount: 0, streak: 0)
 }
 #endif

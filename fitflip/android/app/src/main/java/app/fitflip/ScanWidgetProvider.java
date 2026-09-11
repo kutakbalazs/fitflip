@@ -63,6 +63,7 @@ public class ScanWidgetProvider extends AppWidgetProvider {
 
         long totalHuf = 0;
         int itemCount = 0;
+        int streak = 0;
         try {
             SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
             String raw = prefs.getString(KEY, null);
@@ -70,6 +71,7 @@ public class ScanWidgetProvider extends AppWidgetProvider {
                 JSONObject json = new JSONObject(raw);
                 totalHuf = json.optLong("totalHuf", 0);
                 itemCount = json.optInt("itemCount", 0);
+                streak = json.optInt("streak", 0);
             }
         } catch (Exception ignored) {
             // No stored value yet, or it's unreadable. The widget still has a
@@ -85,6 +87,17 @@ public class ScanWidgetProvider extends AppWidgetProvider {
         } else {
             views.setTextViewText(R.id.widget_value, context.getString(R.string.widget_empty_title));
             views.setTextViewText(R.id.widget_sub, context.getString(R.string.widget_empty_sub));
+        }
+
+        // Hidden entirely when there is no streak: a flame showing 0 reads as
+        // a reproach rather than an encouragement.
+        if (streak > 0) {
+            views.setTextViewText(R.id.widget_streak, String.valueOf(streak));
+            views.setViewVisibility(R.id.widget_streak, android.view.View.VISIBLE);
+            views.setViewVisibility(R.id.widget_flame, android.view.View.VISIBLE);
+        } else {
+            views.setViewVisibility(R.id.widget_streak, android.view.View.GONE);
+            views.setViewVisibility(R.id.widget_flame, android.view.View.GONE);
         }
 
         Intent intent = new Intent(context, MainActivity.class);

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { scanValue, wardrobeTotal } from "@/lib/wardrobe";
+import { displayStreak } from "@/lib/streak";
 
 export const dynamic = "force-dynamic";
 
@@ -97,5 +98,18 @@ export async function GET() {
     })
   );
 
-  return NextResponse.json({ count, totalValueHuf, recent });
+  // The widget shows this next to a flame, so it has to be the live figure
+  // rather than the stored one — see displayStreak.
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("streak_count, last_scan_date")
+    .eq("id", user.id)
+    .maybeSingle<{ streak_count: number | null; last_scan_date: string | null }>();
+
+  return NextResponse.json({
+    count,
+    totalValueHuf,
+    recent,
+    streak: displayStreak(profile),
+  });
 }

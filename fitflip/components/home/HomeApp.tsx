@@ -409,6 +409,7 @@ export default function HomeApp() {
         void publishWardrobeToWidget({
           totalHuf: d.totalValueHuf ?? 0,
           itemCount: d.count ?? 0,
+          streak: d.streak ?? 0,
         });
       })
       .catch(() => {});

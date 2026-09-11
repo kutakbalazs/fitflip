@@ -58,7 +58,8 @@
 
         <TextView
             android:id="@+id/widget_hint"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
             android:maxLines="1"
@@ -66,5 +67,25 @@
             android:text="@string/widget_hint"
             android:textColor="#84B0E4"
             android:textSize="12sp" />
+
+        <!-- Streak, pinned bottom-right. Hidden entirely when there isn't
+             one: a flame showing 0 reads as a reproach. -->
+        <ImageView
+            android:id="@+id/widget_flame"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_marginStart="4dp"
+            android:src="@drawable/ic_widget_flame"
+            android:visibility="gone"
+            android:contentDescription="@null" />
+
+        <TextView
+            android:id="@+id/widget_streak"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:textColor="#F28B4C"
+            android:textSize="12sp"
+            android:visibility="gone" />
     </LinearLayout>
 </LinearLayout>

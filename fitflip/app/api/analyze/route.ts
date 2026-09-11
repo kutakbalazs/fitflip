@@ -4,6 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { claimGuestScan, clientIp } from "@/lib/guestScan";
+import { budapestDate, displayStreak } from "@/lib/streak";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -532,14 +533,6 @@ function nextMidnightUtc(): Date {
   return d;
 }
 
-// Daily streak is tracked in the user's local (Hungarian) day, not UTC —
-// a scan at 00:30 Budapest time should count for that calendar day.
-function budapestDate(offsetDays = 0): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Budapest" }).format(
-    new Date(Date.now() + offsetDays * 86_400_000)
-  );
-}
-
 /**
  * New streak value for a scan happening "now":
  * - already scanned today → unchanged
@@ -554,15 +547,6 @@ function nextStreak(profile: Profile): number {
   if (last === today) return Math.max(1, current);
   if (last === yesterday) return current + 1;
   return 1;
-}
-
-/** Streak to DISPLAY: alive only if the last scan was today or yesterday. */
-function displayStreak(profile: Profile): number {
-  const last = profile.last_scan_date ?? null;
-  if (last === budapestDate() || last === budapestDate(-1)) {
-    return profile.streak_count ?? 0;
-  }
-  return 0;
 }
 
 const PROFILE_COLS = "is_premium, scan_count_today, scan_count_reset_at, streak_count, last_scan_date";
