@@ -43,6 +43,8 @@
         android:textColor="#8A8A8A"
         android:textSize="12sp" />
 
+    <!-- The hint wraps to two lines rather than shrinking, which leaves the
+         streak room to sit inside the tile instead of against its edge. -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -53,6 +55,7 @@
         <ImageView
             android:layout_width="16dp"
             android:layout_height="16dp"
+            android:layout_gravity="bottom"
             android:src="@drawable/ic_widget_camera"
             android:contentDescription="@null" />
 
@@ -62,7 +65,7 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
-            android:maxLines="1"
+            android:maxLines="2"
             android:ellipsize="end"
             android:text="@string/widget_hint"
             android:textColor="#84B0E4"
@@ -75,6 +78,7 @@
             android:layout_width="14dp"
             android:layout_height="14dp"
             android:layout_marginStart="4dp"
+            android:layout_gravity="bottom"
             android:src="@drawable/ic_widget_flame"
             android:visibility="gone"
             android:contentDescription="@null" />
@@ -84,6 +88,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="2dp"
+            android:layout_gravity="bottom"
             android:textColor="#F28B4C"
             android:textSize="12sp"
             android:visibility="gone" />

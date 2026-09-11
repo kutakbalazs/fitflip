@@ -110,14 +110,20 @@ struct FitFlipWidgetView: View {
 
             Spacer(minLength: 8)
 
-            HStack(spacing: 6) {
-                Image(systemName: "camera.fill")
-                    .font(.system(size: 12))
-                Text(isHungarian ? "Koppints a fotózáshoz" : "Tap to take a photo")
-                    .font(.system(size: 12))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
-                    .foregroundColor(accent)
+            // Bottom row, aligned to the baseline of the last line: the hint
+            // wraps to two lines rather than shrinking, which leaves the
+            // streak room to sit inside the tile instead of being pushed
+            // against its edge.
+            HStack(alignment: .bottom, spacing: 6) {
+                HStack(alignment: .top, spacing: 5) {
+                    Image(systemName: "camera.fill")
+                        .font(.system(size: 12))
+                    Text(isHungarian ? "Koppints a fotózáshoz" : "Tap to take a photo")
+                        .font(.system(size: 12))
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .foregroundColor(accent)
 
                 // Only when a streak is actually running. A flame showing 0
                 // would be a reproach, and displayStreak already returns 0
@@ -133,7 +139,6 @@ struct FitFlipWidgetView: View {
                     .foregroundColor(flame)
                 }
             }
-            .foregroundColor(accent)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .widgetURL(target)
