@@ -4,4 +4,9 @@
     <string name="title_activity_main">FitFlip</string>
     <string name="package_name">app.fitflip</string>
     <string name="custom_url_scheme">app.fitflip</string>
+    <string name="widget_hint">Koppints — kamera nyílik</string>
+    <string name="widget_description">Egy koppintás, és nyílik a kamera. Mutatja a szekrényed értékét is.</string>
+    <string name="widget_items">%1$d darab feldolgozva</string>
+    <string name="widget_empty_title">Fényképezz</string>
+    <string name="widget_empty_sub">Derítsd ki, mennyit ér</string>
 </resources>

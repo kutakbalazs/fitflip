@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The whole tile is one tap target. A widget that opens the camera should not
+  make you aim at a small button inside it — and the bottom row says so in
+  words, because a widget that silently launches a camera is startling the
+  first time.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/scan_widget_bg"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/app_name"
+        android:textColor="#E2E2E2"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:fontFamily="serif" />
+
+    <TextView
+        android:id="@+id/widget_value"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textColor="#FFFFFF"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/widget_sub"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textColor="#8A8A8A"
+        android:textSize="12sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="bottom"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/ic_widget_camera"
+            android:contentDescription="@null" />
+
+        <TextView
+            android:id="@+id/widget_hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="@string/widget_hint"
+            android:textColor="#84B0E4"
+            android:textSize="12sp" />
+    </LinearLayout>
+</LinearLayout>

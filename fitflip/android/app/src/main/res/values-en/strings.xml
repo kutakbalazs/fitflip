@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- English overrides. The default values/ are Hungarian, matching the app's
+     own fallback: anything that isn't English is served Hungarian. -->
+<resources>
+    <string name="widget_hint">Tap — camera opens</string>
+    <string name="widget_description">One tap and the camera opens. Also shows what your wardrobe is worth.</string>
+    <string name="widget_items">%1$d items identified</string>
+    <string name="widget_empty_title">Take a photo</string>
+    <string name="widget_empty_sub">Find out what it\'s worth</string>
+</resources>

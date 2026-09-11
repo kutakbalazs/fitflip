@@ -24,6 +24,7 @@ import { savePendingGuestScan } from "@/lib/guestPending";
 import StockxButton from "@/components/StockxButton";
 import ListingDraft from "@/components/ListingDraft";
 import { sourceLabel } from "@/lib/listings/sourceLabel";
+import { publishWardrobeToWidget } from "@/lib/widgetBridge";
 
 type AnalysisResult = {
   recognized: boolean;
@@ -402,6 +403,12 @@ export default function HomeApp() {
           count: d.count ?? 0,
           totalValueHuf: d.totalValueHuf ?? 0,
           recent: Array.isArray(d.recent) ? d.recent : [],
+        });
+        // The home-screen widget has no session and no network of its own,
+        // so this is where it gets its number: whatever the app last saw.
+        void publishWardrobeToWidget({
+          totalHuf: d.totalValueHuf ?? 0,
+          itemCount: d.count ?? 0,
         });
       })
       .catch(() => {});

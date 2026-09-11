@@ -21,6 +21,7 @@
     "@capacitor/core": "^8.4.0",
     "@capacitor/ios": "^8.4.0",
     "@capacitor/network": "^8.0.1",
+    "@capacitor/preferences": "^8.0.1",
     "@capacitor/push-notifications": "^8.1.2",
     "@capacitor/splash-screen": "^8.0.1",
     "@capgo/capacitor-social-login": "^8.3.24",
