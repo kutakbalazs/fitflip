@@ -10,6 +10,7 @@ import { managementUrl } from "@/lib/iap";
 import LegalFooter from "@/components/LegalFooter";
 import ThemeToggle from "@/components/ThemeToggle";
 import MarketingToggle from "@/components/MarketingToggle";
+import PushToggle from "@/components/PushToggle";
 
 export default function AccountPage() {
   const router = useRouter();
@@ -178,6 +179,10 @@ export default function AccountPage() {
             </button>
           </div>
         )}
+
+        <div className="mb-8">
+          <PushToggle lang={lang} />
+        </div>
 
         <div className="mb-8">
           <MarketingToggle lang={lang} />

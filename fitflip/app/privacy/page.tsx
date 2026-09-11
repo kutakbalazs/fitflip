@@ -116,6 +116,21 @@ function ContentHu() {
         mivel ezek nem reklámcélúak.
       </p>
 
+      <h2 className="text-lg font-semibold mt-8 mb-2">2/B. Push értesítések</h2>
+      <p>
+        A mobilalkalmazás push értesítést küldhet, ha a Felhasználó árfigyelője találatot talál a
+        megadott ár alatt. Ez <strong>kizárólag külön bekapcsolás után</strong> történik: a Felhasználónak
+        a fiókja beállításaiban be kell kapcsolnia az értesítéseket, és a készülék operációs rendszerében
+        is engedélyeznie kell azokat. Ehhez az eszközöt azonosító tokent (APNs/FCM) tároljuk, a platform
+        megjelölésével együtt.
+      </p>
+      <p>
+        Az értesítések <strong>bármikor kikapcsolhatók</strong> a fiók beállításaiban vagy a készülék
+        rendszerbeállításaiban; a kikapcsolás a tárolt tokent törli. A kézbesítés az Apple (APNs),
+        illetve Android esetén a Google (Firebase Cloud Messaging) hálózatán keresztül történik.
+        Reklámcélú push üzenetet nem küldünk.
+      </p>
+
       <h2 className="text-lg font-semibold mt-8 mb-2">3. Adatfeldolgozók (címzettek)</h2>
       <p>
         Az Adatkezelő az alábbi adatfeldolgozókat veszi igénybe a Szolgáltatás nyújtásához. Mindegyik adatfeldolgozóval az Adatkezelő GDPR Art. 28 szerinti adatfeldolgozói szerződéssel rendelkezik:
@@ -134,13 +149,22 @@ function ContentHu() {
           <strong>Resend Inc.</strong> (2261 Market Street #4036, San Francisco, CA 94114, USA) – tranzakciós és (kifejezett feliratkozás esetén) hírlevél-email kiküldése.
         </li>
         <li>
+          <strong>Apple Inc.</strong> (One Apple Park Way, Cupertino, CA 95014, USA) – push értesítések kézbesítése iOS-en (APNs), csak bekapcsolt értesítések esetén.
+        </li>
+        <li>
+          <strong>Google LLC</strong> (1600 Amphitheatre Parkway, Mountain View, CA 94043, USA) – push értesítések kézbesítése Androidon (Firebase Cloud Messaging), csak bekapcsolt értesítések esetén.
+        </li>
+        <li>
+          <strong>Functional Software, Inc. (Sentry)</strong> (45 Fremont Street, San Francisco, CA 94105, USA) – alkalmazás-hibák monitorozása; EU-régióban tárolva, email cím és IP nélkül.
+        </li>
+        <li>
           <strong>Vercel Inc.</strong> (440 N Barranca Ave #4133, Covina, CA 91723, USA) – hosting, edge-szolgáltatás.
         </li>
       </ul>
 
       <h2 className="text-lg font-semibold mt-8 mb-2">4. Adattovábbítás harmadik országba</h2>
       <p>
-        A fenti adatfeldolgozók közül Stripe, Anthropic, Resend és Vercel egyesült államokbeli székhelyű. Az ezen szolgáltatóknak történő adattovábbítás jogalapja az Európai Bizottság (EU) 2021/914 végrehajtási határozatában foglalt általános adatvédelmi szerződéses feltételek (SCC), illetve – amennyiben az adott szolgáltató tanúsítva van – az EU–USA Adatvédelmi Keretrendszer (Data Privacy Framework) szerinti megfelelőségi határozat (Art. 45 GDPR).
+        A fenti adatfeldolgozók közül Stripe, Anthropic, Resend, Vercel, Apple, Google és a Sentry egyesült államokbeli székhelyű. Az ezen szolgáltatóknak történő adattovábbítás jogalapja az Európai Bizottság (EU) 2021/914 végrehajtási határozatában foglalt általános adatvédelmi szerződéses feltételek (SCC), illetve – amennyiben az adott szolgáltató tanúsítva van – az EU–USA Adatvédelmi Keretrendszer (Data Privacy Framework) szerinti megfelelőségi határozat (Art. 45 GDPR).
       </p>
 
       <h2 className="text-lg font-semibold mt-8 mb-2">5. Automatizált döntéshozatal, AI-feldolgozás</h2>
@@ -305,6 +329,20 @@ function ContentEn() {
         unsubscribing, as these are not advertising.
       </p>
 
+      <h2 className="text-lg font-semibold mt-8 mb-2">2/B. Push notifications</h2>
+      <p>
+        The mobile app can send a push notification when a price watcher finds a listing under the
+        user&apos;s target price. This happens <strong>only after it is switched on</strong>: the user must
+        enable notifications in their account settings and also allow them at the operating-system
+        level. To deliver them we store a device token (APNs/FCM) together with the platform.
+      </p>
+      <p>
+        Notifications can be <strong>turned off at any time</strong> in account settings or in the
+        device&apos;s system settings; turning them off deletes the stored token. Delivery goes through
+        Apple (APNs) and, on Android, Google (Firebase Cloud Messaging). We do not send advertising
+        push messages.
+      </p>
+
       <h2 className="text-lg font-semibold mt-8 mb-2">3. Data processors (recipients)</h2>
       <p>
         The Controller uses the following processors to deliver the Service. The Controller has entered into a GDPR Art. 28 data processing agreement with each:
@@ -314,12 +352,15 @@ function ContentEn() {
         <li><strong>Stripe Payments Europe Ltd.</strong> (Dublin, Ireland) – payment processing. Stripe also acts as an independent controller for card data.</li>
         <li><strong>Anthropic, PBC</strong> (San Francisco, USA) – AI image analysis (Claude). Uploaded images and prompt data are briefly transmitted to Anthropic&apos;s servers to generate the response.</li>
         <li><strong>Resend Inc.</strong> (San Francisco, USA) – transactional and, where explicitly subscribed, newsletter email delivery.</li>
+        <li><strong>Apple Inc.</strong> (Cupertino, USA) – push notification delivery on iOS (APNs), only where notifications are enabled.</li>
+        <li><strong>Google LLC</strong> (Mountain View, USA) – push notification delivery on Android (Firebase Cloud Messaging), only where notifications are enabled.</li>
+        <li><strong>Functional Software, Inc. (Sentry)</strong> (San Francisco, USA) – application error monitoring; stored in the EU region, without email address or IP.</li>
         <li><strong>Vercel Inc.</strong> (Covina, USA) – hosting, edge services.</li>
       </ul>
 
       <h2 className="text-lg font-semibold mt-8 mb-2">4. International data transfers</h2>
       <p>
-        Of the processors listed above, Stripe, Anthropic, Resend and Vercel are US-based. Transfers to these providers rely on the Standard Contractual Clauses adopted by Commission Implementing Decision (EU) 2021/914 and/or – where the relevant provider is self-certified – the EU–US Data Privacy Framework adequacy decision (GDPR Art. 45).
+        Of the processors listed above, Stripe, Anthropic, Resend, Vercel, Apple, Google and Sentry are US-based. Transfers to these providers rely on the Standard Contractual Clauses adopted by Commission Implementing Decision (EU) 2021/914 and/or – where the relevant provider is self-certified – the EU–US Data Privacy Framework adequacy decision (GDPR Art. 45).
       </p>
 
       <h2 className="text-lg font-semibold mt-8 mb-2">5. Automated processing, AI</h2>

@@ -4,6 +4,7 @@ import { searchAllMarketplaces } from "@/lib/listings/aggregate";
 import { verifyListingsAgainstImage } from "@/lib/listings/verify";
 import { filterListingsByItemType } from "@/lib/listings/itemType";
 import { extractSizeTokens, listingMatchesSize } from "@/lib/listings/sizeMatch";
+import { notifyUser } from "@/lib/push/notify";
 import type { Listing } from "@/lib/listings/types";
 
 export const dynamic = "force-dynamic";
@@ -261,7 +262,49 @@ async function processWatcher(
     })
     .eq("id", w.id);
 
+  // Push is a second delivery channel for the row we just wrote, not a
+  // second source of truth: if it fails, the red dot and /notifications are
+  // already correct. Hence the swallowed error — a dead token must not cost
+  // us a watcher check.
+  try {
+    await pushWatcherHit(admin, w, verified.length);
+  } catch (err) {
+    console.warn(`[cron] push failed for watcher ${w.id}:`, err);
+  }
+
   return { newCount: verified.length, diag };
+}
+
+/**
+ * Tell the user's phone about a watcher hit.
+ *
+ * The item name carries the message — "3 új találat" alone is not worth
+ * unlocking a phone for, "Nike Air Max 90 — 3 új találat" is. Falls back to a
+ * generic line only when the watcher has neither brand nor model.
+ */
+async function pushWatcherHit(
+  admin: ReturnType<typeof createAdminClient>,
+  w: WatcherRow,
+  count: number
+): Promise<void> {
+  const { data } = await admin.auth.admin.getUserById(w.user_id);
+  const lang = (data?.user?.user_metadata as { lang?: string } | null)?.lang;
+  const hu = lang !== "en";
+
+  const item = [w.search_brand, w.search_model].filter(Boolean).join(" ").trim();
+
+  await notifyUser({
+    userId: w.user_id,
+    title: hu ? "Új találat az árfigyelődre" : "New match on your watcher",
+    body: item
+      ? hu
+        ? `${item} — ${count} új találat a megadott ár alatt.`
+        : `${item} — ${count} new listing${count === 1 ? "" : "s"} under your target.`
+      : hu
+        ? `${count} új találat a megadott ár alatt.`
+        : `${count} new listing${count === 1 ? "" : "s"} under your target.`,
+    data: { type: "watcher", watcherId: w.id, url: "/notifications" },
+  });
 }
 
 async function fetchScanImage(
