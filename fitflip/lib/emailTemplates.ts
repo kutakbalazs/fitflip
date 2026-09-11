@@ -170,3 +170,39 @@ export function reengagementEmail(userId: string, hu: boolean): Built {
     ].join("\n"),
   };
 }
+
+/** One-off newsletter, composed per send. Same shell as the automated ones,
+ *  so branding and the unsubscribe footer can't be forgotten. */
+export function campaignEmail(
+  userId: string,
+  hu: boolean,
+  opts: {
+    subject: string;
+    heading: string;
+    paragraphs: string[];
+    ctaLabel: string;
+    ctaHref: string;
+  }
+): Built {
+  return {
+    subject: opts.subject,
+    html: shell({
+      hu,
+      userId,
+      heading: opts.heading,
+      body: opts.paragraphs,
+      ctaLabel: opts.ctaLabel,
+      ctaHref: opts.ctaHref,
+    }),
+    text: [
+      opts.heading,
+      "",
+      // Strip the inline tags the HTML version allows.
+      ...opts.paragraphs.map((p) => p.replace(/<[^>]*>/g, "")),
+      "",
+      opts.ctaHref,
+      "",
+      `${hu ? "Leiratkozás" : "Unsubscribe"}: ${unsubscribeUrl(userId)}`,
+    ].join("\n"),
+  };
+}
