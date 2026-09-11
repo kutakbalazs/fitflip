@@ -34,6 +34,27 @@ Sentry.init({
 
   beforeSend(event) {
     try {
+      // Service-worker registration failures are not ours to fix. We never
+      // call register() — next-pwa does — and privacy extensions routinely
+      // stub navigator.serviceWorker out and reject the promise, which
+      // arrives here as a bare "Error: Rejected" from an <anonymous> frame.
+      //
+      // Nothing depends on it either: the worker is deliberately empty
+      // (no runtime caching) and exists only so Android Chrome offers the
+      // "install app" prompt. A failure costs that prompt and nothing else.
+      //
+      // Matched on the stack rather than the message, because "Rejected" is
+      // far too generic to filter on without hiding real errors.
+      const frames = event.exception?.values?.flatMap(
+        (v) => v.stacktrace?.frames ?? []
+      );
+      if (
+        frames?.some((f) =>
+          `${f.function ?? ""} ${f.module ?? ""}`.includes("serviceWorker")
+        )
+      ) {
+        return null;
+      }
       // Drop query strings (magic-link token_hash, reset tokens, …) from the
       // reported URL.
       if (event.request?.url) {
