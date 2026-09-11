@@ -85,6 +85,12 @@ function ContentHu() {
             <td className="py-2 pr-2">Art. 6(1)(f) – jogos érdek (biztonság, hibakeresés)</td>
             <td className="py-2">30 nap</td>
           </tr>
+          <tr className="border-b border-ink-100 dark:border-ink-700">
+            <td className="py-2 pr-2">Hírlevél küldése (csak kifejezett feliratkozás esetén)</td>
+            <td className="py-2 pr-2">Email cím, a feliratkozás időpontja, nyelvi beállítás</td>
+            <td className="py-2 pr-2">Art. 6(1)(a) – hozzájárulás (Grt. 6. §)</td>
+            <td className="py-2">A leiratkozásig, vagy a fiók törléséig</td>
+          </tr>
           <tr>
             <td className="py-2 pr-2">Panaszkezelés</td>
             <td className="py-2 pr-2">Email kommunikáció, panasz tárgya</td>
@@ -93,6 +99,22 @@ function ContentHu() {
           </tr>
         </tbody>
       </table>
+
+      <h2 className="text-lg font-semibold mt-8 mb-2">2/A. Hírlevél</h2>
+      <p>
+        Hírlevelet <strong>kizárólag annak küldünk, aki erre kifejezetten feliratkozott</strong> — a
+        regisztrációs űrlapon szereplő, alapértelmezetten üresen hagyott jelölőnégyzettel, vagy a fiókja
+        beállításai között. A feliratkozás önkéntes: nem feltétele a regisztrációnak, és a Szolgáltatás
+        hírlevél nélkül is teljeskörűen használható. A feliratkozás tényét és időpontját eltároljuk.
+      </p>
+      <p>
+        A hozzájárulás <strong>bármikor, indokolás nélkül visszavonható</strong>: minden hírlevél alján
+        elhelyezett leiratkozó linkkel (bejelentkezés nélkül, egy kattintással), vagy a fiók beállításaiban.
+        A visszavonás nem érinti a visszavonás előtti adatkezelés jogszerűségét, és nem jár a fiók vagy a
+        Szolgáltatás elvesztésével. A leiratkozás után is megkapja a Felhasználó a Szolgáltatás
+        működéséhez szükséges tranzakciós leveleket (pl. jelszó-visszaállítás, email-megerősítés),
+        mivel ezek nem reklámcélúak.
+      </p>
 
       <h2 className="text-lg font-semibold mt-8 mb-2">3. Adatfeldolgozók (címzettek)</h2>
       <p>
@@ -109,7 +131,7 @@ function ContentHu() {
           <strong>Anthropic, PBC</strong> (548 Market St PMB 90375, San Francisco, CA 94104, USA) – AI képelemzés (Claude). A feltöltött képek és prompt-adatok rövid ideig az Anthropic szervereire kerülnek a válasz generálása érdekében.
         </li>
         <li>
-          <strong>Resend Inc.</strong> (2261 Market Street #4036, San Francisco, CA 94114, USA) – tranzakciós email kiküldés.
+          <strong>Resend Inc.</strong> (2261 Market Street #4036, San Francisco, CA 94114, USA) – tranzakciós és (kifejezett feliratkozás esetén) hírlevél-email kiküldése.
         </li>
         <li>
           <strong>Vercel Inc.</strong> (440 N Barranca Ave #4133, Covina, CA 91723, USA) – hosting, edge-szolgáltatás.
@@ -252,6 +274,12 @@ function ContentEn() {
             <td className="py-2 pr-2">Art. 6(1)(f) – legitimate interest (security, debugging)</td>
             <td className="py-2">30 days</td>
           </tr>
+          <tr className="border-b border-ink-100 dark:border-ink-700">
+            <td className="py-2 pr-2">Newsletter (only where explicitly subscribed)</td>
+            <td className="py-2 pr-2">Email address, time of subscription, language preference</td>
+            <td className="py-2 pr-2">Art. 6(1)(a) – consent</td>
+            <td className="py-2">Until unsubscribed, or until the account is deleted</td>
+          </tr>
           <tr>
             <td className="py-2 pr-2">Complaint handling</td>
             <td className="py-2 pr-2">Email communications, complaint subject</td>
@@ -261,6 +289,22 @@ function ContentEn() {
         </tbody>
       </table>
 
+      <h2 className="text-lg font-semibold mt-8 mb-2">2/A. Newsletter</h2>
+      <p>
+        We send the newsletter <strong>only to people who explicitly subscribed</strong> — via the
+        checkbox on the signup form, which is unticked by default, or from their account settings.
+        Subscribing is voluntary: it is not a condition of registering, and the Service can be used in
+        full without it. We record that consent was given and when.
+      </p>
+      <p>
+        Consent can be <strong>withdrawn at any time, without giving a reason</strong>: through the
+        unsubscribe link at the bottom of every newsletter (one click, no sign-in required), or in
+        account settings. Withdrawal does not affect the lawfulness of processing carried out before it,
+        and does not cost the user their account or the Service. Transactional messages required to
+        operate the Service (such as password resets and email confirmation) continue after
+        unsubscribing, as these are not advertising.
+      </p>
+
       <h2 className="text-lg font-semibold mt-8 mb-2">3. Data processors (recipients)</h2>
       <p>
         The Controller uses the following processors to deliver the Service. The Controller has entered into a GDPR Art. 28 data processing agreement with each:
@@ -269,7 +313,7 @@ function ContentEn() {
         <li><strong>Supabase Inc.</strong> (San Francisco, USA) – authentication, database, image storage. Data is stored in EU regions.</li>
         <li><strong>Stripe Payments Europe Ltd.</strong> (Dublin, Ireland) – payment processing. Stripe also acts as an independent controller for card data.</li>
         <li><strong>Anthropic, PBC</strong> (San Francisco, USA) – AI image analysis (Claude). Uploaded images and prompt data are briefly transmitted to Anthropic&apos;s servers to generate the response.</li>
-        <li><strong>Resend Inc.</strong> (San Francisco, USA) – transactional email delivery.</li>
+        <li><strong>Resend Inc.</strong> (San Francisco, USA) – transactional and, where explicitly subscribed, newsletter email delivery.</li>
         <li><strong>Vercel Inc.</strong> (Covina, USA) – hosting, edge services.</li>
       </ul>
 

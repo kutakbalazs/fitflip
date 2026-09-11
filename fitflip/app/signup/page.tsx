@@ -38,6 +38,8 @@ function SignupPageInner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmSent, setConfirmSent] = useState(false);
+  // Starts UNCHECKED on purpose: a pre-ticked box is not valid consent.
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
   // Apple Sign In is shown only inside the native iOS app (App Store 4.8). Set
   // after mount to avoid a hydration mismatch.
   const [native, setNative] = useState(false);
@@ -66,7 +68,9 @@ function SignupPageInner() {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-        data: { lang },
+        // Recorded at signup and copied into profiles by a trigger, so the
+        // consent and the moment it was given are both evidenced.
+        data: { lang, marketing_consent: marketingOptIn },
       },
     });
     setLoading(false);
@@ -198,6 +202,24 @@ function SignupPageInner() {
                   />
                   <p className="text-xs text-ink-500 dark:text-ink-400 mt-1.5">{t.signupPasswordHint}</p>
                 </div>
+
+                {/* Unticked by default and never a condition of signing up —
+                    consent has to be a free, affirmative choice to count. */}
+                <label className="flex items-start gap-3 text-left cursor-pointer py-1">
+                  <input
+                    type="checkbox"
+                    checked={marketingOptIn}
+                    onChange={(e) => setMarketingOptIn(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-ink-900 dark:accent-white cursor-pointer"
+                  />
+                  <span className="min-w-0">
+                    <span className="block text-sm">{t.marketingOptIn}</span>
+                    <span className="block text-xs text-ink-500 dark:text-ink-400">
+                      {t.marketingOptInHint}
+                    </span>
+                  </span>
+                </label>
+
                 <button
                   type="submit"
                   disabled={loading || !email || !password}

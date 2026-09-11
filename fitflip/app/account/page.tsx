@@ -9,6 +9,7 @@ import { isNativePlatform } from "@/lib/native";
 import { managementUrl } from "@/lib/iap";
 import LegalFooter from "@/components/LegalFooter";
 import ThemeToggle from "@/components/ThemeToggle";
+import MarketingToggle from "@/components/MarketingToggle";
 
 export default function AccountPage() {
   const router = useRouter();
@@ -177,6 +178,10 @@ export default function AccountPage() {
             </button>
           </div>
         )}
+
+        <div className="mb-8">
+          <MarketingToggle lang={lang} />
+        </div>
 
         <div className="mb-8">
           <ThemeToggle lang={lang} />

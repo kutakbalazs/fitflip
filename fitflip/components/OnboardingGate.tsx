@@ -26,6 +26,10 @@ const SKIP_PATHS = [
   "/forgot-password",
   "/reset-password",
   "/auth",
+  // Reached from a link in an email, by someone who may not be signed in
+  // and whose only intent is to stop the email. Redirecting them into
+  // onboarding would break a legally required one-click unsubscribe.
+  "/unsubscribe",
   // Public legal pages reached from external links (App Store / Play Store
   // listings, the privacy-policy URL Google crawls). These must render their
   // own content directly — redirecting them to /welcome made Google Play see
