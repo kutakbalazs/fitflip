@@ -1,3 +1,4 @@
+import { Capacitor } from "@capacitor/core";
 import { isNativePlatform, nativePlatform } from "@/lib/native";
 
 /**
@@ -8,12 +9,29 @@ import { isNativePlatform, nativePlatform } from "@/lib/native";
  * at a remote URL, where the Web Push API is not available on iOS — and a
  * static import would pull native bridge code into the browser bundle for
  * the majority of sessions that can never use it.
+ *
+ * That remote URL is also why `isNativePlatform()` is not enough to decide
+ * whether push works. The web app updates the moment we deploy; the native
+ * shell only updates when someone installs a new build from the store. So
+ * every copy of the app released before push existed is running this code
+ * right now, inside a binary with no PushNotifications plugin in it — and
+ * calling the plugin there throws "not implemented on ios". Hence
+ * `isPluginAvailable`, which asks the bridge what the *installed binary*
+ * actually has.
  */
 
 type PushModule = typeof import("@capacitor/push-notifications");
 
+function bridgeHasPlugin(): boolean {
+  try {
+    return Capacitor.isPluginAvailable("PushNotifications");
+  } catch {
+    return false;
+  }
+}
+
 async function plugin(): Promise<PushModule["PushNotifications"] | null> {
-  if (!isNativePlatform()) return null;
+  if (!isNativePlatform() || !bridgeHasPlugin()) return null;
   try {
     const mod = await import("@capacitor/push-notifications");
     return mod.PushNotifications;
@@ -22,9 +40,9 @@ async function plugin(): Promise<PushModule["PushNotifications"] | null> {
   }
 }
 
-/** True where push can work at all: the native shell, iOS or Android. */
+/** True only where push can actually work: a native shell that ships the plugin. */
 export function pushSupported(): boolean {
-  return isNativePlatform();
+  return isNativePlatform() && bridgeHasPlugin();
 }
 
 /** Has the OS already granted permission? Never prompts. */
@@ -73,15 +91,24 @@ export async function enablePush(): Promise<boolean> {
       // rather than leaving the settings switch spinning forever.
       const timer = setTimeout(() => done(null), 15_000);
 
-      void push.addListener("registration", (t) => {
-        clearTimeout(timer);
-        done(t.value);
-      });
-      void push.addListener("registrationError", () => {
+      // Every one of these is awaited via .catch rather than `void`: a
+      // discarded promise that rejects becomes an unhandled rejection, which
+      // escapes the surrounding try/catch entirely and lands in Sentry as an
+      // uncaught error. That is exactly how "plugin is not implemented on
+      // ios" got reported from a shell that simply predates the plugin.
+      const fail = () => {
         clearTimeout(timer);
         done(null);
-      });
-      void push.register();
+      };
+
+      push
+        .addListener("registration", (t) => {
+          clearTimeout(timer);
+          done(t.value);
+        })
+        .catch(fail);
+      push.addListener("registrationError", fail).catch(fail);
+      push.register().catch(fail);
     });
 
     if (!token) return false;
@@ -137,19 +164,27 @@ export async function initPush(onOpen: (url: string) => void): Promise<void> {
   const push = await plugin();
   if (!push) return;
 
+  // `.catch` rather than `void` on each: a discarded rejected promise
+  // bypasses the try/catch below and surfaces as an uncaught error.
+  const ignore = () => {};
+
   try {
     // A tapped notification should land on the thing it is about.
-    void push.addListener("pushNotificationActionPerformed", (action) => {
-      const url = action.notification.data?.url;
-      if (typeof url === "string" && url.startsWith("/")) onOpen(url);
-    });
+    push
+      .addListener("pushNotificationActionPerformed", (action) => {
+        const url = action.notification.data?.url;
+        if (typeof url === "string" && url.startsWith("/")) onOpen(url);
+      })
+      .catch(ignore);
 
     // Tokens rotate — on reinstall, on restore from backup, occasionally on
     // their own. Without this the row goes stale and the user quietly stops
     // getting notifications they believe are on.
-    void push.addListener("registration", (t) => {
-      void sendToken(t.value);
-    });
+    push
+      .addListener("registration", (t) => {
+        void sendToken(t.value).catch(ignore);
+      })
+      .catch(ignore);
 
     const { receive } = await push.checkPermissions();
     if (receive === "granted") await push.register();
