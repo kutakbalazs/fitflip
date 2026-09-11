@@ -118,8 +118,9 @@ function ContentHu() {
 
       <h2 className="text-lg font-semibold mt-8 mb-2">2/B. Push értesítések</h2>
       <p>
-        A mobilalkalmazás push értesítést küldhet, ha a Felhasználó árfigyelője találatot talál a
-        megadott ár alatt. Ez <strong>kizárólag külön bekapcsolás után</strong> történik: a Felhasználónak
+        A mobilalkalmazás két esetben küld push értesítést: ha a Felhasználó árfigyelője találatot
+        talál a megadott ár alatt, illetve havonta egyszer a beszkennelt darabok összesített
+        becsült értékéről. Ez <strong>kizárólag külön bekapcsolás után</strong> történik: a Felhasználónak
         a fiókja beállításaiban be kell kapcsolnia az értesítéseket, és a készülék operációs rendszerében
         is engedélyeznie kell azokat. Ehhez az eszközöt azonosító tokent (APNs/FCM) tároljuk, a platform
         megjelölésével együtt.
@@ -331,8 +332,9 @@ function ContentEn() {
 
       <h2 className="text-lg font-semibold mt-8 mb-2">2/B. Push notifications</h2>
       <p>
-        The mobile app can send a push notification when a price watcher finds a listing under the
-        user&apos;s target price. This happens <strong>only after it is switched on</strong>: the user must
+        The mobile app sends push notifications in two cases: when a price watcher finds a listing
+        under the user&apos;s target price, and once a month with the combined estimated value of
+        the items they have scanned. This happens <strong>only after it is switched on</strong>: the user must
         enable notifications in their account settings and also allow them at the operating-system
         level. To deliver them we store a device token (APNs/FCM) together with the platform.
       </p>

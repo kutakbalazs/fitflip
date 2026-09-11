@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { scanValue, wardrobeTotal } from "@/lib/wardrobe";
 
 export const dynamic = "force-dynamic";
 
@@ -27,13 +28,6 @@ type RecentItem = {
   imageUrl: string | null;
 };
 
-// Midpoint of the estimated range; falls back to whichever bound exists.
-function scanValue(s: ScanRow): number | null {
-  const min = typeof s.estimated_value_min_huf === "number" ? s.estimated_value_min_huf : null;
-  const max = typeof s.estimated_value_max_huf === "number" ? s.estimated_value_max_huf : null;
-  if (min !== null && max !== null) return Math.round((min + max) / 2);
-  return min ?? max ?? null;
-}
 
 export async function GET() {
   const supabase = createClient();
@@ -77,9 +71,7 @@ export async function GET() {
   }
 
   const recognized = rows.filter((r) => r.recognized !== false);
-
-  const count = recognized.length;
-  const totalValueHuf = recognized.reduce((sum, r) => sum + (scanValue(r) ?? 0), 0);
+  const { totalHuf: totalValueHuf, itemCount: count } = wardrobeTotal(rows);
 
   // Recent 4 recognized items with a signed image URL for the dashboard.
   const admin = createAdminClient();
