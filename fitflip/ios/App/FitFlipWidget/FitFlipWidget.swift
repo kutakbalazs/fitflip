@@ -159,3 +159,23 @@ struct FitFlipWidget: Widget {
         .contentMarginsDisabled()
     }
 }
+
+#if DEBUG
+/// Both states side by side in the Xcode canvas: a wardrobe with something in
+/// it, and the empty one a new user sees. The empty case is the one worth
+/// looking at — it's what everybody meets first.
+@available(iOS 17.0, *)
+#Preview("Kicsi", as: .systemSmall) {
+    FitFlipWidget()
+} timeline: {
+    WardrobeEntry(date: .now, totalHuf: 340_000, itemCount: 12)
+    WardrobeEntry(date: .now, totalHuf: 0, itemCount: 0)
+}
+
+@available(iOS 17.0, *)
+#Preview("Közepes", as: .systemMedium) {
+    FitFlipWidget()
+} timeline: {
+    WardrobeEntry(date: .now, totalHuf: 1_240_000, itemCount: 38)
+}
+#endif

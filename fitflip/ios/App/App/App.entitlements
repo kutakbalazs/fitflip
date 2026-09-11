@@ -13,5 +13,9 @@
 		<string>applinks:www.fitflip.app</string>
 		<string>applinks:fitflip.app</string>
 	</array>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.app.fitflip</string>
+	</array>
 </dict>
 </plist>
