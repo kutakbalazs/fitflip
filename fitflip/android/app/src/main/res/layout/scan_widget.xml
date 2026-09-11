@@ -18,9 +18,9 @@
         android:layout_height="wrap_content"
         android:text="@string/app_name"
         android:textColor="#E2E2E2"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        android:fontFamily="serif" />
+        android:textSize="15sp"
+        android:fontFamily="serif"
+        android:letterSpacing="-0.02" />
 
     <TextView
         android:id="@+id/widget_value"
