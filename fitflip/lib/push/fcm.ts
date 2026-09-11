@@ -38,6 +38,28 @@ export function pushEnabled(): boolean {
   return serviceAccount() !== null;
 }
 
+/**
+ * Prove the credentials actually work, without sending anything.
+ *
+ * "The env var is set" and "the key can mint a token" are different claims,
+ * and the gap between them is where a truncated paste hides. This closes it
+ * by doing the one thing that fails loudly when the key is wrong.
+ */
+export async function fcmCheck(): Promise<{
+  configured: boolean;
+  projectId: string | null;
+  tokenExchange: boolean;
+}> {
+  const sa = serviceAccount();
+  if (!sa) return { configured: false, projectId: null, tokenExchange: false };
+  const token = await accessToken(sa).catch(() => null);
+  return {
+    configured: true,
+    projectId: sa.project_id,
+    tokenExchange: token !== null,
+  };
+}
+
 function b64url(input: string | Buffer): string {
   return Buffer.from(input)
     .toString("base64")

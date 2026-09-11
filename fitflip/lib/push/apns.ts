@@ -36,6 +36,27 @@ export function apnsEnabled(): boolean {
   return Boolean(KEY() && KEY_ID() && TEAM_ID());
 }
 
+/**
+ * Prove the key is usable, without sending anything.
+ *
+ * A `.p8` that lost its newlines on the way into an env var still *looks*
+ * present; it fails at the moment we sign. So this signs.
+ */
+export function apnsCheck(): {
+  configured: boolean;
+  environment: string;
+  bundleId: string;
+  canSign: boolean;
+} {
+  const configured = apnsEnabled();
+  return {
+    configured,
+    environment: process.env.APNS_ENV === "sandbox" ? "sandbox" : "production",
+    bundleId: BUNDLE_ID(),
+    canSign: configured ? authToken() !== null : false,
+  };
+}
+
 function b64url(input: Buffer | string): string {
   return Buffer.from(input)
     .toString("base64")

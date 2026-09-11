@@ -33,3 +33,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 appstore-screenshots/
+
+# Firebase Android config. Not a secret in the strict sense — it ships inside
+# the APK — but this repo is public, and an API key sitting in a public repo
+# gets scraped and probed whether or not it is meant to be private. Keep the
+# file locally at android/app/google-services.json; without it the gradle
+# build silently skips the Firebase plugin and push stops working.
+android/app/google-services.json
