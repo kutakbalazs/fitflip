@@ -108,9 +108,12 @@ ${facts}
 SZABÁLYOK — ezek kötelezőek:
 - A hirdetést ELSŐ SZEMÉLYBEN írd, mintha az eladó írná. Természetes, közvetlen hangnem, tegeződés nélkül is működjön.
 - A LÁTHATÓ HIBÁKAT ŐSZINTÉN írd le, ne szépítsd. Ez bizalmat épít és megelőzi a vitákat.
-- SOHA ne állítsd, hogy eredetiség-garanciát vállalsz, és ne ígérj konkrét befektetési értéket.
+- SOHA ne állítsd, hogy eredetiség-garanciát vállalsz, és ne ígérj konkrét befektetési értéket. Ne írd azt sem, hogy "eredeti" vagy "original" — SEM a leírásban, SEM a címben.
 - NE használd az "AI", "mesterséges intelligencia", "gépi" szavakat, és ne utalj arra, hogy a szöveget program írta.
-- NE találj ki tényt (mérethelyesség, viselési idő, vásárlás helye), ami nincs az adatok között.
+- KIZÁRÓLAG a fenti adatokra támaszkodj. Amiről nincs adat, arról NE ÍRJ — inkább legyen rövidebb a hirdetés. Ez a legfontosabb szabály, mert a kitalált részlet vitát szül az eladó és a vevő között.
+- Konkrétan: ha nincs megadva méret, NE írj méretet (sem a címben). Ha nincs megadva hiba, NE találj ki hibát. Ha nincs megadva a darab típusa, ne nevezd meg (ne írd, hogy "póló", ha nem tudod).
+- NE írj a szállításról, postázásról, személyes átvételről vagy megtekintésről — nem tudjuk, mit vállal az eladó.
+- NE írj a mérethelyességről ("true to size"), a viselési időről, a vásárlás helyéről, a varrás/anyag állapotáról, sem arról, hogy a cipzárak és gombok működnek-e, ha ez nincs megadva.
 - A cím legyen KERESÉSRE optimalizált: márka + modell + méret + kulcstulajdonság. Max 80 karakter.
 - A leírás 3-6 rövid mondat vagy felsorolás. Ne legyen túlírt.
 - A leírás VÉGÉN legyen egy mondat, ami kérdésre/méretegyeztetésre biztat.
@@ -128,9 +131,12 @@ ${facts}
 RULES — these are mandatory:
 - Write in FIRST PERSON, as the seller would. Natural, direct tone.
 - Describe the VISIBLE FLAWS honestly, don't gloss over them. It builds trust and prevents disputes.
-- NEVER claim you guarantee authenticity, and never promise investment value.
+- NEVER claim you guarantee authenticity, and never promise investment value. Do not use the word "original" or "authentic" either — not in the description and not in the title.
 - Do NOT use the words "AI", "artificial intelligence", or imply software wrote the text.
-- Do NOT invent facts (fit, how often worn, where bought) that aren't in the data above.
+- Rely ONLY on the facts above. If something isn't given, do NOT mention it — a shorter listing is better. This is the most important rule: an invented detail is what starts a dispute between seller and buyer.
+- Specifically: if no size is given, do NOT state a size (not in the title either). If no flaws are given, do NOT invent flaws. If the item type isn't given, don't name it.
+- Do NOT mention shipping, postage, collection or viewing — we don't know what the seller offers.
+- Do NOT comment on fit ("true to size"), how long it was worn, where it was bought, the state of the stitching or fabric, or whether zips and buttons work, unless that is given.
 - The title must be SEARCH-optimised: brand + model + size + key attribute. Max 80 characters.
 - The description is 3-6 short sentences or bullets. Don't overwrite it.
 - END the description with a line inviting questions or size checks.
@@ -143,10 +149,14 @@ Return ONLY this JSON, nothing else:
 
     const client = new Anthropic({ apiKey });
     const response = await client.messages.create({
-      // Haiku: this is writing from structured facts we already have, not
-      // reasoning about an image — plenty capable, and fast enough that the
-      // draft appears almost immediately.
-      model: "claude-haiku-4-5",
+      // Sonnet, measured rather than assumed. Haiku was the obvious pick —
+      // this only writes from facts we already have — but over six runs of
+      // the same scan it botched the Hungarian definite article twice
+      // ("a 1990-es évekből"), where Sonnet did so zero times. A third of
+      // drafts reading as broken Hungarian is not acceptable in text that
+      // goes out publicly under the user's own name, and this endpoint is
+      // rate-limited to occasional use, so the cost is small.
+      model: "claude-sonnet-5",
       max_tokens: 700,
       messages: [{ role: "user", content: prompt }],
     });
