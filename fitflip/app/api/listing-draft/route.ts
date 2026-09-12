@@ -114,6 +114,9 @@ SZABÁLYOK — ezek kötelezőek:
 - A cím legyen KERESÉSRE optimalizált: márka + modell + méret + kulcstulajdonság. Max 80 karakter.
 - A leírás 3-6 rövid mondat vagy felsorolás. Ne legyen túlírt.
 - A leírás VÉGÉN legyen egy mondat, ami kérdésre/méretegyeztetésre biztat.
+- A MAGYAR LEGYEN HIBÁTLAN és természetes. Ne fordíts szó szerint, ne használj erőltetett vagy régies kifejezést. Ha egy hibaleírás sután van megfogalmazva a fenti adatokban, írd át természetes magyarra (pl. "kaparódott" helyett "karcolódott" vagy "megkopott", "szuede" helyett "velúr").
+- NE írj üres töltelékmondatot ("ettől függetlenül még jó", "akár még viselhető"). Minden mondat mondjon valamit.
+- NE állíts semmit a HIRDETÉS FOTÓIRÓL (pl. hogy a képeken jól látszanak a hibák) — nem tudjuk, milyen képeket tölt majd fel.
 
 CSAK ezt a JSON-t add vissza, semmi mást:
 {"title": "...", "description": "..."}`
@@ -131,6 +134,9 @@ RULES — these are mandatory:
 - The title must be SEARCH-optimised: brand + model + size + key attribute. Max 80 characters.
 - The description is 3-6 short sentences or bullets. Don't overwrite it.
 - END the description with a line inviting questions or size checks.
+- Write clean, natural English. No stilted or translated-sounding phrasing. If a flaw is awkwardly worded in the data above, rewrite it naturally.
+- Do NOT write empty filler sentences ("still good though", "very wearable"). Every sentence must say something.
+- Do NOT claim anything about the LISTING'S PHOTOS (e.g. that the flaws are clearly visible in them) — we don't know what the seller will upload.
 
 Return ONLY this JSON, nothing else:
 {"title": "...", "description": "..."}`;
