@@ -23,6 +23,19 @@ const TYPE_EN: Record<string, string> = {
   accessory: "Accessory", other: "Item",
 };
 
+/**
+ * Just the type noun, no colour — for prompts that need to tell a model what
+ * the item actually is. `fallbackName` prepends the colour, which reads as a
+ * display label rather than a fact.
+ */
+export function typeNoun(itemType: string | null, lang: "hu" | "en"): string | null {
+  if (!itemType) return null;
+  const map = lang === "hu" ? TYPE_HU : TYPE_EN;
+  const noun = map[itemType];
+  // "other" carries no information — better to say nothing than "Darab".
+  return noun && itemType !== "other" ? noun.toLowerCase() : null;
+}
+
 export function fallbackName(
   itemType: string | null,
   color: string | null,

@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { claimApiCall } from "@/lib/rateLimit";
+import { typeNoun } from "@/lib/itemTypeNames";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -36,6 +37,21 @@ type ScanRow = {
 };
 
 const huf = (n: number) => `${new Intl.NumberFormat("hu-HU").format(n)} Ft`;
+
+/**
+ * The closing line, appended rather than generated.
+ *
+ * It is the same in every listing, so asking a model to write it bought us
+ * nothing and cost us plenty: graded across twenty drafts it was the single
+ * biggest source of both broken sentences ("Any questions or need help
+ * checking the size - just message me") and invented promises, because a
+ * prompt asking for a line that "invites size checks" is asking the model to
+ * offer measurements the seller never said they'd take.
+ */
+const CLOSING = {
+  hu: "Ha kérdésed van, írj bátran!",
+  en: "If you have any questions, just message me.",
+} as const;
 
 export async function POST(req: NextRequest) {
   try {
@@ -85,9 +101,17 @@ export async function POST(req: NextRequest) {
           : null;
 
     const defects = Array.isArray(scan.defects) ? scan.defects.filter(Boolean) : [];
+    // item_type was read from the scan but never reached the prompt, so the
+    // model had no idea whether it was holding a dress or a pair of boots.
+    // That single omission produced most of the wording complaints in the
+    // audit — "Eladó egy Zara virágmintás darab" — and, worse, it is why the
+    // model sometimes guessed the type and called a jumper a t-shirt.
+    const kind = typeNoun(scan.item_type, lang);
+
     const facts = [
       scan.brand && `márka: ${scan.brand}`,
       scan.model && `modell: ${scan.model}`,
+      kind && `a darab típusa: ${kind}`,
       scan.color && `szín: ${scan.color}`,
       scan.era && `korszak: ${scan.era}`,
       scan.condition && `állapot: ${scan.condition}`,
@@ -100,51 +124,82 @@ export async function POST(req: NextRequest) {
 
     const prompt =
       lang === "hu"
-        ? `Írj egy eladási hirdetést erre a használt/másodkézből származó divatcikkre, magyar piactérre (Vinted, Jófogás).
+        ? `Te egy magyar használtruha-eladó vagy, aki a saját darabját hirdeti meg a Vinteden.
 
-ADATOK:
+AMIT A DARABRÓL TUDSZ — ennél többet NEM tudsz:
 ${facts}
 
-SZABÁLYOK — ezek kötelezőek:
-- A hirdetést ELSŐ SZEMÉLYBEN írd, mintha az eladó írná. Természetes, közvetlen hangnem, tegeződés nélkül is működjön.
-- A LÁTHATÓ HIBÁKAT ŐSZINTÉN írd le, ne szépítsd. Ez bizalmat épít és megelőzi a vitákat.
-- SOHA ne állítsd, hogy eredetiség-garanciát vállalsz, és ne ígérj konkrét befektetési értéket. Ne írd azt sem, hogy "eredeti" vagy "original" — SEM a leírásban, SEM a címben.
-- NE használd az "AI", "mesterséges intelligencia", "gépi" szavakat, és ne utalj arra, hogy a szöveget program írta.
-- KIZÁRÓLAG a fenti adatokra támaszkodj. Amiről nincs adat, arról NE ÍRJ — inkább legyen rövidebb a hirdetés. Ez a legfontosabb szabály, mert a kitalált részlet vitát szül az eladó és a vevő között.
-- Konkrétan: ha nincs megadva méret, NE írj méretet (sem a címben). Ha nincs megadva hiba, NE találj ki hibát. Ha nincs megadva a darab típusa, ne nevezd meg (ne írd, hogy "póló", ha nem tudod).
-- NE írj a szállításról, postázásról, személyes átvételről vagy megtekintésről — nem tudjuk, mit vállal az eladó.
-- NE írj a mérethelyességről ("true to size"), a viselési időről, a vásárlás helyéről, a varrás/anyag állapotáról, sem arról, hogy a cipzárak és gombok működnek-e, ha ez nincs megadva.
-- A cím legyen KERESÉSRE optimalizált: márka + modell + méret + kulcstulajdonság. Max 80 karakter.
-- A leírás 3-6 rövid mondat vagy felsorolás. Ne legyen túlírt.
-- A leírás VÉGÉN legyen egy mondat, ami kérdésre/méretegyeztetésre biztat.
-- A MAGYAR LEGYEN HIBÁTLAN és természetes. Ne fordíts szó szerint, ne használj erőltetett vagy régies kifejezést. Ha egy hibaleírás sután van megfogalmazva a fenti adatokban, írd át természetes magyarra (pl. "kaparódott" helyett "karcolódott" vagy "megkopott", "szuede" helyett "velúr").
-- NE írj üres töltelékmondatot ("ettől függetlenül még jó", "akár még viselhető"). Minden mondat mondjon valamit.
-- NE állíts semmit a HIRDETÉS FOTÓIRÓL (pl. hogy a képeken jól látszanak a hibák) — nem tudjuk, milyen képeket tölt majd fel.
+A LEÍRÁS FELÉPÍTÉSE — pontosan ennyi, se több:
+1. Egy mondat, ami megnevezi a darabot a fenti adatokból (márka, modell, szín, méret, korszak — amelyik meg van adva).
+2. Egy vagy két mondat az állapotról. Ha vannak megadott hibák, MINDET nevezd meg őszintén, szépítés nélkül.
+Ennyi. NE írj lezáró mondatot, NE biztass kérdésre — azt a felületünk teszi hozzá.
+
+TILOS — ezek mindegyike vitát szül eladó és vevő között:
+- Bármit írni, ami nincs a fenti adatok között. Ha rövid lesz a hirdetés, az jó.
+- Méret, darabtípus, szín, korszak vagy hiba, ami nincs megadva. Ha nem tudod, mi a darab, ne nevezd meg (ne írd, hogy "póló").
+- Bármi a szállításról, postázásról, személyes átvételről, megtekintésről, bemérésről vagy méretegyeztetésről.
+- Bármi a hirdetés fotóiról ("a képeken jól látszik").
+- Bármi a mérethelyességről, kényelemről, viselési időről, a vásárlás helyéről, a tárolásról ("nemdohányzó háztartás"), a varrásról, az anyag tartásáról, vagy hogy a cipzárak és gombok működnek-e.
+- Értékelő jelző, amire nincs adat: "klasszikus", "örökzöld", "ikonikus", "kultikus", "patinás", "karakteres".
+- Azt állítani, hogy a darab HIBÁTLAN vagy "komolyabb hiba nélküli", ha nincs megadva hiba. A hiba hiánya nem adat — attól, hogy nem tudunk hibáról, nem lesz hibátlan.
+- A megadott hibát KISEBBNEK mutatni, mint amilyen: ha az adat "sárgulás", ne írd, hogy "enyhe sárgulás"; ha "karc", ne írd, hogy "alig látható karc". Szépítés nélkül, ahogy meg van adva.
+- Stílustanács vagy viselési javaslat ("jól passzol farmerhez", "streetwear stílushoz").
+- Az "eredeti", "original", "autentikus" szó — SEM a leírásban, SEM a címben. Eredetiség-garanciát soha ne vállalj, befektetési értéket ne ígérj.
+- Az "AI", "mesterséges intelligencia", "gépi" szó, vagy bármi utalás arra, hogy a szöveget program írta.
+
+A MAGYAR NYELVRŐL — ez a legfontosabb, mert a hirdetés az eladó neve alatt jelenik meg:
+- Írj úgy, ahogy egy magyar ember beszél. Rövid, egyszerű, kijelentő mondatok.
+- TILOS a katalógus-nyelv: "márkájú", "színű", "kínálom", "eladásra kínálom", "megvásárolható", "gazdára vár".
+- TILOS a töltelék-felvezetés: "Őszintén jelzem", "Összességében", "Elmondom őszintén", "Ezektől eltekintve", "Mindent összevetve".
+- TILOS a magyar-angol kötőjeles keverék ("street-stílushoz"). Vagy magyar szó, vagy a bevett angol márkanév/modellnév.
+- Figyelj a határozott ragra: "AZ 1990-es évekből", "AZ egyik", "AZ oldalán" — magánhangzóval kezdődő szó előtt "az". Számoknál a kimondott alak dönt: "az 1990-es", "a 2000-es".
+- Ha egy hibaleírás sután van megfogalmazva a fenti adatokban, írd át természetes magyarra ("kaparódott" → "karcolódott", "szuede" → "velúr", "cippzár" → "cipzár", "összeesődött" → "összenyomódott").
+- SOHA ne kezdd a leírást azzal, hogy "Ez egy..." — magyar hirdetés nem így kezdődik. Kezdd a márkával vagy a darabbal: "Eladó egy Diesel Zathan...", vagy jelzős szerkezettel: "Fekete Nike Air Force 1, 41-es méret."
+- A méret helyesen: "S méretű", "43-as méret", "S méretben" — a "méretes" (pl. "S méretes") HIBÁS.
+- Ha nem tudod, mi a darab (nincs megadva a típusa), ne ismételd a "darab" szót. Egyszer elég, vagy írd körül a márkával: "Eladó Nike termék, viseltes állapotban."
+- Olvasd át magadban a szöveget, mielőtt visszaadod. Ha bármelyik mondat sután hangzik, írd újra.
+
+A CÍM: kereshető legyen — márka + modell + méret + szín, csak a megadott adatokból. Max 80 karakter. Ne legyen benne felkiáltójel.
 
 CSAK ezt a JSON-t add vissza, semmi mást:
 {"title": "...", "description": "..."}`
-        : `Write a marketplace listing for this second-hand fashion item (Vinted, eBay).
+        : `You are selling your own second-hand item on Vinted.
 
-FACTS:
+WHAT YOU KNOW ABOUT IT — you know nothing beyond this:
 ${facts}
 
-RULES — these are mandatory:
-- Write in FIRST PERSON, as the seller would. Natural, direct tone.
-- Describe the VISIBLE FLAWS honestly, don't gloss over them. It builds trust and prevents disputes.
-- NEVER claim you guarantee authenticity, and never promise investment value. Do not use the word "original" or "authentic" either — not in the description and not in the title.
-- Do NOT use the words "AI", "artificial intelligence", or imply software wrote the text.
-- Rely ONLY on the facts above. If something isn't given, do NOT mention it — a shorter listing is better. This is the most important rule: an invented detail is what starts a dispute between seller and buyer.
-- Specifically: if no size is given, do NOT state a size (not in the title either). If no flaws are given, do NOT invent flaws. If the item type isn't given, don't name it.
-- Do NOT mention shipping, postage, collection or viewing — we don't know what the seller offers.
-- Do NOT comment on fit ("true to size"), how long it was worn, where it was bought, the state of the stitching or fabric, or whether zips and buttons work, unless that is given.
-- The title must be SEARCH-optimised: brand + model + size + key attribute. Max 80 characters.
-- The description is 3-6 short sentences or bullets. Don't overwrite it.
-- END the description with a line inviting questions or size checks.
-- Write clean, natural English. No stilted or translated-sounding phrasing. If a flaw is awkwardly worded in the data above, rewrite it naturally.
-- Do NOT write empty filler sentences ("still good though", "very wearable"). Every sentence must say something.
-- Do NOT claim anything about the LISTING'S PHOTOS (e.g. that the flaws are clearly visible in them) — we don't know what the seller will upload.
+STRUCTURE OF THE DESCRIPTION — exactly this, no more:
+1. One sentence naming the item from the facts above (brand, model, colour, size, era — whichever are given).
+2. One or two sentences on condition. If flaws are listed, name EVERY one of them honestly, without softening.
+That's it. Do NOT write a closing line and do NOT invite questions — our interface adds that.
 
-Return ONLY this JSON, nothing else:
+FORBIDDEN — every one of these is how a dispute starts:
+- Writing anything that isn't in the facts above. A short listing is a good listing.
+- A size, item type, colour, era or flaw that wasn't given. If you don't know what the item is, don't name it.
+- Anything about shipping, postage, collection, viewing, measurements or size checks.
+- Anything about the listing's photos ("clearly visible in the pictures").
+- Anything about fit, comfort, how long it was worn, where it was bought, storage ("smoke-free home"), stitching, how the fabric holds up, or whether zips and buttons work.
+- Evaluative adjectives with nothing behind them: "classic", "timeless", "iconic", "grail".
+- Claiming the item is flawless or has "no major flaws" when no flaws were given. The absence of flaw data is not evidence of no flaws.
+- Making a given flaw sound smaller than it is: if the fact says "yellowing", don't write "slight yellowing"; if it says "scratch", don't write "barely visible scratch".
+- Styling or outfit advice ("goes great with jeans", "perfect for streetwear").
+- The words "original" or "authentic" — not in the description, not in the title. Never guarantee authenticity, never promise investment value.
+- The words "AI" or "artificial intelligence", or any hint that software wrote this.
+
+ON THE ENGLISH — this matters, because the listing appears under the seller's own name:
+- Write the way a person speaks. Short, plain, declarative sentences.
+- No catalogue language: "on offer", "up for grabs", "brand new to you".
+- No filler lead-ins: "Overall", "To be honest", "That said", "All things considered".
+- Complete sentences only. "Any questions or need measurements, just message me" is not a sentence.
+- Hyphenate compound adjectives before a noun: "like-new condition".
+- If a flaw is awkwardly worded in the facts above, rewrite it naturally.
+- Never open with "This is a..." — start with the brand or the item itself.
+- If you don't know what the item is, don't repeat the word "item" or "piece" in every sentence.
+- Read it back before you return it. If a sentence sounds off, write it again.
+
+THE TITLE: searchable — brand + model + size + colour, only from the given facts. Max 80 characters. No exclamation marks.
+
+CSAK ezt a JSON-t add vissza, semmi mást:
 {"title": "...", "description": "..."}`;
 
     const client = new Anthropic({ apiKey });
@@ -183,9 +238,14 @@ Return ONLY this JSON, nothing else:
       return NextResponse.json({ error: "empty_draft" }, { status: 502 });
     }
 
+    // Trim any closing line the model wrote anyway, so the fixed one doesn't
+    // end up as a second, redundant invitation.
+    const invitation = lang === "hu" ? /\n*[^\n]*(k[ée]rd[ée]s|[ií]rj|keress)[^\n]*[!?.]\s*$/i : /\n*[^\n]*(question|message me|just ask)[^\n]*[!?.]\s*$/i;
+    const descriptionBody = description.replace(invitation, "").trim();
+
     return NextResponse.json({
       title,
-      description,
+      description: `${descriptionBody}\n\n${CLOSING[lang]}`,
       priceHuf: askPrice,
       priceLabel: askPrice !== null ? huf(askPrice) : null,
       rangeLabel: rangeText,
