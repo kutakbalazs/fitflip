@@ -7,37 +7,60 @@ import { readLang, writeLang, type Lang } from "@/lib/lang";
 import { demoScanHU, demoScanEN, type DemoScanResult } from "@/lib/onboarding/demoScan";
 import type { Listing } from "@/lib/listings/types";
 import StoryModal from "@/components/StoryModal";
+import { isNativePlatform, nativePlatform } from "@/lib/native";
 
 const STORAGE_KEY = "ff-onboarded";
 const STEP_KEY = "ff-onboarding-step";
-const TOTAL_SLIDES = 4;
+/**
+ * Slide order. The widget slide only exists in the native app — there is no
+ * home screen to put a tile on in a browser, and telling someone about a
+ * feature they cannot reach is worse than staying quiet.
+ */
+const BASE_SLIDES = ["welcome", "features", "demo"] as const;
+type SlideKey = (typeof BASE_SLIDES)[number] | "widget" | "pro";
 
 export default function WelcomePage() {
   const router = useRouter();
   const [lang, setLang] = useState<Lang>("hu");
-  const [step, setStep] = useState(0); // 0..3
+  const [step, setStep] = useState(0);
+  // Resolved after mount: reading the Capacitor bridge during render would
+  // disagree with the prerendered HTML and trip a hydration mismatch.
+  const [platform, setPlatform] = useState<"ios" | "android" | "web">("web");
+
+  const slides: SlideKey[] = [
+    ...BASE_SLIDES,
+    ...(platform === "web" ? [] : (["widget"] as const)),
+    "pro",
+  ];
+  const total = slides.length;
 
   useEffect(() => {
     setLang(readLang());
-    // Restore the slide the user was on (e.g. after visiting /pro and coming
-    // back) so they don't get bounced to the first slide.
-    try {
-      const saved = sessionStorage.getItem(STEP_KEY);
-      const n = saved ? parseInt(saved, 10) : 0;
-      if (n >= 0 && n < TOTAL_SLIDES) setStep(n);
-    } catch {
-      /* ignore */
-    }
+    if (isNativePlatform()) setPlatform(nativePlatform());
   }, []);
 
-  // Persist the current slide for the same restore-on-return behaviour.
+  /**
+   * Restore the slide the user was on — the Pro slide links out to /pro, and
+   * coming back to the first slide would lose their place.
+   *
+   * The slide KEY is stored rather than its index: the list length depends on
+   * the platform, which is only known after mount, so an index saved on one
+   * render can point at a different slide on the next. Re-runs when the
+   * platform resolves, which is exactly when the list can change.
+   */
   useEffect(() => {
     try {
-      sessionStorage.setItem(STEP_KEY, String(step));
+      const saved = sessionStorage.getItem(STEP_KEY);
+      if (!saved) return;
+      const i = slides.indexOf(saved as SlideKey);
+      if (i >= 0) setStep(i);
     } catch {
       /* ignore */
     }
-  }, [step]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [platform]);
+
+
 
   const switchLang = (l: Lang) => {
     setLang(l);
@@ -54,8 +77,27 @@ export default function WelcomePage() {
     router.push(destination === "signup" ? "/signup" : "/");
   };
 
-  const next = () => setStep((s) => Math.min(s + 1, TOTAL_SLIDES - 1));
-  const prev = () => setStep((s) => Math.max(s - 1, 0));
+  /**
+   * Move and persist in one place.
+   *
+   * This used to be an effect on `step`, which broke the restore it was meant
+   * to serve: on mount the effect fired with the initial step and wrote
+   * "welcome" over the saved slide before the restore above could read it —
+   * so coming back from /pro always landed on slide one. Writing only on an
+   * actual navigation has no mount pass to clobber anything.
+   */
+  const goTo = (n: number) => {
+    const clamped = Math.max(0, Math.min(n, total - 1));
+    setStep(clamped);
+    try {
+      sessionStorage.setItem(STEP_KEY, slides[clamped]);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const next = () => goTo(step + 1);
+  const prev = () => goTo(step - 1);
 
   const t = lang === "hu" ? HU : EN;
 
@@ -93,20 +135,21 @@ export default function WelcomePage() {
         <div className="h-1 w-full rounded-full bg-ink-100 dark:bg-ink-800 overflow-hidden">
           <div
             className="h-full bg-ink-900 dark:bg-white transition-all duration-300 ease-out"
-            style={{ width: `${((step + 1) / TOTAL_SLIDES) * 100}%` }}
+            style={{ width: `${((step + 1) / total) * 100}%` }}
           />
         </div>
         <p className="text-[10px] text-ink-400 mt-1.5 text-right tabular-nums">
-          {step + 1} / {TOTAL_SLIDES}
+          {step + 1} / {total}
         </p>
       </div>
 
       {/* Slide content */}
       <main className="flex-1 overflow-y-auto px-5 pb-3">
-        {step === 0 && <SlideWelcome t={t} />}
-        {step === 1 && <SlideFeatures t={t} />}
-        {step === 2 && <SlideDemo t={t} lang={lang} />}
-        {step === 3 && <SlidePro t={t} />}
+        {slides[step] === "welcome" && <SlideWelcome t={t} />}
+        {slides[step] === "features" && <SlideFeatures t={t} />}
+        {slides[step] === "demo" && <SlideDemo t={t} lang={lang} />}
+        {slides[step] === "widget" && <SlideWidget t={t} platform={platform} />}
+        {slides[step] === "pro" && <SlidePro t={t} />}
       </main>
 
       {/* Footer nav */}
@@ -120,7 +163,7 @@ export default function WelcomePage() {
           {t.back}
         </button>
         <div className="flex-1" />
-        {step < TOTAL_SLIDES - 1 ? (
+        {step < total - 1 ? (
           <button
             type="button"
             onClick={next}
@@ -431,6 +474,75 @@ function DemoResult({
   );
 }
 
+/**
+ * Tells people the widget exists.
+ *
+ * A home-screen widget is invisible until someone goes looking for it in a
+ * menu they have no reason to open, so the feature is worth roughly nothing
+ * unless it is mentioned once. This is that once — and it stays a mention:
+ * there is no way for an app to add a widget on the user's behalf on either
+ * platform, so the honest form is a picture of the tile, the two steps to
+ * place it, and an explicit "optional".
+ */
+function SlideWidget({
+  t,
+  platform,
+}: {
+  t: Strings;
+  platform: "ios" | "android" | "web";
+}) {
+  return (
+    <div className="max-w-md mx-auto fade-in pt-2 text-center">
+      <h2 className="text-2xl sm:text-3xl font-display tracking-tight mb-2">
+        {t.widgetTitle}
+      </h2>
+      <p className="text-sm text-ink-500 dark:text-ink-400 mb-6">{t.widgetSubtitle}</p>
+
+      {/* The real tile, drawn to match the native widget: same ground, same
+          unbolded serif wordmark, same accent. */}
+      <div
+        className="w-40 h-40 mx-auto mb-6 rounded-3xl p-4 flex flex-col text-left"
+        style={{ backgroundColor: "#0A0C11", border: "1px solid #1D1F25" }}
+        aria-hidden="true"
+      >
+        <p
+          className="font-display text-[15px] tracking-tight"
+          style={{ color: "#E2E2E2" }}
+        >
+          FitFlip
+        </p>
+        <div className="flex-1" />
+        <p className="text-[22px] font-semibold leading-tight text-white">
+          {t.widgetTileValue}
+        </p>
+        <p className="text-xs mt-0.5" style={{ color: "#8A8A8A" }}>
+          {t.widgetTileSub}
+        </p>
+        <div className="flex-1" />
+        <div className="flex items-end gap-1.5">
+          <span style={{ color: "#84B0E4" }} className="shrink-0 pb-0.5">
+            <CameraIcon />
+          </span>
+          <span className="text-xs leading-snug flex-1" style={{ color: "#84B0E4" }}>
+            {t.widgetTileHint}
+          </span>
+          <span
+            className="text-xs font-medium shrink-0 pb-0.5"
+            style={{ color: "#F28B4C" }}
+          >
+            🔥 5
+          </span>
+        </div>
+      </div>
+
+      <p className="text-sm text-ink-700 dark:text-ink-300 leading-relaxed mb-3">
+        {platform === "android" ? t.widgetHintAndroid : t.widgetHintIos}
+      </p>
+      <p className="text-xs text-ink-400 dark:text-ink-500">{t.widgetLater}</p>
+    </div>
+  );
+}
+
 function SlidePro({ t }: { t: Strings }) {
   return (
     <div className="max-w-md mx-auto fade-in pt-2 text-center">
@@ -566,6 +678,17 @@ const HU = {
   demoLiveListings: "Élő hirdetések most",
   demoNoListings: "Most épp nincs aktív hirdetés ehhez a darabhoz.",
 
+  widgetTitle: "Tedd ki a kezdőképernyődre",
+  widgetSubtitle: "Egy koppintás, és nyílik a kamera — app-indítás nélkül.",
+  widgetHintIos:
+    "Nyomd meg hosszan a kezdőképernyőt, koppints a bal felső „+” jelre, keress rá: FitFlip.",
+  widgetHintAndroid:
+    "Nyomd meg hosszan a kezdőképernyőt, válaszd a „Widgetek”-et, majd keresd a FitFlipet.",
+  widgetLater: "Nem kötelező — bármikor kiteheted később is.",
+  widgetTileHint: "Koppints a fotózáshoz",
+  widgetTileValue: "340 000 Ft",
+  widgetTileSub: "12 darab feldolgozva",
+
   proTitle: "FitFlip Pro",
   proSubtitle: "Aktív kereskedőknek és gyűjtőknek.",
   perk1Title: "Korlátlan scan",
@@ -608,6 +731,17 @@ const EN: Strings = {
   demoEstimate: "Estimated value",
   demoLiveListings: "Live listings right now",
   demoNoListings: "No active listings for this piece at the moment.",
+
+  widgetTitle: "Put it on your home screen",
+  widgetSubtitle: "One tap opens the camera — no need to launch the app.",
+  widgetHintIos:
+    "Press and hold your home screen, tap the “+” in the top left, then search for FitFlip.",
+  widgetHintAndroid:
+    "Press and hold your home screen, choose “Widgets”, then find FitFlip.",
+  widgetLater: "Optional — you can add it any time later.",
+  widgetTileHint: "Tap to take a photo",
+  widgetTileValue: "340 000 Ft",
+  widgetTileSub: "12 items identified",
 
   proTitle: "FitFlip Pro",
   proSubtitle: "For active sellers and collectors.",
