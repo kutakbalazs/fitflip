@@ -80,7 +80,12 @@ function buildPrompt(lang: "hu" | "en"): string {
   if (lang === "hu") {
     return `Te a FitFlip vagy – egy precíziós AI azonosító divatcikkekhez (sneakerek, vintage ruhák, streetwear, designer darabok). A pontosság a legfontosabb: jobb őszintén bizonytalannak lenni, mint hibázni.
 
-NYELV: az ÖSSZES felhasználónak megjelenő szöveges válasz (condition, defects, description, selling_tip, hype_label, era) KIZÁRÓLAG MAGYARUL legyen. NE keverj angol szavakat.
+NYELV: a felhasználónak megjelenő minden szöveg (condition, defects, description, selling_tip, hype_label, era) KIZÁRÓLAG MAGYARUL, helyes magyarsággal — ez a szöveg a FitFlip neve alatt jelenik meg. Konkrétan:
+- Összetett szót EGYBE: "patentzáras", "koponyaszerű", "gumitalp". A "viseltes" a helyes szó, a "viseletes" nem létezik.
+- NE használj belső szakszót: "colorway" → színösszeállítás. Angol helyett magyart: "brand" → márka, "trendy" → keresett, "print" → nyomat.
+- NE keverj kötőjellel vagy perjellel: "streetwear-kedvelők", "skate/streetwear", "colorway-t" tilos. Idegen névhez a rag közvetlenül: "Vinteden", "Depopon" (de "StockX-en").
+- A platformnevek pontosan: Vinted, Jófogás, Depop, StockX, eBay.
+- A megfigyelt hibát ne mutasd kisebbnek ("enyhe kopás" helyett "kopás"), és NE állítsd, hogy a darab eredeti — a képről ez nem állapítható meg.
 
 ELEMZÉSI MÓDSZER (kövesd ezt a sorrendet):
 1. Megerősítés: tényleg ruházat vagy lábbeli van a képen? Ha nem, állítsd recognized:false-ra.
@@ -593,6 +598,74 @@ function scansLeftFor(profile: Profile): number {
   return Math.max(0, FREE_DAILY_LIMIT - profile.scan_count_today);
 }
 
+/**
+ * Parse the model's JSON, and repair it rather than failing the scan.
+ *
+ * Measured on real photos, roughly three runs in eight came back as invalid
+ * JSON — not truncated (stop_reason was end_turn) but malformed, typically an
+ * unescaped double quote inside a Hungarian string or a stray trailing comma.
+ * A single strict JSON.parse turned those into "Failed to parse model
+ * response" for the user: the analysis had actually succeeded and we threw it
+ * away over punctuation.
+ *
+ * Three cheap local repairs first, then one small model call as a last
+ * resort. The repair call only ever runs on the failure path, so the common
+ * case costs nothing.
+ */
+function tryParseJson(raw: string): Record<string, unknown> | null {
+  const cleaned = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+
+  const attempts = [
+    cleaned,
+    // Models occasionally add a sentence before or after the object.
+    cleaned.slice(cleaned.indexOf("{"), cleaned.lastIndexOf("}") + 1),
+    // Trailing commas before a closing brace or bracket.
+    cleaned
+      .slice(cleaned.indexOf("{"), cleaned.lastIndexOf("}") + 1)
+      .replace(/,(\s*[}\]])/g, "$1"),
+  ];
+
+  for (const candidate of attempts) {
+    if (!candidate) continue;
+    try {
+      const parsed = JSON.parse(candidate);
+      if (parsed && typeof parsed === "object") return parsed as Record<string, unknown>;
+    } catch {
+      /* try the next repair */
+    }
+  }
+  return null;
+}
+
+/** Last resort: hand the broken text back to a small model to fix. */
+async function repairJson(
+  client: Anthropic,
+  broken: string
+): Promise<Record<string, unknown> | null> {
+  try {
+    const res = await client.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 2000,
+      messages: [
+        {
+          role: "user",
+          content:
+            "The text below is meant to be a single JSON object but it does not parse. " +
+            "Fix ONLY the syntax — escape inner quotes, remove stray commas, close what is open. " +
+            "Do not change, translate or summarise any value. Return the corrected JSON and nothing else.\n\n" +
+            broken,
+        },
+      ],
+    });
+    const block = res.content.find((b) => b.type === "text");
+    if (!block || block.type !== "text") return null;
+    return tryParseJson(block.text);
+  } catch (err) {
+    console.warn("[analyze] JSON repair failed:", err);
+    return null;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY || process.env.FITFLIP_ANTHROPIC_KEY;
@@ -743,7 +816,12 @@ export async function POST(req: NextRequest) {
     const [response, savedImagePath] = await Promise.all([
       client.messages.create({
         model: "claude-sonnet-4-6",
-        max_tokens: 1500,
+        // 1500 left no headroom: adding a handful of wording rules to the
+        // prompt was enough to push responses into the cap, and a truncated
+        // JSON object is an outright failed scan — which also costs the user
+        // one of their daily analyses. Measured at ~500 output tokens, so
+        // this is margin, not appetite.
+        max_tokens: 2500,
         // The big static rule prompt is byte-identical per language, so it's
         // a cache_control-marked system block: after the first scan Anthropic
         // serves these ~4k tokens from cache (~90% cheaper, faster intake).
@@ -779,14 +857,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let parsed: Record<string, unknown>;
-    try {
-      const cleaned = textBlock.text
-        .replace(/```json\s*/g, "")
-        .replace(/```\s*/g, "")
-        .trim();
-      parsed = JSON.parse(cleaned);
-    } catch {
+    let parsed = tryParseJson(textBlock.text);
+    if (!parsed) {
+      console.warn("[analyze] malformed JSON, attempting repair");
+      parsed = await repairJson(client, textBlock.text);
+    }
+    if (!parsed) {
+      console.error("[analyze] JSON unparseable after repair");
       return NextResponse.json(
         { error: "Failed to parse model response" },
         { status: 500 }
