@@ -1,4 +1,4 @@
-import { isNativePlatform, nativePlatform } from "./native";
+import { isNativePlatform, nativePlatform, hasPlugin } from "./native";
 
 // Single initialization point for the capgo SocialLogin plugin so that Apple
 // and Google providers are configured together (calling initialize separately
@@ -53,6 +53,13 @@ export async function ensureSocialLoginInit(): Promise<void> {
 // to the web OAuth redirect.
 export function nativeGoogleAvailable(): boolean {
   if (!isNativePlatform()) return false;
+  // The env vars only say the account is configured; they say nothing about
+  // the binary the user is running. A build released before this plugin was
+  // added does not contain it, and calling into it throws rather than
+  // returning an error — which is how Google sign-in came to "just not work"
+  // on Android with nothing in any log. Same trap as @capacitor/app and
+  // PushNotifications: the web layer ships on deploy, the shell on install.
+  if (!hasPlugin("SocialLogin")) return false;
   const webOk = validGoogleClientId(process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID);
   if (nativePlatform() === "ios") {
     return webOk && validGoogleClientId(process.env.NEXT_PUBLIC_GOOGLE_IOS_CLIENT_ID);

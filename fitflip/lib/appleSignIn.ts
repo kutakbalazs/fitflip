@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isNativePlatform, nativePlatform } from "./native";
 import { ensureSocialLoginInit } from "./socialLogin";
+import { hasPlugin } from "./native";
 
 // Sign in with Apple. Required by App Store guideline 4.8 because the app also
 // offers Google sign-in. Shown only inside the native iOS app.
@@ -14,8 +15,10 @@ export async function signInWithApple(
   supabase: SupabaseClient,
   next: string
 ): Promise<AppleSignInResult> {
-  // --- Web (and Android native): OAuth redirect flow ---
-  if (!isNativePlatform() || nativePlatform() !== "ios") {
+  // --- Web, Android, or an iOS build that predates the plugin: OAuth redirect ---
+  // hasPlugin matters because the shell only updates on install: an older
+  // build has the JS but not the native side, and calling it throws.
+  if (!isNativePlatform() || nativePlatform() !== "ios" || !hasPlugin("SocialLogin")) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "apple",
       options: {
