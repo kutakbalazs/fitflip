@@ -19,3 +19,24 @@ export function nativePlatform(): "ios" | "android" | "web" {
     return "web";
   }
 }
+
+/**
+ * Does the INSTALLED binary actually carry this Capacitor plugin?
+ *
+ * The app loads its web layer from a remote URL, so a deploy reaches every
+ * phone immediately while the native shell only changes when someone installs
+ * a new build from the store. Any plugin added after a release is therefore
+ * absent from the copies people are running, and calling it throws
+ * `"X" plugin is not implemented on android`.
+ *
+ * This has now bitten twice — PushNotifications, then App, the latter
+ * breaking deep links on every Android install in the store. Check before
+ * calling, always.
+ */
+export function hasPlugin(name: string): boolean {
+  try {
+    return Capacitor.isPluginAvailable(name);
+  } catch {
+    return false;
+  }
+}

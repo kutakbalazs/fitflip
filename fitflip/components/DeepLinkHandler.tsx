@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { isNativePlatform } from "@/lib/native";
+import { isNativePlatform, hasPlugin } from "@/lib/native";
 
 // When a Universal Link / App Link (e.g. an email confirmation link on
 // fitflip.app/auth/confirm) opens the native app, iOS/Android launch us with
@@ -9,7 +9,9 @@ import { isNativePlatform } from "@/lib/native";
 // the path into the remote-loaded web app so confirmation completes in-app.
 export default function DeepLinkHandler() {
   useEffect(() => {
-    if (!isNativePlatform()) return;
+    // Builds released before @capacitor/app was added do not have it, and
+    // calling into it there throws rather than no-oping.
+    if (!isNativePlatform() || !hasPlugin("App")) return;
     let remove: (() => void) | undefined;
     (async () => {
       const { App } = await import("@capacitor/app");

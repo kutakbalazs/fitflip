@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { isNativePlatform, nativePlatform } from "@/lib/native";
+import { isNativePlatform, nativePlatform, hasPlugin } from "@/lib/native";
 import { readLang } from "@/lib/lang";
 
 /**
@@ -25,6 +25,10 @@ export default function AndroidBackButton() {
 
   useEffect(() => {
     if (!isNativePlatform() || nativePlatform() !== "android") return;
+    // Older installs predate @capacitor/app. There the back button keeps the
+    // old behaviour — nothing we can do from the web layer — but at least it
+    // fails silently instead of throwing on every launch.
+    if (!hasPlugin("App")) return;
 
     let remove: (() => void) | undefined;
 
