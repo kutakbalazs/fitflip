@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { readLang } from "@/lib/lang";
 import { haptic } from "@/lib/haptics";
 import { setPendingScanFile } from "@/lib/pendingScan";
+import { isNativePlatform } from "@/lib/native";
 
 // Routes where the floating scan button should NOT appear.
 const HIDDEN_PATHS = ["/", "/account", "/welcome", "/pro", "/login", "/signup", "/forgot-password", "/reset-password", "/auth", "/terms", "/privacy", "/cookies"];
@@ -35,6 +36,16 @@ export default function ScanFab() {
   }, [pathname]);
 
   useEffect(() => {
+    // The native app never shows the cookie banner (see CookieBanner), so the
+    // consent key is never written there. Reading its absence as "the banner
+    // is on screen" left this button parked at bottom-44 — 176px up, hovering
+    // above a bar that does not exist — on every screen of the native app.
+    // A tester reported it as the scan button being "way too high"; moving it
+    // down on iOS earlier had treated the symptom.
+    if (isNativePlatform()) {
+      setCookieVisible(false);
+      return;
+    }
     try {
       setCookieVisible(!localStorage.getItem("ff-cookie-consent"));
     } catch {

@@ -18,6 +18,30 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- App Links. Without this, every link we mail someone — email
+                 confirmation, password reset, unsubscribe — opened the
+                 browser instead of the app, stranding them mid-signup in a
+                 web session the app knows nothing about. iOS had its half of
+                 this (apple-app-site-association) from the start; Android's
+                 was never added.
+
+                 autoVerify makes Android fetch
+                 https://www.fitflip.app/.well-known/assetlinks.json and check
+                 our signing certificate before it will open links silently.
+                 If that file or the fingerprint is wrong, the system falls
+                 back to the browser with no error anywhere. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- Scoped to the same paths iOS claims in its
+                     apple-app-site-association. Claiming the whole domain
+                     would hijack every marketing and legal page into the app,
+                     including the privacy-policy URL Google Play crawls. -->
+                <data android:scheme="https" android:host="www.fitflip.app" android:pathPrefix="/auth/confirm" />
+                <data android:scheme="https" android:host="fitflip.app" android:pathPrefix="/auth/confirm" />
+            </intent-filter>
         </activity>
 
         <provider

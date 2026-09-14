@@ -838,23 +838,29 @@ export default function HomeApp() {
           ...(trimmedSize ? { size: trimmedSize } : {}),
         }),
       });
-      if (res.status === 401) {
-        window.location.href = "/login";
-        return;
-      }
       if (res.status === 429) {
         setLimitReached(true);
         setScansLeft(0);
         setLoading(false);
         return;
       }
+
       const data = await res.json();
+
+      // A guest who has used their free try gets the screen explaining what an
+      // account buys them. This has to be checked BEFORE the generic 401
+      // redirect below: that redirect used to run first, which made this
+      // branch unreachable and threw every guest straight to /login the
+      // moment they took a photo — the exact opposite of letting them try the
+      // app before signing up.
       if (res.status === 401 && data.error === "guest_limit_reached") {
-        // The free try is gone — an account is the way forward, so show that
-        // rather than a generic error.
         setGuestExhausted(true);
         track("limit_reached", { guest: true });
         setLoading(false);
+        return;
+      }
+      if (res.status === 401) {
+        window.location.href = "/login";
         return;
       }
       if (!res.ok || data.error) {

@@ -27,6 +27,7 @@ import DeepLinkHandler from "@/components/DeepLinkHandler";
 import LangInit from "@/components/LangInit";
 import AnalyticsInit from "@/components/AnalyticsInit";
 import PushInit from "@/components/PushInit";
+import AndroidBackButton from "@/components/AndroidBackButton";
 import GuestScanClaimer from "@/components/GuestScanClaimer";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { themeInitScript } from "@/lib/theme";
@@ -92,6 +93,7 @@ export default function RootLayout({
           <LangInit />
           <AnalyticsInit />
           <PushInit />
+          <AndroidBackButton />
           <GuestScanClaimer />
         </ThemeProvider>
       </body>

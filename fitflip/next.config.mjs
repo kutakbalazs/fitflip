@@ -27,6 +27,14 @@ const nextConfig = {
         headers: [{ key: "Content-Type", value: "application/json" }],
       },
       {
+        // Android fetches this to verify App Links. Same requirements as
+        // Apple's: JSON, HTTPS, no redirect. A wrong content type is enough
+        // for verification to fail silently and send every emailed link to
+        // the browser instead of the app.
+        source: "/.well-known/assetlinks.json",
+        headers: [{ key: "Content-Type", value: "application/json" }],
+      },
+      {
         // Baseline security headers. Framing is denied site-wide (nothing
         // legitimately embeds us — the Capacitor WebView loads pages
         // top-level, which X-Frame-Options does not affect). HSTS is added
