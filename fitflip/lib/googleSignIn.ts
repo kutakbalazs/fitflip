@@ -24,6 +24,26 @@ async function sha256Hex(input: string): Promise<string> {
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+/**
+ * Send a failed native sign-in to Sentry.
+ *
+ * A broken Google button produces no server request and no log — the user
+ * simply taps and nothing happens, and that is exactly how it reached us:
+ * "Google sign-up doesn't work", with nothing to diagnose. A configuration
+ * fault here breaks sign-up for every Android user at once, so it is worth
+ * knowing about without waiting for someone to mention it.
+ */
+async function reportSignInFault(kind: string, err: unknown): Promise<void> {
+  try {
+    const Sentry = await import("@sentry/nextjs");
+    Sentry.captureException(err instanceof Error ? err : new Error(String(err)), {
+      tags: { area: "auth", provider: "google", fault: kind },
+    });
+  } catch {
+    /* monitoring must never be the thing that breaks sign-in */
+  }
+}
+
 export async function signInWithGoogle(
   supabase: SupabaseClient,
   next: string
@@ -61,6 +81,19 @@ export async function signInWithGoogle(
       if (msg.includes("cancel") || msg.includes("12501")) {
         return { ok: false, error: "cancelled" };
       }
+      // Android status 10 is DEVELOPER_ERROR: Google checks the package name
+      // together with the signing certificate, and refuses when the pair
+      // isn't registered on the OAuth client. In practice that means the
+      // Android OAuth client carries the debug or upload fingerprint while
+      // the installed build was signed by Play. It is worth naming, because
+      // the symptom — sign-in that simply doesn't happen — looks identical to
+      // the user cancelling, and it was reported to us as "Google sign-up
+      // doesn't work" with nothing to go on.
+      if (msg.includes("10:") || msg.includes("developer_error") || msg.includes("status code 10")) {
+        void reportSignInFault("google_config", err);
+        return { ok: false, error: "google_config" };
+      }
+      void reportSignInFault("google_failed", err);
       return { ok: false, error: "google_failed" };
     }
   }
