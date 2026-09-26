@@ -67,10 +67,9 @@ struct Provider: TimelineProvider {
 
 /// Hungarian unless the device is set to English — the same fallback the app uses.
 private var isHungarian: Bool {
-    if #available(iOS 16.0, *) {
-        return Locale.current.language.languageCode?.identifier != "en"
-    }
-    return Locale.current.languageCode != "en"
+    // The pre-iOS-16 branch this used to carry was dead code once the widget
+    // target settled on iOS 17, and it warned on every build.
+    Locale.current.language.languageCode?.identifier != "en"
 }
 
 private func formatHuf(_ value: Int) -> String {
