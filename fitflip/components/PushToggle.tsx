@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { translations } from "@/lib/translations";
 import { pushSupported, pushPermission, enablePush, disablePush } from "@/lib/push";
+import { isNativePlatform } from "@/lib/native";
 import PushPrimer from "@/components/PushPrimer";
 import type { Lang } from "@/lib/lang";
 
@@ -16,15 +17,23 @@ import type { Lang } from "@/lib/lang";
  */
 export default function PushToggle({ lang }: { lang: Lang }) {
   const t = lang === "hu" ? translations.hu : translations.en;
-  const [supported, setSupported] = useState(false);
+  const [onNative, setOnNative] = useState(false);
+  // Native, but this build has no push plugin — an install older than the
+  // release that added it. Worth saying out loud: the row used to vanish
+  // here, which reads as a missing feature rather than an old app.
+  const [unavailable, setUnavailable] = useState(false);
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [saving, setSaving] = useState(false);
   const [primerOpen, setPrimerOpen] = useState(false);
 
   useEffect(() => {
-    if (!pushSupported()) return;
-    setSupported(true);
+    if (!isNativePlatform()) return; // no push on the web at all
+    setOnNative(true);
+    if (!pushSupported()) {
+      setUnavailable(true);
+      return;
+    }
 
     // The server knows whether a token is registered; the OS knows whether
     // it is still allowed to deliver. Both have to be true for the switch to
@@ -73,7 +82,7 @@ export default function PushToggle({ lang }: { lang: Lang }) {
     }
   };
 
-  if (!supported || enabled === null) return null;
+  if (!onNative) return null;
 
   return (
     <div className="p-4 rounded-2xl bg-ink-50 dark:bg-ink-800 border border-ink-100 dark:border-ink-700">
@@ -81,29 +90,37 @@ export default function PushToggle({ lang }: { lang: Lang }) {
         <div className="min-w-0">
           <p className="text-sm font-semibold">{t.pushTitle}</p>
           <p className="text-xs text-ink-500 dark:text-ink-400">
-            {saving ? t.pushSaving : enabled ? t.pushOn : t.pushOff}
+            {unavailable
+              ? t.pushUnavailable
+              : enabled === null
+                ? t.pushLoading
+                : saving
+                  ? t.pushSaving
+                  : enabled
+                    ? t.pushOn
+                    : t.pushOff}
           </p>
         </div>
         <button
           type="button"
           role="switch"
-          aria-checked={enabled}
+          aria-checked={enabled === true}
           aria-label={t.pushTitle}
           onClick={toggle}
-          disabled={saving}
+          disabled={saving || unavailable || enabled === null}
           className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60 ${
             enabled ? "bg-ink-900 dark:bg-white" : "bg-ink-300 dark:bg-ink-700"
           }`}
         >
           <span
-            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white dark:bg-ink-900 shadow transition-transform ${
+            className={`absolute left-0 top-0.5 h-5 w-5 rounded-full bg-white dark:bg-ink-900 shadow transition-transform ${
               enabled ? "translate-x-[22px]" : "translate-x-0.5"
             }`}
           />
         </button>
       </div>
       <p className="mt-2 text-xs text-ink-500 dark:text-ink-400 leading-relaxed">
-        {blocked && !enabled ? t.pushBlocked : t.pushHint}
+        {unavailable ? t.pushUnavailable : blocked && !enabled ? t.pushBlocked : t.pushHint}
       </p>
 
       {primerOpen && (
