@@ -17,7 +17,7 @@ const STEP_KEY = "ff-onboarding-step";
  * feature they cannot reach is worse than staying quiet.
  */
 const BASE_SLIDES = ["welcome", "features", "demo"] as const;
-type SlideKey = (typeof BASE_SLIDES)[number] | "widget" | "pro";
+type SlideKey = (typeof BASE_SLIDES)[number] | "push" | "widget" | "pro";
 
 export default function WelcomePage() {
   const router = useRouter();
@@ -29,7 +29,7 @@ export default function WelcomePage() {
 
   const slides: SlideKey[] = [
     ...BASE_SLIDES,
-    ...(platform === "web" ? [] : (["widget"] as const)),
+    ...(platform === "web" ? [] : (["push", "widget"] as const)),
     "pro",
   ];
   const total = slides.length;
@@ -148,6 +148,7 @@ export default function WelcomePage() {
         {slides[step] === "welcome" && <SlideWelcome t={t} />}
         {slides[step] === "features" && <SlideFeatures t={t} />}
         {slides[step] === "demo" && <SlideDemo t={t} lang={lang} />}
+        {slides[step] === "push" && <SlidePush t={t} onDone={next} />}
         {slides[step] === "widget" && <SlideWidget t={t} platform={platform} />}
         {slides[step] === "pro" && <SlidePro t={t} />}
       </main>
@@ -484,6 +485,62 @@ function DemoResult({
  * platform, so the honest form is a picture of the tile, the two steps to
  * place it, and an explicit "optional".
  */
+/**
+ * Asks for notifications once, here, where someone is meeting the feature for
+ * the first time.
+ *
+ * Deliberately thin: no list of what we'll send. That list would age badly —
+ * it changes as the app does — and a promise about specifics is a promise to
+ * keep. One sentence, and the fact it can be turned off, is the honest amount
+ * to say before a permission dialog the OS only ever shows once.
+ */
+function SlidePush({ t, onDone }: { t: Strings; onDone: () => void }) {
+  const [asking, setAsking] = useState(false);
+
+  const allow = async () => {
+    if (asking) return;
+    setAsking(true);
+    try {
+      const { enablePush } = await import("@/lib/push");
+      await enablePush();
+    } catch {
+      /* declining, or an older build without the plugin — carry on either way */
+    } finally {
+      setAsking(false);
+      onDone();
+    }
+  };
+
+  return (
+    <div className="max-w-md mx-auto fade-in pt-2 text-center">
+      <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-ink-900 dark:bg-white text-white dark:text-ink-900 flex items-center justify-center">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        </svg>
+      </div>
+      <h2 className="text-2xl sm:text-3xl font-display tracking-tight mb-2">{t.pushPrimerTitle}</h2>
+      <p className="text-sm text-ink-500 dark:text-ink-400 mb-7 leading-relaxed">{t.pushPrimerBody}</p>
+
+      <button
+        type="button"
+        onClick={allow}
+        disabled={asking}
+        className="w-full py-3.5 rounded-full bg-ink-900 dark:bg-white text-white dark:text-ink-900 font-medium text-sm disabled:opacity-60"
+      >
+        {t.pushPrimerConfirm}
+      </button>
+      <button
+        type="button"
+        onClick={onDone}
+        className="w-full py-3 mt-2 text-sm text-ink-500 dark:text-ink-400"
+      >
+        {t.pushPrimerLater}
+      </button>
+    </div>
+  );
+}
+
 function SlideWidget({
   t,
   platform,
@@ -678,6 +735,11 @@ const HU = {
   demoLiveListings: "Élő hirdetések most",
   demoNoListings: "Most épp nincs aktív hirdetés ehhez a darabhoz.",
 
+  pushPrimerTitle: "Kérsz értesítést?",
+  pushPrimerBody: "Szólunk, ha történik valami, ami érdekelhet. Bármikor kikapcsolhatod.",
+  pushPrimerConfirm: "Bekapcsolom",
+  pushPrimerLater: "Most nem",
+
   widgetTitle: "Tedd ki a kezdőképernyődre",
   widgetSubtitle: "Egy koppintás, és nyílik a kamera — app-indítás nélkül.",
   widgetHintIos:
@@ -731,6 +793,11 @@ const EN: Strings = {
   demoEstimate: "Estimated value",
   demoLiveListings: "Live listings right now",
   demoNoListings: "No active listings for this piece at the moment.",
+
+  pushPrimerTitle: "Want notifications?",
+  pushPrimerBody: "We'll let you know when something happens. You can turn it off any time.",
+  pushPrimerConfirm: "Turn on",
+  pushPrimerLater: "Not now",
 
   widgetTitle: "Put it on your home screen",
   widgetSubtitle: "One tap opens the camera — no need to launch the app.",

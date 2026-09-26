@@ -40,6 +40,21 @@ async function plugin(): Promise<PushModule["PushNotifications"] | null> {
   }
 }
 
+/**
+ * Bound a bridge call.
+ *
+ * On a real device `checkPermissions()` was observed never settling, which
+ * left the settings switch stuck on "saving" with no way out. A native call
+ * that hangs is indistinguishable from one that is slow, and neither should
+ * be able to freeze a control the user is holding.
+ */
+function bounded<T>(p: Promise<T>, fallback: T, ms = 4000): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
 /** True only where push can actually work: a native shell that ships the plugin. */
 export function pushSupported(): boolean {
   return isNativePlatform() && bridgeHasPlugin();
@@ -50,7 +65,9 @@ export async function pushPermission(): Promise<"granted" | "denied" | "prompt">
   const push = await plugin();
   if (!push) return "denied";
   try {
-    const { receive } = await push.checkPermissions();
+    const { receive } = await bounded(push.checkPermissions(), { receive: "prompt" } as Awaited<
+      ReturnType<typeof push.checkPermissions>
+    >);
     if (receive === "granted") return "granted";
     if (receive === "denied") return "denied";
     return "prompt";
@@ -73,9 +90,12 @@ export async function enablePush(): Promise<boolean> {
   if (!push) return false;
 
   try {
-    let { receive } = await push.checkPermissions();
+    type Perm = Awaited<ReturnType<typeof push.checkPermissions>>;
+    let { receive } = await bounded(push.checkPermissions(), { receive: "prompt" } as Perm);
     if (receive === "prompt" || receive === "prompt-with-rationale") {
-      ({ receive } = await push.requestPermissions());
+      // The OS dialog is the one wait that legitimately takes as long as the
+      // user takes, so it gets a far longer leash than the silent checks.
+      ({ receive } = await bounded(push.requestPermissions(), { receive: "denied" } as Perm, 60_000));
     }
     if (receive !== "granted") return false;
 

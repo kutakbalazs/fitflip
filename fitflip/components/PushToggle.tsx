@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { translations } from "@/lib/translations";
 import { pushSupported, pushPermission, enablePush, disablePush } from "@/lib/push";
 import { isNativePlatform } from "@/lib/native";
-import PushPrimer from "@/components/PushPrimer";
 import type { Lang } from "@/lib/lang";
 
 /**
@@ -25,7 +24,6 @@ export default function PushToggle({ lang }: { lang: Lang }) {
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [primerOpen, setPrimerOpen] = useState(false);
 
   useEffect(() => {
     if (!isNativePlatform()) return; // no push on the web at all
@@ -68,27 +66,15 @@ export default function PushToggle({ lang }: { lang: Lang }) {
 
   const toggle = async () => {
     if (enabled === null || saving) return;
-    // Turning it ON goes through the primer first — the OS dialog is a
-    // one-shot, and it should not be spent on a tap the user hasn't been
-    // given the information to make. Turning it OFF is immediate: making
-    // someone argue with a dialog to stop receiving things is the wrong way
-    // round.
-    if (!enabled) {
-      setPrimerOpen(true);
-      return;
-    }
+    // A switch in settings is a switch: it does the thing. The explanation
+    // belongs where someone meets the feature for the first time, not in
+    // front of a control they deliberately went looking for.
     setSaving(true);
     try {
-      if (await disablePush()) setEnabled(false);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const confirmEnable = async () => {
-    setPrimerOpen(false);
-    setSaving(true);
-    try {
+      if (enabled) {
+        if (await disablePush()) setEnabled(false);
+        return;
+      }
       const ok = await enablePush();
       setEnabled(ok);
       if (!ok) setBlocked((await pushPermission()) === "denied");
@@ -138,14 +124,6 @@ export default function PushToggle({ lang }: { lang: Lang }) {
         {unavailable ? t.pushUnavailable : blocked && !enabled ? t.pushBlocked : t.pushHint}
       </p>
 
-      {primerOpen && (
-        <PushPrimer
-          lang={lang}
-          blocked={blocked}
-          onConfirm={confirmEnable}
-          onClose={() => setPrimerOpen(false)}
-        />
-      )}
     </div>
   );
 }
