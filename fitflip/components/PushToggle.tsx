@@ -40,11 +40,26 @@ export default function PushToggle({ lang }: { lang: Lang }) {
     // read "on", or a user who revoked permission in Settings would see a
     // green switch and wonder why nothing arrives.
     void (async () => {
+      // Neither of these is supposed to hang, and one of them did: the row
+      // sat on "Betöltés…" forever on a device. A switch that can never
+      // resolve is worse than one that guesses wrong — the user can always
+      // tap a wrong guess, but they can't tap a spinner. So: bounded wait,
+      // then fall through to "off", which is both the safe default and the
+      // state a tap can correct.
+      const withTimeout = <T,>(p: Promise<T>, fallback: T): Promise<T> =>
+        Promise.race([
+          p,
+          new Promise<T>((resolve) => setTimeout(() => resolve(fallback), 5000)),
+        ]);
+
       const [perm, res] = await Promise.all([
-        pushPermission(),
-        fetch("/api/push/register")
-          .then((r) => (r.ok ? r.json() : null))
-          .catch(() => null),
+        withTimeout(pushPermission(), "prompt" as const),
+        withTimeout(
+          fetch("/api/push/register")
+            .then((r) => (r.ok ? r.json() : null))
+            .catch(() => null),
+          null
+        ),
       ]);
       setBlocked(perm === "denied");
       setEnabled(perm === "granted" && res?.enabled === true);

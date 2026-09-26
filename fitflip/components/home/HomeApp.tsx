@@ -1644,13 +1644,24 @@ export default function HomeApp() {
                           {lang === "hu" ? "Összes →" : "All →"}
                         </Link>
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
+                      {/* Free-scrolling row rather than a 2x2 grid: the cards
+                          keep their size, but the strip runs to the screen
+                          edge (-mx-6 px-6) so it reads as "there is more this
+                          way". Deliberately no scroll-snap — the ask was to
+                          slide freely, not to be caught at fixed stops. */}
+                      <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-1">
                         {stats.recent.map((it) => {
                           const name =
                             `${it.brand ?? ""} ${it.model ?? ""}`.trim() ||
                             fallbackName(it.itemType, it.color, lang);
                           return (
-                            <Link key={it.id} href={`/scan/${it.id}`} className="text-left">
+                            <Link
+                              key={it.id}
+                              href={`/scan/${it.id}`}
+                              // Same width the 2-column grid gave each card,
+                              // so nothing about the cards themselves changes.
+                              className="text-left shrink-0 w-[calc((100%-0.75rem)/2)] max-w-[220px]"
+                            >
                               <div className="aspect-square rounded-xl overflow-hidden bg-ink-50 dark:bg-ink-800 mb-2 flex items-center justify-center">
                                 {it.imageUrl ? (
                                   /* eslint-disable-next-line @next/next/no-img-element */
