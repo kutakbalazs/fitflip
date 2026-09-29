@@ -1,14 +1,18 @@
 import { Capacitor } from "@capacitor/core";
+import { PushNotifications } from "@capacitor/push-notifications";
 import { isNativePlatform, nativePlatform } from "@/lib/native";
 
 /**
  * Push notifications, client side.
  *
- * The plugin is imported dynamically everywhere below. It has no web
- * implementation worth using here — the app runs inside a WKWebView pointed
- * at a remote URL, where the Web Push API is not available on iOS — and a
- * static import would pull native bridge code into the browser bundle for
- * the majority of sessions that can never use it.
+ * The plugin is imported statically. It used to be dynamic, to keep native
+ * bridge code out of the browser bundle for the many sessions that can never
+ * use it — but on a device the settings switch stalled, and instrumenting
+ * every step showed all of them waiting on that one import: the chunk is
+ * fetched over the network on first use, inside a WKWebView pointed at a
+ * remote URL, and it never arrived. A few KB in the web bundle is a smaller
+ * price than a feature that does not work, so the import moved back up here.
+ * Importing it is inert anyway; nothing native happens until it is called.
  *
  * That remote URL is also why `isNativePlatform()` is not enough to decide
  * whether push works. The web app updates the moment we deploy; the native
@@ -20,7 +24,7 @@ import { isNativePlatform, nativePlatform } from "@/lib/native";
  * actually has.
  */
 
-type PushModule = typeof import("@capacitor/push-notifications");
+type PushModule = { PushNotifications: typeof PushNotifications };
 
 function bridgeHasPlugin(): boolean {
   try {
@@ -45,9 +49,9 @@ function bounded<T>(p: Promise<T>, fallback: T, ms = 4000): Promise<T> {
   ]);
 }
 
-async function plugin(
+function plugin(
   onStep?: (step: string) => void
-): Promise<PushModule["PushNotifications"] | null> {
+): PushModule["PushNotifications"] | null {
   if (!isNativePlatform()) {
     onStep?.("nem natív");
     return null;
@@ -56,24 +60,7 @@ async function plugin(
     onStep?.("a bináris nem tartalmazza a plugint");
     return null;
   }
-  try {
-    // Bounded like every other step here. A dynamic import resolves from the
-    // network on first use, and a chunk that never arrives would otherwise
-    // stall silently before any of the instrumented steps below is reached.
-    const mod = await bounded(
-      import("@capacitor/push-notifications"),
-      null as unknown as PushModule,
-      8000
-    );
-    if (!mod) {
-      onStep?.("a plugin modul nem töltődött be");
-      return null;
-    }
-    return mod.PushNotifications;
-  } catch (e) {
-    onStep?.(`plugin hiba: ${e instanceof Error ? e.message : String(e)}`);
-    return null;
-  }
+  return PushNotifications;
 }
 
 /** True only where push can actually work: a native shell that ships the plugin. */
@@ -83,7 +70,7 @@ export function pushSupported(): boolean {
 
 /** Has the OS already granted permission? Never prompts. */
 export async function pushPermission(): Promise<"granted" | "denied" | "prompt"> {
-  const push = await plugin();
+  const push = plugin();
   if (!push) return "denied";
   try {
     const { receive } = await bounded(push.checkPermissions(), { receive: "prompt" } as Awaited<
@@ -113,7 +100,7 @@ export async function enablePush(onStep?: (step: string) => void): Promise<boole
   const step = (s: string) => onStep?.(s);
 
   step("plugin betöltése");
-  const push = await plugin(step);
+  const push = plugin(step);
   if (!push) return false;
 
   try {
@@ -221,7 +208,7 @@ export async function disablePush(): Promise<boolean> {
  * for.
  */
 export async function initPush(onOpen: (url: string) => void): Promise<void> {
-  const push = await plugin();
+  const push = plugin();
   if (!push) return;
 
   // `.catch` rather than `void` on each: a discarded rejected promise
