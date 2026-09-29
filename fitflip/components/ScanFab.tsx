@@ -43,6 +43,8 @@ export default function ScanFab() {
 
   if (pathname !== "/") return null;
 
+  const native = isNativePlatform();
+
   const label = lang === "hu" ? "Új scan" : "New scan";
   const galleryLabel = lang === "hu" ? "Galéria" : "Gallery";
 
@@ -54,7 +56,7 @@ export default function ScanFab() {
 
   const openCamera = async () => {
     haptic("tap");
-    if (isNativePlatform()) {
+    if (native) {
       hand(await captureViaNativeCamera());
       return;
     }
@@ -63,7 +65,7 @@ export default function ScanFab() {
 
   const openGallery = async () => {
     haptic("tap");
-    if (isNativePlatform()) {
+    if (native) {
       // Straight into the library. A plain file input makes iOS ask "Photo
       // Library / Take Photo / Choose File" first, which is a question the
       // user answered by pressing this button rather than the shutter.
@@ -101,7 +103,10 @@ export default function ScanFab() {
 
       <div
         // safe-mb keeps the buttons clear of Android's gesture bar.
-        className={`fixed ${cookieVisible ? "bottom-40" : "bottom-20"} safe-mb left-1/2 -translate-x-1/2 z-40 transition-all duration-300`}
+        // Mobile web has the browser's own toolbar under this, so the buttons
+        // sit higher there than in the app, where the bottom of the screen is
+        // ours. Both keep clear of Android's gesture bar via safe-mb.
+        className={`fixed ${cookieVisible ? "bottom-40" : native ? "bottom-20" : "bottom-28"} safe-mb left-1/2 -translate-x-1/2 z-40 transition-all duration-300`}
       >
         <div className="flex flex-col items-center gap-1.5">
           <button
