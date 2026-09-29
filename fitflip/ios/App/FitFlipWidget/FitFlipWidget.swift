@@ -114,10 +114,9 @@ struct FitFlipWidgetView: View {
 
             Spacer(minLength: 8)
 
-            // Bottom row, centred as a group. The hint and the streak belong
-            // together — one says what a tap does, the other is the reward for
-            // having tapped — so they read as a pair rather than as two things
-            // pushed to opposite edges.
+            // Bottom row: the hint holds the left edge, the streak the right.
+            // Centred as a pair they read as one run-on phrase; apart, each is
+            // its own thing — what a tap does, and how many days in a row.
             HStack(alignment: .center, spacing: 8) {
                 HStack(alignment: .center, spacing: 5) {
                     Image(systemName: "camera.fill")
@@ -133,6 +132,7 @@ struct FitFlipWidgetView: View {
                 // would be a reproach, and displayStreak already returns 0
                 // once the chain is broken.
                 if entry.streak > 0 {
+                    Spacer(minLength: 6)
                     HStack(spacing: 2) {
                         Image(systemName: "flame.fill")
                             .font(.system(size: 11))
@@ -142,7 +142,7 @@ struct FitFlipWidgetView: View {
                     .foregroundColor(flame)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .center)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .widgetURL(target)
