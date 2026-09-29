@@ -13,7 +13,7 @@ import WatcherWidget from "@/components/WatcherWidget";
 import AllListingsOverlay from "@/components/AllListingsOverlay";
 import { haptic } from "@/lib/haptics";
 import { createClient } from "@/lib/supabase/client";
-import { takePendingScanFile } from "@/lib/pendingScan";
+import { onPendingScanFile } from "@/lib/pendingScan";
 import { writeLang } from "@/lib/lang";
 import { fallbackName } from "@/lib/itemTypeNames";
 import { hypeBadgeLabel } from "@/lib/hype";
@@ -528,12 +528,11 @@ export default function HomeApp() {
     e.target.value = "";
   };
 
-  // Photo captured via the floating scan button on another page: process it
-  // here on the home screen (shows the preview, same as picking a file).
-  useEffect(() => {
-    const file = takePendingScanFile();
-    if (file) processFile(file);
-  }, [processFile]);
+  // Photo captured elsewhere — the floating button, or the widget's
+  // /scan/new. Subscribing rather than reading once on mount: the file can
+  // arrive while this screen is already mounted, and a mount-time read would
+  // miss it entirely.
+  useEffect(() => onPendingScanFile((file) => processFile(file)), [processFile]);
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();

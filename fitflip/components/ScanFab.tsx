@@ -8,11 +8,16 @@ import { setPendingScanFile } from "@/lib/pendingScan";
 import { isNativePlatform } from "@/lib/native";
 
 // Routes where the floating scan button should NOT appear.
-const HIDDEN_PATHS = ["/", "/account", "/notifications", "/welcome", "/pro", "/login", "/signup", "/forgot-password", "/reset-password", "/auth", "/terms", "/privacy", "/cookies"];
+const HIDDEN_PATHS = ["/account", "/notifications", "/welcome", "/pro", "/login", "/signup", "/forgot-password", "/reset-password", "/auth", "/terms", "/privacy", "/cookies"];
 
 /**
- * Fixed bottom-centre "scan" button shown on every page except the home
- * screen and the account/subscription page.
+ * Fixed bottom-centre "scan" button, shown on the home screen too.
+ *
+ * It used to be hidden on home, where the only way to the camera was a dark
+ * banner you had to know was tappable — the camera glyph sat inside it at low
+ * contrast and read as decoration. A round button at the bottom is what a
+ * photo-first app is expected to have, and putting the same control in the
+ * same place everywhere means there is one thing to learn rather than two.
  *
  * Tapping it opens the camera DIRECTLY (a hidden capture input is clicked in
  * the same user gesture — this is the only reliable way to open the camera on
@@ -85,7 +90,9 @@ export default function ScanFab() {
           e.target.value = "";
           if (!file) return; // user cancelled the camera
           setPendingScanFile(file);
-          router.push("/");
+          // Already home: the subscriber took the file directly, and pushing
+          // the route we are on would be a no-op that scrolls the page.
+          if (pathname !== "/") router.push("/");
         }}
       />
       <button

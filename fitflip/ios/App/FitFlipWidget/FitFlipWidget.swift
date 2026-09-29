@@ -102,9 +102,14 @@ struct FitFlipWidgetView: View {
                 .lineLimit(1)
                 .foregroundColor(.white)
 
+            // Two lines, and allowed to shrink: "Derítsd ki, mennyit ér" and
+            // "Find out what it's worth" both overflow a single line on a
+            // small tile, and a truncated sentence looks like a bug.
             Text(subtitle)
                 .font(.system(size: 12))
-                .lineLimit(1)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
+                .fixedSize(horizontal: false, vertical: true)
                 .foregroundColor(Color(white: 0.54))
 
             Spacer(minLength: 8)
