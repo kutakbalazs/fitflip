@@ -241,8 +241,6 @@ export default function HomeApp() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Daily scan streak ("🔥 X napos sorozat") — gamification/retention.
   const [streak, setStreak] = useState(0);
-  // TEMPORARY: why the home-screen widget has no numbers. Removed once known.
-  const [widgetStatus, setWidgetStatus] = useState<string | null>(null);
   // Language the current result's AI text is in (the scan-time language).
   // Switching UI language afterwards translates the shown AI fields via
   // /api/translate-scan; both language versions are cached per scan.
@@ -412,7 +410,7 @@ export default function HomeApp() {
           totalHuf: d.totalValueHuf ?? 0,
           itemCount: d.count ?? 0,
           streak: d.streak ?? 0,
-        }).then(setWidgetStatus);
+        });
       })
       .catch(() => {});
     return () => {
@@ -1590,13 +1588,6 @@ export default function HomeApp() {
                       )}
                     </div>
 
-                    {/* TEMPORARY: what the home-screen widget was told, or why
-                        it was told nothing. Removed once the tile works. */}
-                    {widgetStatus && (
-                      <p className="mt-3 pt-3 border-t border-ink-100 dark:border-ink-700 text-[11px] text-ink-500 dark:text-ink-400 break-words">
-                        widget: {widgetStatus}
-                      </p>
-                    )}
                   </div>
 
                   {/* Recent items */}
