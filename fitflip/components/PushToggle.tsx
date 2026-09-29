@@ -24,6 +24,8 @@ export default function PushToggle({ lang }: { lang: Lang }) {
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [saving, setSaving] = useState(false);
+  // TEMPORARY diagnostic — see enablePush(onStep).
+  const [step, setStep] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isNativePlatform()) return; // no push on the web at all
@@ -75,7 +77,7 @@ export default function PushToggle({ lang }: { lang: Lang }) {
         if (await disablePush()) setEnabled(false);
         return;
       }
-      const ok = await enablePush();
+      const ok = await enablePush(setStep);
       setEnabled(ok);
       if (!ok) setBlocked((await pushPermission()) === "denied");
     } finally {
@@ -91,7 +93,9 @@ export default function PushToggle({ lang }: { lang: Lang }) {
         <div className="min-w-0">
           <p className="text-sm font-semibold">{t.pushTitle}</p>
           <p className="text-xs text-ink-500 dark:text-ink-400">
-            {unavailable
+            {step
+              ? step
+              : unavailable
               ? t.pushUnavailable
               : enabled === null
                 ? t.pushLoading
