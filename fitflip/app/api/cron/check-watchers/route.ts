@@ -245,14 +245,20 @@ async function processWatcher(
   const newUrls = verified.map((v) => v.url);
   const updatedBaseline = Array.from(new Set([...(w.baseline_urls ?? []), ...newUrls]));
 
-  await admin.from("watcher_notifications").insert({
-    user_id: w.user_id,
-    watcher_id: w.id,
-    listings: verified,
-    scan_brand: w.search_brand,
-    scan_model: w.search_model,
-    target_price_huf: w.target_price_huf,
-  });
+  // Keep the id: the push links straight to this notification rather than
+  // to the list, so a tap lands on the thing the tap was about.
+  const { data: inserted } = await admin
+    .from("watcher_notifications")
+    .insert({
+      user_id: w.user_id,
+      watcher_id: w.id,
+      listings: verified,
+      scan_brand: w.search_brand,
+      scan_model: w.search_model,
+      target_price_huf: w.target_price_huf,
+    })
+    .select("id")
+    .single<{ id: string }>();
 
   await admin
     .from("price_watchers")
@@ -267,7 +273,7 @@ async function processWatcher(
   // already correct. Hence the swallowed error — a dead token must not cost
   // us a watcher check.
   try {
-    await pushWatcherHit(admin, w, verified.length);
+    await pushWatcherHit(admin, w, verified.length, inserted?.id ?? null);
   } catch (err) {
     console.warn(`[cron] push failed for watcher ${w.id}:`, err);
   }
@@ -285,7 +291,8 @@ async function processWatcher(
 async function pushWatcherHit(
   admin: ReturnType<typeof createAdminClient>,
   w: WatcherRow,
-  count: number
+  count: number,
+  notificationId: string | null
 ): Promise<void> {
   const { data } = await admin.auth.admin.getUserById(w.user_id);
   const lang = (data?.user?.user_metadata as { lang?: string } | null)?.lang;
@@ -303,7 +310,13 @@ async function pushWatcherHit(
       : hu
         ? `${count} új találat a megadott ár alatt.`
         : `${count} new listing${count === 1 ? "" : "s"} under your target.`,
-    data: { type: "watcher", watcherId: w.id, url: "/notifications" },
+    data: {
+      type: "watcher",
+      watcherId: w.id,
+      // Falls back to the plain list if the insert somehow returned no id —
+      // a notification that lands one level too high beats one that 404s.
+      url: notificationId ? `/notifications?open=${notificationId}` : "/notifications",
+    },
   });
 }
 

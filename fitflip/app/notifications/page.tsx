@@ -52,6 +52,14 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<NotificationRow[]>([]);
   const [removing, setRemoving] = useState<Set<string>>(new Set());
+  // A push links to the notification it is about, not just to this list.
+  // Read straight off the URL rather than through useSearchParams, which
+  // would demand a Suspense boundary purely to prerender a page that is
+  // client-only anyway.
+  const [openId, setOpenId] = useState<string | null>(null);
+  useEffect(() => {
+    setOpenId(new URLSearchParams(window.location.search).get("open"));
+  }, []);
 
   useEffect(() => {
     try {
@@ -214,6 +222,7 @@ export default function NotificationsPage() {
               <NotificationItem
                 key={n.id}
                 item={n}
+                highlight={n.id === openId}
                 removing={removing.has(n.id)}
                 onDelete={() => deleteOne(n.id)}
                 onOpen={() => markRead(n.id)}
@@ -237,6 +246,7 @@ function NotificationItem({
   removing,
   onDelete,
   onOpen,
+  highlight,
   t,
   lang,
 }: {
@@ -244,6 +254,7 @@ function NotificationItem({
   removing: boolean;
   onDelete: () => void;
   onOpen: () => void;
+  highlight?: boolean;
   t: {
     priceUnder: (p: string) => string;
     listingsCount: (n: number) => string;
@@ -252,7 +263,19 @@ function NotificationItem({
   lang: "hu" | "en";
 }) {
   const [drag, setDrag] = useState(0);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(!!highlight);
+  const rowRef = useRef<HTMLLIElement>(null);
+
+  // Arriving from a tapped notification: bring this row into view and mark it
+  // read, the same as opening it by hand would.
+  useEffect(() => {
+    if (!highlight) return;
+    rowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    onOpen();
+    // Once only — re-running on every onOpen identity change would fight the
+    // user's own scrolling.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlight]);
   const startX = useRef<number | null>(null);
   const startY = useRef<number | null>(null);
   const swipeLocked = useRef<"horizontal" | "vertical" | null>(null);
@@ -303,6 +326,7 @@ function NotificationItem({
 
   return (
     <li
+      ref={rowRef}
       className="relative overflow-hidden rounded-2xl"
       style={{
         transition: removing ? "transform 0.32s ease, opacity 0.32s ease, max-height 0.32s ease" : undefined,

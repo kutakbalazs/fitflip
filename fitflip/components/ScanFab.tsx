@@ -8,7 +8,7 @@ import { setPendingScanFile } from "@/lib/pendingScan";
 import { isNativePlatform } from "@/lib/native";
 
 // Routes where the floating scan button should NOT appear.
-const HIDDEN_PATHS = ["/", "/account", "/welcome", "/pro", "/login", "/signup", "/forgot-password", "/reset-password", "/auth", "/terms", "/privacy", "/cookies"];
+const HIDDEN_PATHS = ["/", "/account", "/notifications", "/welcome", "/pro", "/login", "/signup", "/forgot-password", "/reset-password", "/auth", "/terms", "/privacy", "/cookies"];
 
 /**
  * Fixed bottom-centre "scan" button shown on every page except the home
