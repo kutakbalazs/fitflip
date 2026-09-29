@@ -14,6 +14,7 @@ import AllListingsOverlay from "@/components/AllListingsOverlay";
 import { haptic } from "@/lib/haptics";
 import { createClient } from "@/lib/supabase/client";
 import { onPendingScanFile } from "@/lib/pendingScan";
+import ScanFab from "@/components/ScanFab";
 import { writeLang } from "@/lib/lang";
 import { fallbackName } from "@/lib/itemTypeNames";
 import { hypeBadgeLabel } from "@/lib/hype";
@@ -856,6 +857,12 @@ export default function HomeApp() {
         setGuestExhausted(true);
         track("limit_reached", { guest: true });
         setLoading(false);
+        // The explanation lives on the empty home screen, and the photo was
+        // still loaded — so the app fell back to the photo preview with no
+        // word about why, which looks exactly like a scan that silently
+        // failed. Clearing the photo is what lets the reason show. It could
+        // not have survived anyway: signing in is a full page navigation.
+        setImages([]);
         return;
       }
       if (res.status === 401) {
@@ -1486,6 +1493,12 @@ export default function HomeApp() {
       )}
 
       <section className="flex-1 flex flex-col items-center justify-start px-6 py-4 sm:py-12 max-w-2xl mx-auto w-full">
+        {/* The shutter belongs to the empty home screen only. Once a photo is
+            loaded the screen is about that photo — its preview, the analysis,
+            the result — and a second "new scan" button floating over it
+            competes with the one thing the user is looking at. */}
+        {images.length === 0 && !result && !loading && <ScanFab />}
+
         {images.length === 0 && !result && (
           <div className="w-full text-center fade-in">
             <h1

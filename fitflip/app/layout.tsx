@@ -20,7 +20,6 @@ const archivo = Archivo({
   display: "swap",
 });
 import OnboardingGate from "@/components/OnboardingGate";
-import ScanFab from "@/components/ScanFab";
 import PullToRefresh from "@/components/PullToRefresh";
 import IapInit from "@/components/IapInit";
 import DeepLinkHandler from "@/components/DeepLinkHandler";
@@ -86,7 +85,6 @@ export default function RootLayout({
             {children}
           </PullToRefresh>
           <OnboardingGate />
-          <ScanFab />
           <CookieBanner />
           <IapInit />
           <DeepLinkHandler />
