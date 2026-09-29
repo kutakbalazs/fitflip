@@ -13,13 +13,28 @@ import { isNativePlatform } from "@/lib/native";
  * and two paths that both work beat one path that has to serve both.
  */
 export async function captureViaNativeCamera(): Promise<File | null> {
+  return capture("camera");
+}
+
+/**
+ * Open the photo library directly.
+ *
+ * A plain `<input type="file" accept="image/*">` makes iOS ask first —
+ * "Photo Library / Take Photo / Choose File" — which is a question the user
+ * already answered by pressing the gallery button rather than the shutter.
+ */
+export async function pickFromNativeGallery(): Promise<File | null> {
+  return capture("photos");
+}
+
+async function capture(from: "camera" | "photos"): Promise<File | null> {
   if (!isNativePlatform()) return null;
 
   try {
     const { Camera, CameraResultType, CameraSource } = await import("@capacitor/camera");
 
     const photo = await Camera.getPhoto({
-      source: CameraSource.Camera,
+      source: from === "camera" ? CameraSource.Camera : CameraSource.Photos,
       // DataUrl, not Uri. A Uri result hands back capacitor://localhost/...,
       // and this page is served from https://www.fitflip.app — a different
       // origin, so fetching that path fails. The failure landed in the catch

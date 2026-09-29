@@ -213,7 +213,7 @@ export default function WatchersPage() {
             </p>
             <Link
               href="/"
-              className="inline-block px-6 py-2.5 rounded-full bg-ink-900 dark:bg-white text-white dark:text-ink-900 text-sm font-medium hover:bg-ink-700 dark:hover:bg-ink-100 transition"
+              className="inline-block mt-4 px-6 py-2.5 rounded-full bg-ink-900 dark:bg-white text-white dark:text-ink-900 text-sm font-medium hover:bg-ink-700 dark:hover:bg-ink-100 transition"
             >
               {t.newScan}
             </Link>

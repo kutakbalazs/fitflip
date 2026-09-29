@@ -1,40 +1,32 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { readLang } from "@/lib/lang";
 import { haptic } from "@/lib/haptics";
 import { setPendingScanFile } from "@/lib/pendingScan";
 import { isNativePlatform } from "@/lib/native";
-
-// Routes where the floating scan button should NOT appear.
-const HIDDEN_PATHS = ["/account", "/notifications", "/welcome", "/pro", "/login", "/signup", "/forgot-password", "/reset-password", "/auth", "/terms", "/privacy", "/cookies"];
+import { captureViaNativeCamera, pickFromNativeGallery } from "@/lib/quickScan";
 
 /**
- * Fixed bottom-centre "scan" button, shown on the home screen too.
+ * The shutter, on the home screen only.
  *
- * It used to be hidden on home, where the only way to the camera was a dark
- * banner you had to know was tappable — the camera glyph sat inside it at low
- * contrast and read as decoration. A round button at the bottom is what a
- * photo-first app is expected to have, and putting the same control in the
- * same place everywhere means there is one thing to learn rather than two.
+ * It used to follow the user around every page as a pill. It doesn't any
+ * more: scanning starts at home, the pages that want their own way back to it
+ * already have one inline, and a floating button on top of a list someone is
+ * reading is in the way of the reading.
  *
- * Tapping it opens the camera DIRECTLY (a hidden capture input is clicked in
- * the same user gesture — this is the only reliable way to open the camera on
- * mobile). Once a photo is captured, the File is stashed in the pendingScan
- * module and we navigate to the home screen, which processes it on mount.
- *
- * Sits above the very bottom so the footer stays visible — except on the
- * history page, where it sits much lower per design.
+ * The camera sits on the centre line — it is the thing the screen is for —
+ * and the gallery hangs off to its left rather than sharing the centre with
+ * it, so the primary control stays where a thumb expects it.
  */
 export default function ScanFab() {
   const pathname = usePathname();
-  const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const [lang, setLang] = useState<"hu" | "en">("hu");
-  // While the cookie banner is on screen the button lifts above it so the
-  // two fixed bottom elements never overlap; it slides back down on consent.
+  // While the cookie banner is on screen the buttons lift above it so the two
+  // fixed bottom elements never overlap; they slide back down on consent.
   const [cookieVisible, setCookieVisible] = useState(false);
 
   useEffect(() => {
@@ -42,21 +34,6 @@ export default function ScanFab() {
   }, [pathname]);
 
   useEffect(() => {
-    // The native app never shows the cookie banner (see CookieBanner), so the
-    // consent key is never written there. Reading its absence as "the banner
-    // is on screen" left this button parked at bottom-44 — 176px up, hovering
-    // above a bar that does not exist — on every screen of the native app.
-    // A tester reported it as the scan button being "way too high"; moving it
-    // down on iOS earlier had treated the symptom.
-    if (isNativePlatform()) {
-      setCookieVisible(false);
-      return;
-    }
-    try {
-      setCookieVisible(!localStorage.getItem("ff-cookie-consent"));
-    } catch {
-      /* ignore */
-    }
     const onBanner = (e: Event) => {
       setCookieVisible(!!(e as CustomEvent).detail?.visible);
     };
@@ -64,38 +41,50 @@ export default function ScanFab() {
     return () => window.removeEventListener("ff-cookie-banner", onBanner);
   }, []);
 
-  // Hidden on listed routes and on scan detail pages (which have their own
-  // inline "new scan" button at the bottom).
-  if (!pathname || HIDDEN_PATHS.includes(pathname) || pathname.startsWith("/scan")) return null;
+  if (pathname !== "/") return null;
 
   const label = lang === "hu" ? "Új scan" : "New scan";
   const galleryLabel = lang === "hu" ? "Galéria" : "Gallery";
-  const onHome = pathname === "/";
-  // History page wants the button much lower; elsewhere keep it clear of the
-  // footer. While the cookie banner shows, lift above it on every page.
-  const bottomClass = cookieVisible
-    ? "bottom-44"
-    : pathname.startsWith("/history")
-      ? "bottom-6"
-      : "bottom-24";
+
+  // The home screen is already mounted and listening, so the file goes
+  // straight to it — no navigation, no round trip.
+  const hand = (file: File | null) => {
+    if (file) setPendingScanFile(file);
+  };
+
+  const openCamera = async () => {
+    haptic("tap");
+    if (isNativePlatform()) {
+      hand(await captureViaNativeCamera());
+      return;
+    }
+    cameraRef.current?.click();
+  };
+
+  const openGallery = async () => {
+    haptic("tap");
+    if (isNativePlatform()) {
+      // Straight into the library. A plain file input makes iOS ask "Photo
+      // Library / Take Photo / Choose File" first, which is a question the
+      // user answered by pressing this button rather than the shutter.
+      hand(await pickFromNativeGallery());
+      return;
+    }
+    galleryRef.current?.click();
+  };
 
   return (
     <>
       <input
-        ref={inputRef}
+        ref={cameraRef}
         type="file"
         accept="image/*"
         capture="environment"
         className="hidden"
         onChange={(e) => {
-          const file = e.target.files?.[0];
-          // Reset so picking the same file again still fires onChange next time.
-          e.target.value = "";
-          if (!file) return; // user cancelled the camera
-          setPendingScanFile(file);
-          // Already home: the subscriber took the file directly, and pushing
-          // the route we are on would be a no-op that scrolls the page.
-          if (pathname !== "/") router.push("/");
+          const file = e.target.files?.[0] ?? null;
+          e.target.value = ""; // so picking the same file again still fires
+          hand(file);
         }}
       />
       <input
@@ -104,76 +93,48 @@ export default function ScanFab() {
         accept="image/*"
         className="hidden"
         onChange={(e) => {
-          const file = e.target.files?.[0];
+          const file = e.target.files?.[0] ?? null;
           e.target.value = "";
-          if (!file) return;
-          setPendingScanFile(file);
-          if (pathname !== "/") router.push("/");
+          hand(file);
         }}
       />
 
-      {onHome ? (
-        // Home screen: a shutter, because this is the thing the app is for.
-        // The pill elsewhere is a way back to scanning; here it is the point
-        // of the screen, and it should look like the button on a camera.
-        <div className={`fixed ${bottomClass} safe-mb left-1/2 -translate-x-1/2 z-40 flex items-end gap-7`}>
-          <div className="flex flex-col items-center gap-2">
-            <button
-              type="button"
-              aria-label={galleryLabel}
-              onClick={() => {
-                haptic("tap");
-                galleryRef.current?.click();
-              }}
-              className="w-14 h-14 rounded-full bg-ink-100 dark:bg-ink-800 border border-ink-200 dark:border-ink-700 text-ink-900 dark:text-white flex items-center justify-center active:scale-95 transition"
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <circle cx="9" cy="9" r="2" />
-                <path d="m21 15-4.35-4.35a2 2 0 0 0-2.83 0L4 20" />
-              </svg>
-            </button>
-            <span className="text-xs text-ink-500 dark:text-ink-400">{galleryLabel}</span>
-          </div>
-
-          <div className="flex flex-col items-center gap-2">
-            <button
-              type="button"
-              aria-label={label}
-              onClick={() => {
-                haptic("tap");
-                inputRef.current?.click();
-              }}
-              className="w-[76px] h-[76px] rounded-full bg-ink-900 dark:bg-white ring-2 ring-offset-4 ring-ink-900 dark:ring-white ring-offset-white dark:ring-offset-ink-950 text-white dark:text-ink-900 flex items-center justify-center shadow-lg shadow-black/20 active:scale-95 transition"
-            >
-              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
-              </svg>
-            </button>
-            <span className="text-sm font-medium">{label}</span>
-          </div>
-        </div>
-      ) : (
-      <button
-        type="button"
-        aria-label={label}
-        onClick={() => {
-          haptic("tap");
-          inputRef.current?.click();
-        }}
-        // safe-mb keeps the button clear of Android 15's gesture bar; on
-        // /history the offset is only bottom-6, which would otherwise sit
-        // right on it.
-        className={`fixed ${bottomClass} safe-mb left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-6 py-3.5 rounded-full bg-ink-900 dark:bg-white text-white dark:text-ink-900 font-medium text-sm shadow-lg shadow-black/20 hover:opacity-90 active:scale-95 transition-all duration-300`}
+      <div
+        // safe-mb keeps the buttons clear of Android's gesture bar.
+        className={`fixed ${cookieVisible ? "bottom-40" : "bottom-20"} safe-mb left-1/2 -translate-x-1/2 z-40 transition-all duration-300`}
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-          <circle cx="12" cy="13" r="4" />
-        </svg>
-        {label}
-      </button>
-      )}
+        <div className="flex flex-col items-center gap-1.5">
+          <button
+            type="button"
+            aria-label={label}
+            onClick={openCamera}
+            className="w-16 h-16 rounded-full bg-ink-900 dark:bg-white ring-2 ring-offset-4 ring-ink-900 dark:ring-white ring-offset-white dark:ring-offset-ink-950 text-white dark:text-ink-900 flex items-center justify-center shadow-lg shadow-black/20 active:scale-95 transition"
+          >
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+          </button>
+          <span className="text-sm font-medium">{label}</span>
+        </div>
+
+        {/* Centred on the shutter's circle, so the shutter keeps the centre line. */}
+        <div className="absolute right-full mr-7 top-8 -translate-y-1/2 flex flex-col items-center gap-1.5">
+          <button
+            type="button"
+            aria-label={galleryLabel}
+            onClick={openGallery}
+            className="w-12 h-12 rounded-full bg-ink-100 dark:bg-ink-800 border border-ink-200 dark:border-ink-700 text-ink-900 dark:text-white flex items-center justify-center active:scale-95 transition"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <circle cx="9" cy="9" r="2" />
+              <path d="m21 15-4.35-4.35a2 2 0 0 0-2.83 0L4 20" />
+            </svg>
+          </button>
+          <span className="text-xs text-ink-500 dark:text-ink-400">{galleryLabel}</span>
+        </div>
+      </div>
     </>
   );
 }
