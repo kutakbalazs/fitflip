@@ -3,9 +3,17 @@
     "details": [
       {
         "appIDs": ["X5ZD5S529Q.app.fitflip"],
+        "comment": "Paths that are the app's own screens open in the app when it is installed. The public pages — the landing page, terms, privacy, cookies, the blog — deliberately stay in the browser: a link someone shares should show the same thing to everyone, whether or not they happen to have the app.",
         "components": [
-          { "/": "/auth/confirm", "comment": "email confirmation / recovery — open in app" },
-          { "/": "/auth/confirm/*", "comment": "email confirmation with sub-paths" }
+          { "/": "/auth/confirm", "comment": "email confirmation / recovery" },
+          { "/": "/auth/confirm/*", "comment": "email confirmation with sub-paths" },
+          { "/": "/welcome", "comment": "onboarding" },
+          { "/": "/notifications", "comment": "watcher hits, incl. ?open=<id>" },
+          { "/": "/scan", "comment": "scan index" },
+          { "/": "/scan/*", "comment": "a single scan, and /scan/new from the widget" },
+          { "/": "/history", "comment": "the user's own scans" },
+          { "/": "/watchers", "comment": "the user's own price watchers" },
+          { "/": "/account", "comment": "settings" }
         ]
       }
     ]

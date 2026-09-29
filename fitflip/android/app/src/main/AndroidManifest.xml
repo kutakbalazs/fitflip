@@ -40,7 +40,19 @@
                      would hijack every marketing and legal page into the app,
                      including the privacy-policy URL Google Play crawls. -->
                 <data android:scheme="https" android:host="www.fitflip.app" android:pathPrefix="/auth/confirm" />
+                <data android:scheme="https" android:host="www.fitflip.app" android:pathPrefix="/welcome" />
+                <data android:scheme="https" android:host="www.fitflip.app" android:pathPrefix="/notifications" />
+                <data android:scheme="https" android:host="www.fitflip.app" android:pathPrefix="/scan" />
+                <data android:scheme="https" android:host="www.fitflip.app" android:pathPrefix="/history" />
+                <data android:scheme="https" android:host="www.fitflip.app" android:pathPrefix="/watchers" />
+                <data android:scheme="https" android:host="www.fitflip.app" android:pathPrefix="/account" />
                 <data android:scheme="https" android:host="fitflip.app" android:pathPrefix="/auth/confirm" />
+                <data android:scheme="https" android:host="fitflip.app" android:pathPrefix="/welcome" />
+                <data android:scheme="https" android:host="fitflip.app" android:pathPrefix="/notifications" />
+                <data android:scheme="https" android:host="fitflip.app" android:pathPrefix="/scan" />
+                <data android:scheme="https" android:host="fitflip.app" android:pathPrefix="/history" />
+                <data android:scheme="https" android:host="fitflip.app" android:pathPrefix="/watchers" />
+                <data android:scheme="https" android:host="fitflip.app" android:pathPrefix="/account" />
             </intent-filter>
         </activity>
 
