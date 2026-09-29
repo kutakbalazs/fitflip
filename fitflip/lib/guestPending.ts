@@ -1,11 +1,22 @@
 /**
  * Holds a scan made while signed out, until the visitor creates an account.
  *
- * sessionStorage is the whole trick: it survives the trip to the sign-up page
- * and back, but dies when the tab or app closes. So "save it if they sign in,
- * drop it if they don't" needs no database row, no orphan cleanup and no
- * scheduled job — the browser does it for us.
+ * localStorage with an explicit expiry, not sessionStorage.
+ *
+ * sessionStorage looked like the whole trick — it survives the trip to the
+ * sign-up page and back, and dies on its own afterwards, so "save it if they
+ * sign in, drop it if they don't" needed no database row and no cleanup job.
+ * But it is scoped to one tab, and signing in with Google or Apple can land
+ * the visitor in a different one; in the app, the web view can be rebuilt
+ * around the same trip. Either way the scan was sitting in a tab nobody came
+ * back to, and the visitor signed up and found nothing saved.
+ *
+ * So it persists properly, and the expiry does by hand what closing the tab
+ * used to do: a scan nobody claimed within a day is dropped on the next read.
  */
+
+/** Unclaimed after this long, it is not worth keeping. */
+const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 export type PendingGuestScan = {
   result: Record<string, unknown>;
@@ -23,7 +34,7 @@ export function savePendingGuestScan(
 ): void {
   if (typeof window === "undefined") return;
   const write = (payload: PendingGuestScan) =>
-    sessionStorage.setItem(KEY, JSON.stringify(payload));
+    localStorage.setItem(KEY, JSON.stringify(payload));
   try {
     write({ result, image, savedAt: Date.now() });
   } catch {
@@ -40,10 +51,14 @@ export function savePendingGuestScan(
 export function readPendingGuestScan(): PendingGuestScan | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = sessionStorage.getItem(KEY);
+    const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as PendingGuestScan;
     if (!parsed || typeof parsed !== "object" || !parsed.result) return null;
+    if (typeof parsed.savedAt === "number" && Date.now() - parsed.savedAt > MAX_AGE_MS) {
+      clearPendingGuestScan();
+      return null;
+    }
     return parsed;
   } catch {
     return null;
@@ -53,7 +68,7 @@ export function readPendingGuestScan(): PendingGuestScan | null {
 export function clearPendingGuestScan(): void {
   if (typeof window === "undefined") return;
   try {
-    sessionStorage.removeItem(KEY);
+    localStorage.removeItem(KEY);
   } catch {
     /* ignore */
   }
