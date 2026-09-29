@@ -43,8 +43,8 @@ export async function publishWardrobeToWidget(payload: {
   totalHuf: number;
   itemCount: number;
   streak: number;
-}): Promise<void> {
-  if (!isNativePlatform()) return;
+}): Promise<string> {
+  if (!isNativePlatform()) return "nem natív";
 
   const totalHuf = Math.round(payload.totalHuf);
   const itemCount = payload.itemCount;
@@ -53,8 +53,7 @@ export async function publishWardrobeToWidget(payload: {
   try {
     if (nativePlatform() === "ios") {
       await FFWidgetBridge.setWardrobe({ totalHuf, itemCount, streak });
-      console.log("[ff-widget] wrote via iOS bridge", { totalHuf, itemCount, streak });
-      return;
+      return `iOS OK — ${totalHuf} Ft / ${itemCount} db / ${streak} nap`;
     }
 
     const { Preferences } = await import("@capacitor/preferences");
@@ -65,15 +64,12 @@ export async function publishWardrobeToWidget(payload: {
       updatedAt: new Date().toISOString(),
     };
     await Preferences.set({ key: WIDGET_KEY, value: JSON.stringify(value) });
-    // TEMPORARY: the widget shows "take a photo" on a device that has 107
-    // items, and the catch below hides why. Capacitor forwards console
-    // output to the Xcode log, so this is readable without new UI.
-    console.log("[ff-widget] wrote", { totalHuf, itemCount, streak });
+    return `Android OK — ${totalHuf} / ${itemCount} / ${streak}`;
   } catch (e) {
     // A widget that shows a stale number is a far smaller problem than an
     // app that fails because it couldn't update one. This also swallows the
     // "plugin is not implemented" thrown by shells built before the widget
     // existed — the same remote-URL trap push fell into.
-    console.log("[ff-widget] FAILED:", e instanceof Error ? e.message : String(e));
+    return `HIBA: ${e instanceof Error ? e.message : String(e)}`;
   }
 }
