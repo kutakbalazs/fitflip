@@ -30,16 +30,6 @@ function bridgeHasPlugin(): boolean {
   }
 }
 
-async function plugin(): Promise<PushModule["PushNotifications"] | null> {
-  if (!isNativePlatform() || !bridgeHasPlugin()) return null;
-  try {
-    const mod = await import("@capacitor/push-notifications");
-    return mod.PushNotifications;
-  } catch {
-    return null;
-  }
-}
-
 /**
  * Bound a bridge call.
  *
@@ -53,6 +43,37 @@ function bounded<T>(p: Promise<T>, fallback: T, ms = 4000): Promise<T> {
     p,
     new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
   ]);
+}
+
+async function plugin(
+  onStep?: (step: string) => void
+): Promise<PushModule["PushNotifications"] | null> {
+  if (!isNativePlatform()) {
+    onStep?.("nem natív");
+    return null;
+  }
+  if (!bridgeHasPlugin()) {
+    onStep?.("a bináris nem tartalmazza a plugint");
+    return null;
+  }
+  try {
+    // Bounded like every other step here. A dynamic import resolves from the
+    // network on first use, and a chunk that never arrives would otherwise
+    // stall silently before any of the instrumented steps below is reached.
+    const mod = await bounded(
+      import("@capacitor/push-notifications"),
+      null as unknown as PushModule,
+      8000
+    );
+    if (!mod) {
+      onStep?.("a plugin modul nem töltődött be");
+      return null;
+    }
+    return mod.PushNotifications;
+  } catch (e) {
+    onStep?.(`plugin hiba: ${e instanceof Error ? e.message : String(e)}`);
+    return null;
+  }
 }
 
 /** True only where push can actually work: a native shell that ships the plugin. */
@@ -91,12 +112,9 @@ export async function enablePush(onStep?: (step: string) => void): Promise<boole
   // position instead. Remove once the stall is understood.
   const step = (s: string) => onStep?.(s);
 
-  step("plugin");
-  const push = await plugin();
-  if (!push) {
-    step("nincs plugin");
-    return false;
-  }
+  step("plugin betöltése");
+  const push = await plugin(step);
+  if (!push) return false;
 
   try {
     type Perm = Awaited<ReturnType<typeof push.checkPermissions>>;

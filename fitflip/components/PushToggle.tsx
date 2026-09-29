@@ -93,9 +93,7 @@ export default function PushToggle({ lang }: { lang: Lang }) {
         <div className="min-w-0">
           <p className="text-sm font-semibold">{t.pushTitle}</p>
           <p className="text-xs text-ink-500 dark:text-ink-400">
-            {step
-              ? step
-              : unavailable
+            {unavailable
               ? t.pushUnavailable
               : enabled === null
                 ? t.pushLoading
@@ -114,18 +112,20 @@ export default function PushToggle({ lang }: { lang: Lang }) {
           onClick={toggle}
           disabled={saving || unavailable || enabled === null}
           className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60 ${
-            enabled ? "bg-ink-900 dark:bg-white" : "bg-ink-300 dark:bg-ink-700"
+            enabled ? "bg-ink-900 dark:bg-white" : "bg-ink-300 dark:bg-ink-500"
           }`}
         >
           <span
-            className={`absolute left-0 top-0.5 h-5 w-5 rounded-full bg-white dark:bg-ink-900 shadow transition-transform ${
+            className={`absolute left-0 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+              enabled ? "dark:bg-ink-900" : "dark:bg-ink-100"
+            } ${
               enabled ? "translate-x-[22px]" : "translate-x-0.5"
             }`}
           />
         </button>
       </div>
       <p className="mt-2 text-xs text-ink-500 dark:text-ink-400 leading-relaxed">
-        {unavailable ? t.pushUnavailable : blocked && !enabled ? t.pushBlocked : t.pushHint}
+        {step ?? (unavailable ? t.pushUnavailable : blocked && !enabled ? t.pushBlocked : t.pushHint)}
       </p>
 
     </div>

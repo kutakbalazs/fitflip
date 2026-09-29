@@ -64,11 +64,13 @@ export default function MarketingToggle({ lang }: { lang: Lang }) {
           onClick={toggle}
           disabled={saving}
           className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60 ${
-            consent ? "bg-ink-900 dark:bg-white" : "bg-ink-300 dark:bg-ink-700"
+            consent ? "bg-ink-900 dark:bg-white" : "bg-ink-300 dark:bg-ink-500"
           }`}
         >
           <span
-            className={`absolute left-0 top-0.5 h-5 w-5 rounded-full bg-white dark:bg-ink-900 shadow transition-transform ${
+            className={`absolute left-0 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+              consent ? "dark:bg-ink-900" : "dark:bg-ink-100"
+            } ${
               consent ? "translate-x-[22px]" : "translate-x-0.5"
             }`}
           />
