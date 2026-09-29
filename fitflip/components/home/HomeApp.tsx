@@ -1566,12 +1566,8 @@ export default function HomeApp() {
                   </div>
                 )}
 
-                {/* Mobile dashboard.
-                    pb leaves room for the fixed shutter, which otherwise
-                    floats over the last row of cards — on mobile web it also
-                    has the browser's own toolbar below it, so the clearance
-                    has to cover both. */}
-                <div className="sm:hidden text-left pb-44">
+                {/* pb clears the fixed scan bar at the bottom of the screen. */}
+                <div className="sm:hidden text-left pb-32">
                   {/* Estimated identified total + count */}
                   <div className="rounded-2xl border border-ink-100 dark:border-ink-700 p-5 mb-6">
                     <p className="text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-1">
