@@ -1568,46 +1568,6 @@ export default function HomeApp() {
 
                 {/* Mobile dashboard */}
                 <div className="sm:hidden text-left">
-                  {/* Top bar: tap anywhere = camera; Galéria = gallery */}
-                  <div
-                    onClick={() => {
-                      haptic("tap");
-                      cameraInputRef.current?.click();
-                    }}
-                    className="relative rounded-2xl bg-ink-900 text-white p-4 mb-5 cursor-pointer flex items-center gap-3 shadow-lg shadow-black/10 dark:bg-gradient-to-br dark:from-ink-500 dark:to-ink-800 dark:ring-1 dark:ring-white/25 dark:shadow-xl dark:shadow-black/50"
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-white/10 dark:bg-white/15 flex items-center justify-center shrink-0">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                        <circle cx="12" cy="13" r="4" />
-                      </svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-display text-lg leading-tight">{t.tagline}</p>
-                      {converting && (
-                        <p className="text-[11px] text-white/50 uppercase tracking-wider mt-0.5 truncate">
-                          {lang === "hu" ? "HEIC konverzió…" : "Converting HEIC…"}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        haptic("tap");
-                        fileInputRef.current?.click();
-                      }}
-                      className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 transition text-xs font-medium"
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                        <circle cx="9" cy="9" r="2" />
-                        <path d="m21 15-4.35-4.35a2 2 0 0 0-2.83 0L4 20" />
-                      </svg>
-                      {lang === "hu" ? "Galéria" : "Gallery"}
-                    </button>
-                  </div>
-
                   {/* Estimated identified total + count */}
                   <div className="rounded-2xl border border-ink-100 dark:border-ink-700 p-5 mb-6">
                     <p className="text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-1">

@@ -31,6 +31,7 @@ export default function ScanFab() {
   const pathname = usePathname();
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
   const [lang, setLang] = useState<"hu" | "en">("hu");
   // While the cookie banner is on screen the button lifts above it so the
   // two fixed bottom elements never overlap; it slides back down on consent.
@@ -68,6 +69,8 @@ export default function ScanFab() {
   if (!pathname || HIDDEN_PATHS.includes(pathname) || pathname.startsWith("/scan")) return null;
 
   const label = lang === "hu" ? "Új scan" : "New scan";
+  const galleryLabel = lang === "hu" ? "Galéria" : "Gallery";
+  const onHome = pathname === "/";
   // History page wants the button much lower; elsewhere keep it clear of the
   // footer. While the cookie banner shows, lift above it on every page.
   const bottomClass = cookieVisible
@@ -95,6 +98,63 @@ export default function ScanFab() {
           if (pathname !== "/") router.push("/");
         }}
       />
+      <input
+        ref={galleryRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (!file) return;
+          setPendingScanFile(file);
+          if (pathname !== "/") router.push("/");
+        }}
+      />
+
+      {onHome ? (
+        // Home screen: a shutter, because this is the thing the app is for.
+        // The pill elsewhere is a way back to scanning; here it is the point
+        // of the screen, and it should look like the button on a camera.
+        <div className={`fixed ${bottomClass} safe-mb left-1/2 -translate-x-1/2 z-40 flex items-end gap-7`}>
+          <div className="flex flex-col items-center gap-2">
+            <button
+              type="button"
+              aria-label={galleryLabel}
+              onClick={() => {
+                haptic("tap");
+                galleryRef.current?.click();
+              }}
+              className="w-14 h-14 rounded-full bg-ink-100 dark:bg-ink-800 border border-ink-200 dark:border-ink-700 text-ink-900 dark:text-white flex items-center justify-center active:scale-95 transition"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="9" cy="9" r="2" />
+                <path d="m21 15-4.35-4.35a2 2 0 0 0-2.83 0L4 20" />
+              </svg>
+            </button>
+            <span className="text-xs text-ink-500 dark:text-ink-400">{galleryLabel}</span>
+          </div>
+
+          <div className="flex flex-col items-center gap-2">
+            <button
+              type="button"
+              aria-label={label}
+              onClick={() => {
+                haptic("tap");
+                inputRef.current?.click();
+              }}
+              className="w-[76px] h-[76px] rounded-full bg-ink-900 dark:bg-white ring-2 ring-offset-4 ring-ink-900 dark:ring-white ring-offset-white dark:ring-offset-ink-950 text-white dark:text-ink-900 flex items-center justify-center shadow-lg shadow-black/20 active:scale-95 transition"
+            >
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+            </button>
+            <span className="text-sm font-medium">{label}</span>
+          </div>
+        </div>
+      ) : (
       <button
         type="button"
         aria-label={label}
@@ -113,6 +173,7 @@ export default function ScanFab() {
         </svg>
         {label}
       </button>
+      )}
     </>
   );
 }

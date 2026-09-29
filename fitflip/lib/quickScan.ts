@@ -20,7 +20,13 @@ export async function captureViaNativeCamera(): Promise<File | null> {
 
     const photo = await Camera.getPhoto({
       source: CameraSource.Camera,
-      resultType: CameraResultType.Uri,
+      // DataUrl, not Uri. A Uri result hands back capacitor://localhost/...,
+      // and this page is served from https://www.fitflip.app — a different
+      // origin, so fetching that path fails. The failure landed in the catch
+      // below and returned null, which this flow reads as "the user cancelled":
+      // the camera opened, the photo was taken, and the app went home having
+      // silently dropped it.
+      resultType: CameraResultType.DataUrl,
       // The plugin hands back JPEG regardless of what the sensor produced,
       // which sidesteps the HEIC conversion the web path needs.
       quality: 85,
@@ -29,14 +35,33 @@ export async function captureViaNativeCamera(): Promise<File | null> {
       saveToGallery: false,
     });
 
-    if (!photo.webPath) return null;
+    if (!photo.dataUrl) return null;
 
     // The rest of the pipeline expects a File, same as the button produces.
-    const blob = await fetch(photo.webPath).then((r) => r.blob());
+    // Decoding the data URL in-page needs no network and no origin to match.
+    const blob = dataUrlToBlob(photo.dataUrl);
+    if (!blob) return null;
     const ext = photo.format || "jpeg";
     return new File([blob], `scan.${ext}`, { type: blob.type || `image/${ext}` });
   } catch {
     // Cancelling the camera rejects. That is a normal outcome, not an error.
+    return null;
+  }
+}
+
+/** Decode a `data:` URL without going through fetch(). */
+function dataUrlToBlob(dataUrl: string): Blob | null {
+  const comma = dataUrl.indexOf(",");
+  if (comma < 0) return null;
+  const header = dataUrl.slice(0, comma);
+  const mime = header.match(/^data:([^;]+)/)?.[1] ?? "image/jpeg";
+  if (!header.includes(";base64")) return null;
+  try {
+    const binary = atob(dataUrl.slice(comma + 1));
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: mime });
+  } catch {
     return null;
   }
 }
