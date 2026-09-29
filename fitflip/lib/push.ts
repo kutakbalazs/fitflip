@@ -49,17 +49,8 @@ function bounded<T>(p: Promise<T>, fallback: T, ms = 4000): Promise<T> {
   ]);
 }
 
-function plugin(
-  onStep?: (step: string) => void
-): PushModule["PushNotifications"] | null {
-  if (!isNativePlatform()) {
-    onStep?.("nem natív");
-    return null;
-  }
-  if (!bridgeHasPlugin()) {
-    onStep?.("a bináris nem tartalmazza a plugint");
-    return null;
-  }
+function plugin(): PushModule["PushNotifications"] | null {
+  if (!isNativePlatform() || !bridgeHasPlugin()) return null;
   return PushNotifications;
 }
 
@@ -93,31 +84,19 @@ export async function pushPermission(): Promise<"granted" | "denied" | "prompt">
  * than "we asked politely". The token arrives on an event, not from the
  * `register()` promise, which is why this waits on a listener.
  */
-export async function enablePush(onStep?: (step: string) => void): Promise<boolean> {
-  // TEMPORARY. The switch stalls on a real device and three rounds of
-  // reasoning about where have all been wrong, so it now reports its own
-  // position instead. Remove once the stall is understood.
-  const step = (s: string) => onStep?.(s);
-
-  step("plugin betöltése");
-  const push = plugin(step);
+export async function enablePush(): Promise<boolean> {
+  const push = plugin();
   if (!push) return false;
 
   try {
     type Perm = Awaited<ReturnType<typeof push.checkPermissions>>;
-    step("ellenőrzés");
     let { receive } = await bounded(push.checkPermissions(), { receive: "prompt" } as Perm);
-    step(`ellenőrzés: ${receive}`);
     if (receive === "prompt" || receive === "prompt-with-rationale") {
       // The OS dialog is the one wait that legitimately takes as long as the
       // user takes, so it gets a far longer leash than the silent checks.
-      step("engedélykérés");
       ({ receive } = await bounded(push.requestPermissions(), { receive: "denied" } as Perm, 30_000));
-      step(`engedély: ${receive}`);
     }
     if (receive !== "granted") return false;
-
-    step("token várása");
 
     const token = await new Promise<string | null>((resolve) => {
       let settled = false;
@@ -151,16 +130,9 @@ export async function enablePush(onStep?: (step: string) => void): Promise<boole
       push.register().catch(fail);
     });
 
-    if (!token) {
-      step("nincs token");
-      return false;
-    }
-    step("token mentése");
-    const ok = await sendToken(token);
-    step(ok ? "kész" : "szerver hiba");
-    return ok;
-  } catch (e) {
-    step(`kivétel: ${e instanceof Error ? e.message : String(e)}`);
+    if (!token) return false;
+    return await sendToken(token);
+  } catch {
     return false;
   }
 }
