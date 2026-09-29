@@ -576,8 +576,10 @@ function SlideWidget({
           {t.widgetTileSub}
         </p>
         <div className="flex-1" />
-        <div className="flex items-end gap-1.5">
-          <span style={{ color: "#84B0E4" }} className="shrink-0 pb-0.5">
+        {/* Centre the glyph against the hint, which wraps to two lines — on
+            the bottom edge it sat level with the second line only. */}
+        <div className="flex items-center gap-1.5">
+          <span style={{ color: "#84B0E4" }} className="shrink-0">
             <CameraIcon />
           </span>
           <span className="text-xs leading-snug flex-1" style={{ color: "#84B0E4" }}>

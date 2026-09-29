@@ -7,6 +7,7 @@ import { haptic } from "@/lib/haptics";
 import { setPendingScanFile } from "@/lib/pendingScan";
 import { isNativePlatform } from "@/lib/native";
 import { captureViaNativeCamera, pickFromNativeGallery } from "@/lib/quickScan";
+import LegalFooter from "@/components/LegalFooter";
 
 /**
  * The shutter, on the home screen only.
@@ -101,21 +102,27 @@ export default function ScanFab() {
         }}
       />
 
-      {/* A bar, not a floating button. Floating over a scrolling page means
-          floating over whatever happens to be under it — here, the row of
-          recent items — and no amount of bottom padding fixes that, because
-          the page keeps moving and the button does not. With its own
-          background it stops being something in the way and becomes the edge
-          of the screen. */}
+      {/* Two shapes for two situations.
+          In the app the bottom of the screen is ours, so the controls float
+          and the page runs underneath them — which is what it looked like
+          before and what it should go back to. On mobile web they cannot:
+          the browser has its own toolbar below, and a floating control there
+          sat on top of the recent items and buried the legal footer. So the
+          web gets a real bar, with the footer links inside it rather than
+          hidden behind it. */}
       <div
-        className={`fixed left-0 right-0 ${cookieVisible ? "bottom-24" : "bottom-0"} z-40 bg-white/95 dark:bg-ink-950/95 backdrop-blur border-t border-ink-100 dark:border-ink-800 transition-all duration-300`}
+        className={`fixed left-0 right-0 ${cookieVisible ? "bottom-24" : "bottom-0"} z-40 transition-all duration-300 ${
+          native
+            ? ""
+            : "bg-white/95 dark:bg-ink-950/95 backdrop-blur border-t border-ink-100 dark:border-ink-800"
+        }`}
       >
-        <div className="relative flex flex-col items-center gap-1 px-6 pt-3 pb-3 safe-mb">
+        <div className={`relative flex flex-col items-center gap-1 px-6 ${native ? "pt-0 pb-6" : "pt-3 pb-2"} safe-mb`}>
           <button
             type="button"
             aria-label={label}
             onClick={openCamera}
-            className="w-14 h-14 rounded-full bg-ink-900 dark:bg-white ring-2 ring-offset-2 ring-ink-900 dark:ring-white ring-offset-white dark:ring-offset-ink-950 text-white dark:text-ink-900 flex items-center justify-center active:scale-95 transition"
+            className="w-14 h-14 rounded-full bg-ink-900 dark:bg-white ring-2 ring-offset-2 ring-ink-900 dark:ring-white ring-offset-white dark:ring-offset-ink-950 text-white dark:text-ink-900 flex items-center justify-center shadow-lg shadow-black/20 active:scale-95 transition"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
@@ -123,15 +130,22 @@ export default function ScanFab() {
             </svg>
           </button>
           <span className="text-sm font-medium">{label}</span>
+
+          {/* Web only: the bar covers the page footer, so it carries it. */}
+          {!native && (
+            <div className="mt-1">
+              <LegalFooter />
+            </div>
+          )}
         </div>
 
         {/* Off to the left, so the shutter keeps the centre line. */}
-        <div className="absolute left-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
+        <div className={`absolute left-6 ${native ? "bottom-6" : "top-[3.25rem] -translate-y-1/2"} flex flex-col items-center gap-1`}>
           <button
             type="button"
             aria-label={galleryLabel}
             onClick={openGallery}
-            className="w-11 h-11 rounded-full bg-ink-100 dark:bg-ink-800 border border-ink-200 dark:border-ink-700 text-ink-900 dark:text-white flex items-center justify-center active:scale-95 transition"
+            className="w-11 h-11 rounded-full bg-ink-100 dark:bg-ink-800 border border-ink-200 dark:border-ink-700 text-ink-900 dark:text-white flex items-center justify-center shadow-lg shadow-black/10 active:scale-95 transition"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <rect x="3" y="3" width="18" height="18" rx="2" />

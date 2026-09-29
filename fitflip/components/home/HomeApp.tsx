@@ -1566,8 +1566,8 @@ export default function HomeApp() {
                   </div>
                 )}
 
-                {/* pb clears the fixed scan bar at the bottom of the screen. */}
-                <div className="sm:hidden text-left pb-32">
+                {/* pb clears the scan controls fixed to the bottom. */}
+                <div className="sm:hidden text-left pb-40">
                   {/* Estimated identified total + count */}
                   <div className="rounded-2xl border border-ink-100 dark:border-ink-700 p-5 mb-6">
                     <p className="text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-1">
@@ -1682,7 +1682,11 @@ export default function HomeApp() {
                   {t.chooseFile}
                 </button>
 
-                {!isPremium && (
+                {/* Signed-in users get a daily allowance worth showing. A guest
+                    does not have one — they get a single trial scan — so "0
+                    ingyenes scan ma" told them the opposite of the banner
+                    directly above it, which offers them that free try. */}
+                {!isPremium && authenticated === true && (
                   <p className="text-xs text-ink-500 dark:text-ink-400 mt-4 text-center sm:text-left">
                     {t.scansLeftFull.replace("{n}", scansLeft.toString())}
                   </p>
