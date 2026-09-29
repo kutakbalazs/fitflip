@@ -52,8 +52,17 @@ export async function publishWardrobeToWidget(payload: {
 
   try {
     if (nativePlatform() === "ios") {
-      await FFWidgetBridge.setWardrobe({ totalHuf, itemCount, streak });
-      return `iOS OK — ${totalHuf} Ft / ${itemCount} db / ${streak} nap`;
+      // Bounded. A Capacitor call to a plugin the binary never registered
+      // is not rejected — the message leaves the web layer and nothing
+      // answers it, so the promise hangs. That is how this failed silently
+      // for a whole afternoon: no error, no log, no timeout, nothing.
+      const answered = await Promise.race([
+        FFWidgetBridge.setWardrobe({ totalHuf, itemCount, streak }).then(() => true),
+        new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 4000)),
+      ]);
+      return answered
+        ? `iOS OK — ${totalHuf} Ft / ${itemCount} db / ${streak} nap`
+        : "HIBA: a natív plugin nem válaszol (nincs regisztrálva?)";
     }
 
     const { Preferences } = await import("@capacitor/preferences");

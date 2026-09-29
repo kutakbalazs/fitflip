@@ -19,6 +19,7 @@
 		55F0768D3054A4B9006B0527 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55F0768C3054A4B9006B0527 /* SwiftUI.framework */; };
 		55F0769A3054A4BB006B0527 /* FitFlipWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 55F076883054A4B8006B0527 /* FitFlipWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		55F076A43054A997006B0527 /* FFWidgetBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55F076A33054A997006B0527 /* FFWidgetBridge.swift */; };
+		55F076B23054A997006B0527 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55F076B13054A997006B0527 /* MainViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -60,6 +61,7 @@
 		55F0768C3054A4B9006B0527 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		55F076A23054A8DD006B0527 /* FitFlipWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FitFlipWidgetExtension.entitlements; sourceTree = "<group>"; };
 		55F076A33054A997006B0527 /* FFWidgetBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFWidgetBridge.swift; sourceTree = "<group>"; };
+		55F076B13054A997006B0527 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -127,6 +129,7 @@
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				55F076A33054A997006B0527 /* FFWidgetBridge.swift */,
+				55F076B13054A997006B0527 /* MainViewController.swift */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
 				504EC3131FED79650016851F /* Info.plist */,
 				2FAD9762203C412B000D30F8 /* config.xml */,
@@ -261,6 +264,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				55F076A43054A997006B0527 /* FFWidgetBridge.swift in Sources */,
+				55F076B23054A997006B0527 /* MainViewController.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
