@@ -7,7 +7,7 @@ export default function TermsPage() {
     <LegalShell
       titleHu="Általános Szerződési Feltételek"
       titleEn="Terms and Conditions"
-      effectiveDate="2026-05-19"
+      effectiveDate="2026-10-03"
     >
       {(lang) => (lang === "hu" ? <ContentHu /> : <ContentEn />)}
     </LegalShell>
@@ -47,7 +47,7 @@ function ContentHu() {
       <h2 className="text-lg font-semibold mt-8 mb-2">5. Csomagok és árak</h2>
       <p>
         <strong>Ingyenes csomag:</strong> napi 3 scan, alapfunkciók.<br />
-        <strong>Prémium csomag:</strong> 2 490 Ft / hó vagy 24 990 Ft / év (bruttó, ÁFA-mentes alanyi mentesség alapján), korlátlan scan és élő hirdetéskeresés (Vinted, Jófogás, eBay). A mindenkori aktuális árat minden esetben a vásárlás helye (App Store, Google Play, illetve a webes fizetési felület) mutatja.
+        <strong>Prémium csomag:</strong> 1 490 Ft / hó vagy 14 990 Ft / év (akciós ár; az eredeti ár 2 490 Ft / hó, illetve 24 990 Ft / év; bruttó, ÁFA-mentes alanyi mentesség alapján), korlátlan scan és élő hirdetéskeresés (Vinted, Jófogás, eBay). A mindenkori aktuális árat minden esetben a vásárlás helye (App Store, Google Play, illetve a webes fizetési felület) mutatja.
       </p>
       <p>
         A prémium előfizetés a választott időszaknak megfelelően (havonta, illetve évente) automatikusan megújul a Felhasználó által regisztrált fizetési módon, amíg a Felhasználó le nem mondja azt. A fizetést a vásárlás helyétől függően a Stripe Payments Europe Ltd. (Ír Köztársaság), az Apple (App Store) vagy a Google (Google Play) bonyolítja le; bankkártya-adatokat a Szolgáltató egyik esetben sem kezel.
