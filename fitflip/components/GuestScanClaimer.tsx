@@ -42,6 +42,12 @@ export default function GuestScanClaimer() {
         if (res.ok) {
           clearPendingGuestScan();
           track("signup_complete", { claimedGuestScan: true });
+          // Tell whoever is on screen. The home page fetches its stats at
+          // the same moment this runs, and when that fetch won the race the
+          // newly saved scan was missing from the totals — so someone who
+          // signed up precisely to keep it saw nothing and concluded it was
+          // lost. It was saved every time; nothing said so.
+          window.dispatchEvent(new CustomEvent("ff-guest-scan-claimed"));
         }
       } catch {
         // Leave it pending: the next auth change or reload tries again.

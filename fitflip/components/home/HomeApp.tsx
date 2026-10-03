@@ -209,6 +209,8 @@ export default function HomeApp() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState(false);
   const [banner, setBanner] = useState<{ kind: "success" | "info"; text: string } | null>(null);
+  // Bumped to refetch the dashboard stats on demand.
+  const [statsNonce, setStatsNonce] = useState(0);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showUpgradeConsent, setShowUpgradeConsent] = useState(false);
   const [upgradeConsentChecked, setUpgradeConsentChecked] = useState(false);
@@ -378,6 +380,10 @@ export default function HomeApp() {
         }
         if (d.isPremium) setIsPremium(true);
         if (typeof d.streak === "number") setStreak(d.streak);
+        // A guest who already spent today's free scan goes straight to the
+        // sign-up prompt, rather than being let through to take a photo that
+        // is refused only after it has uploaded.
+        if (d.authenticated === false && d.guestTrialUsed) setGuestExhausted(true);
       })
       .catch(() => {});
 
@@ -441,7 +447,18 @@ export default function HomeApp() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [images.length, result]);
+  }, [images.length, result, statsNonce]);
+
+  // A scan made before signing in has just been moved into this account:
+  // say so, and fetch the totals again so it is actually in them.
+  useEffect(() => {
+    const onClaimed = () => {
+      setBanner({ kind: "success", text: t.guestClaimed });
+      setStatsNonce((n) => n + 1);
+    };
+    window.addEventListener("ff-guest-scan-claimed", onClaimed);
+    return () => window.removeEventListener("ff-guest-scan-claimed", onClaimed);
+  }, [t.guestClaimed]);
 
 
   useEffect(() => {
@@ -900,6 +917,9 @@ export default function HomeApp() {
         return;
       }
       if (data.guest) {
+        // That was the free one. When they leave this result, home shows the
+        // sign-up prompt instead of the camera.
+        setGuestExhausted(true);
         // Nothing was stored server-side. Hold it in the browser so it can be
         // moved into their history the moment they create an account.
         savePendingGuestScan(
@@ -1521,7 +1541,9 @@ export default function HomeApp() {
             loaded the screen is about that photo — its preview, the analysis,
             the result — and a second "new scan" button floating over it
             competes with the one thing the user is looking at. */}
-        {images.length === 0 && !result && !loading && <ScanFab />}
+        {images.length === 0 && !result && !loading && !(authenticated === false && guestExhausted) && (
+          <ScanFab />
+        )}
 
         {images.length === 0 && !result && (
           <div className="w-full text-center fade-in">

@@ -3,7 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { claimGuestScan, clientIp } from "@/lib/guestScan";
+import { claimGuestScan, clientIp, guestTrialUsed } from "@/lib/guestScan";
 import { budapestDate, displayStreak } from "@/lib/streak";
 
 export const maxDuration = 60;
@@ -1063,11 +1063,15 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ scansLeft: 0, authenticated: false });
+    return NextResponse.json({
+      scansLeft: 0,
+      authenticated: false,
+      guestTrialUsed: await guestTrialUsed(createAdminClient(), clientIp(request.headers)),
+    });
   }
   const admin = createAdminClient();
   const profile = await getOrResetProfile(admin, user.id);

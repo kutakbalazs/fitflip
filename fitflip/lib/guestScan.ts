@@ -88,3 +88,27 @@ export async function claimGuestScan(
     return { allowed: false, used: 0 };
   }
 }
+
+/**
+ * Has this address already used today's free scan? Read-only — it counts
+ * nothing, so it is safe to call on every page load.
+ *
+ * Lets the home screen show the sign-up prompt before the camera, instead of
+ * after: otherwise a returning guest is let through to take a photo, waits
+ * for an upload, and only then hears the trial was used up. Enforcement stays
+ * in claimGuestScan; this only decides what to show first.
+ */
+export async function guestTrialUsed(admin: SupabaseClient, ip: string): Promise<boolean> {
+  try {
+    const { data } = await admin
+      .from("guest_scan_usage")
+      .select("count")
+      .eq("ip_hash", hashIp(ip))
+      .eq("day", new Date().toISOString().slice(0, 10))
+      .maybeSingle<{ count: number }>();
+    return (data?.count ?? 0) >= GUEST_DAILY_LIMIT;
+  } catch {
+    // Unknown means show the camera — the real gate is still at upload.
+    return false;
+  }
+}
