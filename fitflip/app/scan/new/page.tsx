@@ -50,8 +50,8 @@ export default function QuickScanPage() {
 
   const t =
     lang === "hu"
-      ? { title: "Fotózz le egy darabot", cta: "Kamera megnyitása", opening: "Kamera indul…" }
-      : { title: "Photograph a piece", cta: "Open camera", opening: "Opening camera…" };
+      ? { title: "Fotózz le egy darabot", cta: "Kamera megnyitása" }
+      : { title: "Photograph a piece", cta: "Open camera" };
 
   return (
     <main className="min-h-dvh flex flex-col items-center justify-center gap-6 px-8 bg-white dark:bg-ink-950 text-center">
@@ -79,9 +79,12 @@ export default function QuickScanPage() {
             {t.cta}
           </button>
         </>
-      ) : (
-        <p className="text-sm text-ink-500 dark:text-ink-400">{t.opening}</p>
-      )}
+      ) : null
+      /* Nothing on the native path. The camera covers this screen while it
+         is open, and afterwards the page is only on screen for the instant
+         before it hands off — so "Kamera indul…" was either hidden or wrong:
+         it was still saying the camera was starting after the photo had
+         been taken. */}
     </main>
   );
 }

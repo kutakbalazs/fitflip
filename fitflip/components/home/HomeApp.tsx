@@ -26,6 +26,7 @@ import StockxButton from "@/components/StockxButton";
 import ListingDraft from "@/components/ListingDraft";
 import { sourceLabel } from "@/lib/listings/sourceLabel";
 import { publishWardrobeToWidget } from "@/lib/widgetBridge";
+import { cachedStats, storeStats } from "@/lib/statsCache";
 
 type AnalysisResult = {
   recognized: boolean;
@@ -348,6 +349,14 @@ export default function HomeApp() {
     const stored = (localStorage.getItem("ff-lang") ?? localStorage.getItem("ff_lang"));
     if (stored === "hu" || stored === "en") setLang(stored);
 
+    // A locally stored session is enough to lay out the signed-in home on
+    // the first frame; getUser below still confirms it with the server and
+    // overrules this if the session turns out to be dead. Without it the
+    // page showed the guest layout for a beat on every open, then reflowed.
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) setAuthenticated((a) => a ?? true);
+    });
+
     supabase.auth.getUser().then(({ data }) => {
       setAuthenticated(!!data.user);
       setUserEmail(data.user?.email ?? null);
@@ -390,34 +399,49 @@ export default function HomeApp() {
     return () => window.clearTimeout(id);
   }, [banner]);
 
-  // Load dashboard stats (total identified value + count) when the
-  // authenticated home is showing the empty state.
+  // Load dashboard stats (total identified value + count) while the home is
+  // showing its empty state.
+  //
+  // Not gated on `authenticated` any more. That flag only arrives after a
+  // round trip to Supabase, and waiting for it put the stats request at the
+  // back of a queue of three network legs. The local session is enough to
+  // know whose stats to ask for, and to paint the last-seen ones straight away.
   useEffect(() => {
-    if (authenticated !== true) return;
     if (images.length > 0 || result) return;
     let cancelled = false;
-    fetch("/api/scan-stats")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (cancelled || !d) return;
-        setStats({
+    void (async () => {
+      const { data } = await supabase.auth.getSession();
+      const uid = data.session?.user?.id;
+      if (!uid || cancelled) return; // a guest has no stats to show
+
+      const cached = cachedStats(uid);
+      if (cached) setStats((current) => current ?? cached);
+
+      const d = await fetch("/api/scan-stats")
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+      if (cancelled || !d) return;
+
+      setStats(
+        storeStats(uid, {
           count: d.count ?? 0,
           totalValueHuf: d.totalValueHuf ?? 0,
           recent: Array.isArray(d.recent) ? d.recent : [],
-        });
-        // The home-screen widget has no session and no network of its own,
-        // so this is where it gets its number: whatever the app last saw.
-        void publishWardrobeToWidget({
-          totalHuf: d.totalValueHuf ?? 0,
-          itemCount: d.count ?? 0,
-          streak: d.streak ?? 0,
-        });
-      })
-      .catch(() => {});
+        })
+      );
+      // The home-screen widget has no session and no network of its own,
+      // so this is where it gets its number: whatever the app last saw.
+      void publishWardrobeToWidget({
+        totalHuf: d.totalValueHuf ?? 0,
+        itemCount: d.count ?? 0,
+        streak: d.streak ?? 0,
+      });
+    })();
     return () => {
       cancelled = true;
     };
-  }, [authenticated, images.length, result]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images.length, result]);
 
 
   useEffect(() => {
