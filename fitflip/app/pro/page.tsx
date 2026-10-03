@@ -23,6 +23,27 @@ type AuthState =
  *                        as the main-page paywall, just reachable earlier)
  *   - signed-in premium → /account ("Manage subscription")
  */
+/**
+ * The regular price — what a struck-through figure refers back to. Under EU
+ * price-indication rules a "was" price must be the lowest one actually
+ * charged in the 30 days before the reduction, which these were.
+ */
+const LIST_PRICE = { yearly: 24990, monthly: 2490 } as const;
+
+/**
+ * What the web checkout charges, which is Stripe's price, not ours to state.
+ * Keep it in step with the STRIPE_PRICE_ID / STRIPE_PRICE_ID_YEARLY prices;
+ * lowering it here before Stripe changes would advertise a price the card is
+ * then not charged.
+ */
+const WEB_PRICE = { yearly: 24990, monthly: 2490 } as const;
+
+/** "1 490 Ft". Grouped by hand: hu-HU leaves four-digit numbers ungrouped,
+ *  which put "1490 Ft" next to "14 900 Ft" on the same card. */
+function formatFt(n: number): string {
+  return `${String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ")} Ft`;
+}
+
 export default function ProPage() {
   const router = useRouter();
   const [lang, setLang] = useState<Lang>("hu");
@@ -192,12 +213,28 @@ export default function ProPage() {
 
   const t = lang === "hu" ? HU : EN;
 
-  // Native shows the store-localized price; web (and native before offerings
-  // load) shows the canonical HUF price.
-  const yearlyPrice =
-    storePlans.find((p) => p.plan === "yearly")?.priceString ?? "24 990 Ft";
-  const monthlyPrice =
-    storePlans.find((p) => p.plan === "monthly")?.priceString ?? "2 490 Ft";
+  // Native shows the store's own price; the web (and native before offerings
+  // load) shows WEB_PRICE, which has to match what Stripe actually charges.
+  const priceFor = (plan: "yearly" | "monthly") => {
+    const store = storePlans.find((p) => p.plan === plan);
+    const amount = store ? store.price : WEB_PRICE[plan];
+    const currency = store ? store.currencyCode : "HUF";
+    return {
+      // Our own formatting for forints, so the struck-through price and the
+      // live one read alike; the store's own string for anything else.
+      label: currency === "HUF" ? formatFt(amount) : store!.priceString,
+      // A struck-through price is a claim that we used to charge it. So it
+      // is shown only when the price actually being charged — read from the
+      // store, not assumed — is below it. If the store change has not gone
+      // live yet, there is no sale, and the page says nothing about one.
+      was: currency === "HUF" && amount < LIST_PRICE[plan] ? formatFt(LIST_PRICE[plan]) : null,
+      amount,
+    };
+  };
+  const yearly = priceFor("yearly");
+  const monthly = priceFor("monthly");
+  const saleOff =
+    monthly.was !== null ? Math.round((1 - monthly.amount / LIST_PRICE.monthly) * 100) : null;
 
   const ctaLabel = (() => {
     switch (auth.status) {
@@ -297,6 +334,14 @@ export default function ProPage() {
             {t.ctaCardLabel}
           </p>
 
+          {saleOff !== null && saleOff > 0 && (
+            <p className="mb-3 text-center">
+              <span className="inline-block px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-200 text-xs font-semibold">
+                {t.saleBadge(saleOff)}
+              </span>
+            </p>
+          )}
+
           {/* Yearly */}
           <button
             type="button"
@@ -310,10 +355,13 @@ export default function ProPage() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="font-semibold text-sm">{t.planYearly}</p>
-                <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">{t.planYearlySub}</p>
+                <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">{t.planYearlySub(formatFt(Math.round(yearly.amount / 12)))}</p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-xl font-display">{yearlyPrice}</p>
+                {yearly.was && (
+                  <p className="text-xs text-ink-400 dark:text-ink-500 line-through">{yearly.was}</p>
+                )}
+                <p className="text-xl font-display">{yearly.label}</p>
                 <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold">
                   {t.planYearlyBadge}
                 </span>
@@ -336,7 +384,12 @@ export default function ProPage() {
                 <p className="font-semibold text-sm">{t.planMonthly}</p>
                 <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">{t.planMonthlySub}</p>
               </div>
-              <p className="text-xl font-display shrink-0">{monthlyPrice}</p>
+              <div className="text-right shrink-0">
+                {monthly.was && (
+                  <p className="text-xs text-ink-400 dark:text-ink-500 line-through">{monthly.was}</p>
+                )}
+                <p className="text-xl font-display">{monthly.label}</p>
+              </div>
             </div>
           </button>
 
@@ -572,8 +625,9 @@ const HU = {
 
   ctaCardLabel: "FitFlip Pro előfizetés",
   planYearly: "Éves",
-  planYearlySub: "Csak 2 083 Ft / hónap",
-  planYearlyBadge: "−16% · ~2 hónap ingyen",
+  planYearlySub: (perMonth: string) => `Csak ${perMonth} / hónap`,
+  planYearlyBadge: "~2 hónap ingyen",
+  saleBadge: (pct: number) => `Akció: −${pct}%`,
   planMonthly: "Havi",
   planMonthlySub: "A legrugalmasabb",
   ctaCardCancel: "Bármikor lemondható, automatikus megújulás.",
@@ -630,8 +684,9 @@ const EN: Strings = {
 
   ctaCardLabel: "FitFlip Pro subscription",
   planYearly: "Yearly",
-  planYearlySub: "Just 2,083 HUF / month",
-  planYearlyBadge: "−16% · ~2 months free",
+  planYearlySub: (perMonth: string) => `Just ${perMonth} / month`,
+  planYearlyBadge: "~2 months free",
+  saleBadge: (pct: number) => `Sale: −${pct}%`,
   planMonthly: "Monthly",
   planMonthlySub: "Most flexible",
   ctaCardCancel: "Cancel anytime, auto-renewal.",

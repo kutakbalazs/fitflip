@@ -13,6 +13,9 @@ export type IapPlan = "monthly" | "yearly";
 export type IapPlanInfo = {
   plan: IapPlan;
   priceString: string; // store-localized, e.g. "2 490 Ft"
+  /** The same price as a number, so the paywall can tell whether it is on sale. */
+  price: number;
+  currencyCode: string;
   identifier: string;
 };
 
@@ -60,6 +63,8 @@ export async function getPlans(): Promise<IapPlanInfo[]> {
     out.push({
       plan: "yearly",
       priceString: current.annual.product.priceString,
+      price: current.annual.product.price,
+      currencyCode: current.annual.product.currencyCode,
       identifier: current.annual.identifier,
     });
   }
@@ -67,6 +72,8 @@ export async function getPlans(): Promise<IapPlanInfo[]> {
     out.push({
       plan: "monthly",
       priceString: current.monthly.product.priceString,
+      price: current.monthly.product.price,
+      currencyCode: current.monthly.product.currencyCode,
       identifier: current.monthly.identifier,
     });
   }
